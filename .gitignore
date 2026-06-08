@@ -1,0 +1,15 @@
+node_modules/
+dist/
+
+# use pnpm — ignore other lockfiles
+package-lock.json
+yarn.lock
+
+# local pnpm store (only appears if store-dir is set in-project)
+.pnpm-store/
+
+.env
+.env.*
+
+*.log
+.DS_Store
