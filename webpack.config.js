@@ -1,5 +1,6 @@
 import path from "path";
 import HtmlWebpackPlugin from "html-webpack-plugin";
+import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,6 +27,10 @@ export default (_env, argv) => {
                     use: "ts-loader",
                     exclude: /node_modules/,
                 },
+                {
+                    test: /\.css$/,
+                    use: [MiniCssExtractPlugin.loader, "css-loader"],
+                },
             ],
         },
 
@@ -40,6 +45,9 @@ export default (_env, argv) => {
         },
 
         plugins: [
+            new MiniCssExtractPlugin({
+                filename: isDevelopment ? "[name].css" : "[name].[contenthash:8].css",
+            }),
             new HtmlWebpackPlugin({
                 template: "./public/index.html",
                 minify: !isDevelopment,

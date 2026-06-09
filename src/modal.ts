@@ -1,5 +1,4 @@
-import { AdvancedDynamicTexture, Rectangle, StackPanel, TextBlock, Button, Control } from "@babylonjs/gui";
-import { createFixedHeightImage, fadeControl, setPlaneHighlight } from "./utils";
+import { setPlaneHighlight } from "./utils";
 import type { AbstractMesh } from "@babylonjs/core";
 import type { GalleryItem, WindowConfig } from "./scenes/types";
 
@@ -13,17 +12,59 @@ export interface ModalOptions {
 }
 
 export class ModalManager {
-    private ui: AdvancedDynamicTexture;
+    private root: HTMLElement;
+    private backdrop: HTMLElement;
+    private panel: HTMLElement;
+    private titleEl: HTMLElement;
+    private imageEl: HTMLImageElement;
+    private bodyEl: HTMLElement;
+    private nextBtn: HTMLButtonElement;
+
     private detachCamera: () => void;
     private attachCamera: () => void;
 
     private open = false;
-    private controls: Control[] = [];
+    private activeMeshes: AbstractMesh[] = [];
+    private onCloseCallback: (() => void) | null = null;
+    private onNextCallback: (() => void) | null = null;
+    private backdropClickHandler: (() => void) | null = null;
 
-    constructor(ui: AdvancedDynamicTexture, detachCamera: () => void, attachCamera: () => void) {
-        this.ui = ui;
+    constructor(detachCamera: () => void, attachCamera: () => void) {
+        const root = document.getElementById("modal-root");
+        if (!root) throw new Error("Modal root element not found");
+
+        const backdrop = root.querySelector<HTMLElement>(".modal-backdrop");
+        const panel = root.querySelector<HTMLElement>(".modal-panel");
+        const titleEl = root.querySelector<HTMLElement>(".modal-title");
+        const imageEl = root.querySelector<HTMLImageElement>(".modal-image");
+        const bodyEl = root.querySelector<HTMLElement>(".modal-body");
+        const closeBtn = root.querySelector<HTMLButtonElement>(".modal-btn-close");
+        const nextBtn = root.querySelector<HTMLButtonElement>(".modal-btn-next");
+
+        if (!backdrop || !panel || !titleEl || !imageEl || !bodyEl || !closeBtn || !nextBtn) {
+            throw new Error("Modal markup is incomplete");
+        }
+
+        this.root = root;
+        this.backdrop = backdrop;
+        this.panel = panel;
+        this.titleEl = titleEl;
+        this.imageEl = imageEl;
+        this.bodyEl = bodyEl;
+        this.nextBtn = nextBtn;
         this.detachCamera = detachCamera;
         this.attachCamera = attachCamera;
+
+        closeBtn.addEventListener("click", () => this.close(this.onCloseCallback ?? undefined));
+        nextBtn.addEventListener("click", () => {
+            const onClose = this.onCloseCallback;
+            const onNext = this.onNextCallback;
+            this.close(() => {
+                onClose?.();
+                onNext?.();
+            });
+        });
+        panel.addEventListener("click", (e) => e.stopPropagation());
     }
 
     isOpen(): boolean {
@@ -34,116 +75,75 @@ export class ModalManager {
         if (this.open) return;
 
         this.open = true;
+        this.activeMeshes = options.meshes;
+        this.onCloseCallback = options.onClose;
+        this.onNextCallback = options.onNext ?? null;
+
         this.clearHighlights(options.meshes);
         options.meshes.forEach((m) => (m.isPickable = false));
         this.detachCamera();
 
-        const backdrop = new Rectangle("backdrop");
-        backdrop.width = 1;
-        backdrop.height = 1;
-        backdrop.thickness = 0;
-        backdrop.background = "black";
-        backdrop.alpha = 0;
-        backdrop.isPointerBlocker = true;
-        this.ui.addControl(backdrop);
-
         const config = options.windowConfig;
-        const panel = new Rectangle("panel");
-        panel.width = "560px";
-        panel.height = "420px";
-        panel.cornerRadius = 8;
-        panel.thickness = 2;
-        panel.color = "white";
-        panel.background = config.color;
-        panel.left = config.left;
-        panel.top = config.top;
-        panel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-        panel.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-        panel.alpha = 0;
-        panel.isPointerBlocker = true;
-        this.ui.addControl(panel);
+        this.panel.style.setProperty("--modal-color", config.color);
+        this.panel.style.setProperty("--modal-offset-x", config.left);
+        this.panel.style.setProperty("--modal-offset-y", config.top);
 
-        this.controls = [backdrop, panel];
+        this.titleEl.textContent = options.item.title;
+        this.imageEl.src = options.item.img;
+        this.imageEl.alt = options.item.title;
+        this.bodyEl.textContent = options.item.text;
 
-        const stack = new StackPanel();
-        panel.addControl(stack);
+        const showNext = Boolean(options.item.showNextButton && options.onNext);
+        this.nextBtn.hidden = !showNext;
 
-        const titleBlock = new TextBlock();
-        titleBlock.text = options.item.title;
-        titleBlock.height = "50px";
-        titleBlock.color = "white";
-        titleBlock.fontSize = 28;
-        stack.addControl(titleBlock);
+        this.root.classList.remove("is-closing");
+        this.root.classList.add("is-open");
+        this.root.setAttribute("aria-hidden", "false");
 
-        stack.addControl(createFixedHeightImage(options.item.img, 200));
+        requestAnimationFrame(() => {
+            if (this.open) this.root.classList.add("is-visible");
+        });
 
-        const body = new TextBlock();
-        body.text = options.item.text;
-        body.height = "90px";
-        body.color = "white";
-        body.textWrapping = true;
-        stack.addControl(body);
-
-        const buttonRow = new StackPanel();
-        buttonRow.isVertical = false;
-        buttonRow.height = "44px";
-        buttonRow.spacing = 16;
-        buttonRow.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-
-        const closeBtn = Button.CreateSimpleButton("close", "Close");
-        closeBtn.width = "150px";
-        closeBtn.height = "44px";
-        closeBtn.background = "#333";
-        closeBtn.color = "white";
-        closeBtn.hoverCursor = "pointer";
-        closeBtn.isPointerBlocker = true;
-        closeBtn.onPointerClickObservable.add(() => this.close(options.meshes, options.onClose));
-        buttonRow.addControl(closeBtn);
-
-        if (options.item.showNextButton && options.onNext) {
-            const nextBtn = Button.CreateSimpleButton("next", "Next");
-            nextBtn.width = "150px";
-            nextBtn.height = "44px";
-            nextBtn.background = "#1a6b3c";
-            nextBtn.color = "white";
-            nextBtn.hoverCursor = "pointer";
-            nextBtn.isPointerBlocker = true;
-            nextBtn.onPointerClickObservable.add(() => {
-                this.close(options.meshes, () => {
-                    options.onClose();
-                    options.onNext!();
-                });
-            });
-            buttonRow.addControl(nextBtn);
-        }
-
-        stack.addControl(buttonRow);
-
-        fadeControl(backdrop, 0, 0.55, 120);
-        fadeControl(panel, 0, 1, 120);
-        this.bindBackdropDismiss(backdrop, options.meshes, options.onClose);
+        this.bindBackdropDismiss();
     }
 
-    private close(meshes: AbstractMesh[], onClosed?: () => void): void {
+    private close(onClosed?: () => void): void {
         if (!this.open) return;
 
-        const controls = this.controls;
         this.open = false;
-        this.controls = [];
+        const meshes = this.activeMeshes;
+        this.activeMeshes = [];
+        this.onCloseCallback = null;
+        this.onNextCallback = null;
 
-        let remaining = controls.length;
-        const onFaded = (): void => {
+        if (this.backdropClickHandler) {
+            this.backdrop.removeEventListener("click", this.backdropClickHandler);
+            this.backdropClickHandler = null;
+        }
+
+        this.root.classList.remove("is-visible");
+        this.root.classList.add("is-closing");
+
+        const elements = [this.backdrop, this.panel];
+        let remaining = elements.length;
+
+        const onTransitionEnd = (e: TransitionEvent): void => {
+            if (e.propertyName !== "opacity") return;
             remaining -= 1;
             if (remaining === 0) {
-                controls.forEach((c) => c.dispose());
+                for (const el of elements) {
+                    el.removeEventListener("transitionend", onTransitionEnd);
+                }
+                this.root.classList.remove("is-open", "is-closing");
+                this.root.setAttribute("aria-hidden", "true");
                 meshes.forEach((m) => (m.isPickable = true));
                 this.attachCamera();
                 onClosed?.();
             }
         };
 
-        for (const control of controls) {
-            fadeControl(control, control.alpha, 0, 180, onFaded);
+        for (const el of elements) {
+            el.addEventListener("transitionend", onTransitionEnd);
         }
     }
 
@@ -153,14 +153,18 @@ export class ModalManager {
         }
     }
 
-    private bindBackdropDismiss(backdrop: Rectangle, meshes: AbstractMesh[], onClose: () => void): void {
+    private bindBackdropDismiss(): void {
         const openedAt = performance.now();
 
+        this.backdropClickHandler = (): void => {
+            if (performance.now() - openedAt < 300) return;
+            this.close(this.onCloseCallback ?? undefined);
+        };
+
         requestAnimationFrame(() => {
-            backdrop.onPointerClickObservable.add(() => {
-                if (performance.now() - openedAt < 300) return;
-                this.close(meshes, onClose);
-            });
+            if (this.backdropClickHandler) {
+                this.backdrop.addEventListener("click", this.backdropClickHandler);
+            }
         });
     }
 }

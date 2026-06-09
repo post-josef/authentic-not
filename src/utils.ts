@@ -1,40 +1,9 @@
 import { Scene, MeshBuilder, StandardMaterial, Color3, Texture, ActionManager, ExecuteCodeAction, AbstractMesh } from "@babylonjs/core";
-import { Image, Control } from "@babylonjs/gui";
 import type { GalleryItem } from "./scenes/types";
 
 export const PLANE_WIDTH = 2.3;
 export const PLANE_HEIGHT = 3.2;
 export const BORDER_WIDTH = 0.04;
-
-export function createFixedHeightImage(imageUrl: string, heightPx: number): Image {
-    const img = new Image("img", imageUrl);
-    img.height = `${heightPx}px`;
-    img.onImageLoadedObservable.addOnce(() => {
-        if (img.imageHeight > 0) {
-            img.width = `${(heightPx * img.imageWidth) / img.imageHeight}px`;
-        }
-    });
-    return img;
-}
-
-export function fadeControl(control: Control, from: number, to: number, duration: number, onEnd?: () => void): void {
-    const start = performance.now();
-
-    const tick = (now: number): void => {
-        let t = (now - start) / duration;
-        if (t > 1) t = 1;
-
-        control.alpha = from + (to - from) * t;
-
-        if (t < 1) {
-            requestAnimationFrame(tick);
-        } else {
-            onEnd?.();
-        }
-    };
-
-    requestAnimationFrame(tick);
-}
 
 export function setPlaneHighlight(plane: AbstractMesh, on: boolean): void {
     const border = plane.metadata?.border as AbstractMesh | undefined;

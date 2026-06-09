@@ -2,19 +2,25 @@
     "name": "authentic-not",
     "version": "1.0.0",
     "private": true,
+    "type": "module",
     "scripts": {
         "dev": "webpack serve --mode development",
         "build": "webpack --mode production",
-        "clean": "rm -rf dist"
+        "clean": "rm -rf dist",
+        "lint": "eslint src"
     },
     "dependencies": {
-        "@babylonjs/core": "9.11.0",
-        "@babylonjs/gui": "9.11.0"
+        "@babylonjs/core": "9.11.0"
     },
     "devDependencies": {
+        "@types/node": "25.9.2",
+        "css-loader": "7.1.4",
+        "eslint": "10.4.1",
         "html-webpack-plugin": "5.6.7",
+        "mini-css-extract-plugin": "2.10.2",
         "ts-loader": "9.6.0",
         "typescript": "6.0.3",
+        "typescript-eslint": "8.60.1",
         "webpack": "5.107.2",
         "webpack-cli": "7.0.3",
         "webpack-dev-server": "5.2.4"

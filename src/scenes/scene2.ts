@@ -4,11 +4,11 @@ import { createInteractiveImagePlane } from "../utils";
 import type { GameScene, GalleryItem, SceneLoadContext } from "./types";
 
 export const SCENE2_WINDOW_CONFIGS = [
-    { color: "#0D5C63", left: "-280px", top: "60px" },
-    { color: "#C44536", left: "-180px", top: "-160px" },
-    { color: "#6B2D5C", left: "40px", top: "-40px" },
-    { color: "#2A4A7F", left: "200px", top: "40px" },
-    { color: "#8B6914", left: "300px", top: "180px" },
+    { color: "#21432b99", left: "-320px", top: "140px" },
+    { color: "#501d2599", left: "-250px", top: "-120px" },
+    { color: "#3c284d99", left: "0px", top: "0px" },
+    { color: "#1b3b5899", left: "220px", top: "-80px" },
+    { color: "#39321899", left: "260px", top: "120px" },
 ];
 
 const GALLERY_ITEMS: GalleryItem[] = [
