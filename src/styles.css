@@ -96,6 +96,7 @@ body {
 }
 
 .modal-image {
+    margin-bottom: 8px;
     height: 200px;
     width: auto;
     max-width: 100%;
@@ -105,7 +106,7 @@ body {
 .modal-body {
     margin: 0;
     color: #fff;
-    font-size: 16px;
+    font-size: 18px;
     line-height: 1.4;
     text-align: center;
     max-height: 90px;
@@ -139,7 +140,7 @@ body {
 }
 
 .modal-btn-close {
-    background-image: linear-gradient(to right, #766632 0%, #584436 51%, #766632 100%)
+    background-image: linear-gradient(to right, #766632 0%, #584436 51%, #766632 100%);
 }
 
 .modal-btn-next {
