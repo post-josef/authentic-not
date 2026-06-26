@@ -1,7 +1,10 @@
 import type { Observer, AbstractMesh } from "@babylonjs/core";
 import type { Scene } from "@babylonjs/core";
-import { createInteractiveImagePlane } from "../utils";
-import type { GameScene, GalleryItem, SceneLoadContext } from "./types";
+import { createImagePlane } from "../objects/imagePlane";
+import { openModal, wireInteractive, type SceneObject } from "../objects/sceneObject";
+import type { SceneContext } from "../managers/types";
+import { createGalleryModal } from "./modalContent";
+import type { GameScene, GalleryItem } from "./types";
 
 export const SCENE2_WINDOW_CONFIGS = [
     { color: "#21432b99", left: "-320px", top: "140px" },
@@ -10,6 +13,8 @@ export const SCENE2_WINDOW_CONFIGS = [
     { color: "#1b3b5899", left: "220px", top: "-80px" },
     { color: "#39321899", left: "260px", top: "120px" },
 ];
+
+const SCENE2_MODAL_CLASS = "modal-scene2";
 
 const GALLERY_ITEMS: GalleryItem[] = [
     {
@@ -55,30 +60,33 @@ const GALLERY_ITEMS: GalleryItem[] = [
         y: 2.1,
         z: 3.5,
         r: -0.4,
-        text: "Return to the classic row layout anytime.",
-        showNextButton: true,
+        text: "Continue to the orbital ring gallery.",
+        nextSceneId: "scene3",
     },
 ];
 
 export class Scene2 implements GameScene {
     readonly id = "scene2";
-    readonly meshes: AbstractMesh[] = [];
+    readonly highlightMode = "highlightLayer" as const;
 
     private babylonScene: Scene | null = null;
     private renderObserver: Observer<Scene> | null = null;
+    private objects: SceneObject[] = [];
     private basePositions: { x: number; y: number; z: number; r: number }[] = [];
 
-    load(ctx: SceneLoadContext): void {
-        this.babylonScene = ctx.scene;
-        this.meshes.length = 0;
+    load(ctx: SceneContext): void {
+        this.babylonScene = ctx.babylonScene;
+        this.objects = [];
         this.basePositions = [];
 
         GALLERY_ITEMS.forEach((item, index) => {
-            const plane = createInteractiveImagePlane(ctx.scene, item, {
-                isInteractionBlocked: ctx.isInteractionBlocked,
-                onPick: () => ctx.onItemClick(index, item),
+            const object = createImagePlane(ctx.babylonScene, item, this.highlightMode);
+            wireInteractive(object, {
+                ctx,
+                onPick: () =>
+                    openModal(ctx, createGalleryModal(item, SCENE2_WINDOW_CONFIGS[index], SCENE2_MODAL_CLASS)),
             });
-            this.meshes.push(plane);
+            this.objects.push(object);
             this.basePositions.push({
                 x: item.x,
                 y: item.y ?? 1.8,
@@ -87,11 +95,12 @@ export class Scene2 implements GameScene {
             });
         });
 
-        this.renderObserver = ctx.scene.onBeforeRenderObservable.add(() => {
+        this.renderObserver = ctx.babylonScene.onBeforeRenderObservable.add(() => {
             const t = performance.now() * 0.001;
-            this.meshes.forEach((mesh, i) => {
+            this.objects.forEach((object, i) => {
                 const base = this.basePositions[i];
                 const phase = i * 1.2;
+                const mesh = object.mesh;
 
                 mesh.position.x = base.x + Math.cos(t * 0.7 + phase) * 0.25;
                 mesh.position.y = base.y + Math.sin(t * 1.1 + phase) * 0.35;
@@ -109,17 +118,21 @@ export class Scene2 implements GameScene {
             this.renderObserver = null;
         }
 
-        for (const mesh of this.meshes) {
-            mesh.dispose(false, true);
+        for (const object of this.objects) {
+            object.dispose();
         }
-        this.meshes.length = 0;
+        this.objects = [];
         this.basePositions = [];
         this.babylonScene = null;
     }
 
+    getMeshes(): AbstractMesh[] {
+        return this.objects.map((o) => o.mesh);
+    }
+
     setMeshesPickable(pickable: boolean): void {
-        for (const mesh of this.meshes) {
-            mesh.isPickable = pickable;
+        for (const object of this.objects) {
+            object.mesh.isPickable = pickable;
         }
     }
 }

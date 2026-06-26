@@ -1,9 +1,12 @@
-import type { Observer, AbstractMesh, SpotLight } from "@babylonjs/core";
+import type { Observer, AbstractMesh } from "@babylonjs/core";
 import type { Scene } from "@babylonjs/core";
 import { Vector3 } from "@babylonjs/core";
-import { createInteractiveImagePlane } from "../utils";
+import { createImagePlane } from "../objects/imagePlane";
+import { openModal, wireInteractive, type SceneObject } from "../objects/sceneObject";
+import type { SceneContext } from "../managers/types";
 import { createSoftRedSpotLight } from "./spotlight";
-import type { GameScene, GalleryItem, SceneLoadContext } from "./types";
+import { createGalleryModal } from "./modalContent";
+import type { GameScene, GalleryItem } from "./types";
 
 export const SCENE1_WINDOW_CONFIGS = [
     { color: "#21432b99", left: "-320px", top: "140px" },
@@ -13,51 +16,86 @@ export const SCENE1_WINDOW_CONFIGS = [
     { color: "#39321899", left: "260px", top: "120px" },
 ];
 
+const SCENE1_MODAL_CLASS = "modal-scene1";
+
 const SPOT_POSITION = new Vector3(0, 3.2, 1.5);
 const SPOT_TARGET = new Vector3(0, 1.8, 5);
 
 const GALLERY_ITEMS: GalleryItem[] = [
-    { title: "Image One", img: "images/i1.png", x: -6, r: -0.6, text: "Red themed popup." },
-    { title: "Image Two", img: "images/i2.png", x: -3, r: -0.2, text: "Blue themed popup." },
-    { title: "Image Three", img: "images/i3.png", x: 0, r: 0, text: "Green themed popup." },
-    { title: "Image Four", img: "images/i4.png", x: 3, r: 0.2, text: "Gold themed popup." },
     {
-        title: "Image Five",
+        title: "Row One",
+        img: "images/i1.png",
+        x: -6,
+        r: -0.6,
+        text: "The line begins here — a soft red light spills across the first frame.",
+    },
+    {
+        title: "Row Two",
+        img: "images/i2.png",
+        x: -3,
+        r: -0.2,
+        text: "Each panel leans in slightly, drawing you further along the corridor.",
+    },
+    {
+        title: "Row Three",
+        img: "images/i3.png",
+        x: 0,
+        r: 0,
+        text: "At the center, the spot finds its mark and the image gently breathes.",
+    },
+    {
+        title: "Row Four",
+        img: "images/i4.png",
+        x: 3,
+        r: 0.2,
+        text: "The rhythm holds — quiet float, warm glow, one piece after another.",
+    },
+    {
+        title: "Row Five",
         img: "images/i5.png",
         x: 6,
         r: 0.6,
-        text: "Purple themed popup. Press Next to explore the floating gallery.",
-        showNextButton: true,
+        text: "The row ends, but the gallery does not. Step into the drifting collection ahead.",
+        nextSceneId: "scene2",
     },
 ];
 
 export class Scene1 implements GameScene {
     readonly id = "scene1";
-    readonly meshes: AbstractMesh[] = [];
+    readonly highlightMode = "border" as const;
 
     private babylonScene: Scene | null = null;
     private renderObserver: Observer<Scene> | null = null;
-    private spot: SpotLight | null = null;
+    private objects: SceneObject[] = [];
 
-    load(ctx: SceneLoadContext): void {
-        this.babylonScene = ctx.scene;
-        this.meshes.length = 0;
+    load(ctx: SceneContext): void {
+        this.babylonScene = ctx.babylonScene;
+        this.objects = [];
 
         GALLERY_ITEMS.forEach((item, index) => {
-            const plane = createInteractiveImagePlane(ctx.scene, item, {
-                isInteractionBlocked: ctx.isInteractionBlocked,
-                onPick: () => ctx.onItemClick(index, item),
+            const object = createImagePlane(ctx.babylonScene, item, this.highlightMode);
+            wireInteractive(object, {
+                ctx,
+                onPick: () =>
+                    openModal(ctx, createGalleryModal(item, SCENE1_WINDOW_CONFIGS[index], SCENE1_MODAL_CLASS)),
             });
-            this.meshes.push(plane);
+            this.objects.push(object);
         });
 
         const spotDirection = SPOT_TARGET.subtract(SPOT_POSITION);
-        this.spot = createSoftRedSpotLight("scene1Spot", SPOT_POSITION, spotDirection, ctx.scene, this.meshes);
+        const spot = createSoftRedSpotLight(
+            "scene1Spot",
+            SPOT_POSITION,
+            spotDirection,
+            ctx.babylonScene,
+            this.getMeshes(),
+        );
+        ctx.light.track(spot);
 
-        this.renderObserver = ctx.scene.onBeforeRenderObservable.add(() => {
+        this.renderObserver = ctx.babylonScene.onBeforeRenderObservable.add(() => {
             const t = performance.now() * 0.001;
-            this.meshes.forEach((mesh, i) => {
-                mesh.position.y = 1.8 + Math.sin(t * 1.4 + i) * 0.15;
+            this.objects.forEach((object, i) => {
+                object.mesh.position.y = 1.8 + Math.sin(t * 1.4 + i) * 0.15;
             });
         });
     }
@@ -68,19 +106,20 @@ export class Scene1 implements GameScene {
             this.renderObserver = null;
         }
 
-        this.spot?.dispose();
-        this.spot = null;
-
-        for (const mesh of this.meshes) {
-            mesh.dispose(false, true);
+        for (const object of this.objects) {
+            object.dispose();
         }
-        this.meshes.length = 0;
+        this.objects = [];
         this.babylonScene = null;
     }
 
+    getMeshes(): AbstractMesh[] {
+        return this.objects.map((o) => o.mesh);
+    }
+
     setMeshesPickable(pickable: boolean): void {
-        for (const mesh of this.meshes) {
-            mesh.isPickable = pickable;
+        for (const object of this.objects) {
+            object.mesh.isPickable = pickable;
         }
     }
 }

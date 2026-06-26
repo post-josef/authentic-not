@@ -1,5 +1,6 @@
 import type { AbstractMesh } from "@babylonjs/core";
-import type { Scene } from "@babylonjs/core";
+import type { HighlightMode } from "../managers/highlight";
+import type { SceneContext } from "../managers/types";
 
 export interface WindowConfig {
     color: string;
@@ -15,19 +16,14 @@ export interface GalleryItem {
     z?: number;
     r: number;
     text: string;
-    showNextButton?: boolean;
-}
-
-export interface SceneLoadContext {
-    scene: Scene;
-    onItemClick: (index: number, item: GalleryItem) => void;
-    isInteractionBlocked: () => boolean;
+    nextSceneId?: string;
 }
 
 export interface GameScene {
     readonly id: string;
-    readonly meshes: AbstractMesh[];
-    load(ctx: SceneLoadContext): void;
+    readonly highlightMode: HighlightMode;
+    load(ctx: SceneContext): void;
     unload(): void;
+    getMeshes(): AbstractMesh[];
     setMeshesPickable(pickable: boolean): void;
 }
