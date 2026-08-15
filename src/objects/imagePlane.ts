@@ -1,9 +1,9 @@
 import {
+    Color3,
+    Material,
     MeshBuilder,
     StandardMaterial,
-    Color3,
     Texture,
-    Material,
     type Scene,
 } from "@babylonjs/core";
 import type { HighlightMode } from "../managers/highlight";
@@ -20,6 +20,8 @@ export interface ImagePlaneData {
     y?: number;
     z?: number;
     r: number;
+    width?: number;
+    height?: number;
 }
 
 export function createImagePlane(
@@ -27,47 +29,54 @@ export function createImagePlane(
     data: ImagePlaneData,
     highlightMode: HighlightMode,
 ): SceneObject {
-    const plane = MeshBuilder.CreatePlane(data.title, { width: PLANE_WIDTH, height: PLANE_HEIGHT }, scene);
+    const width = data.width ?? PLANE_WIDTH;
+    const height = data.height ?? PLANE_HEIGHT;
+    const plane = MeshBuilder.CreatePlane(data.title, { width, height }, scene);
     plane.position.set(data.x, data.y ?? 1.8, data.z ?? 5);
     plane.rotation.y = data.r;
+    plane.isPickable = false;
 
-    const texture = new Texture(data.img, scene);
+    const texture = new Texture(
+        data.img,
+        scene,
+        false,
+        true,
+        Texture.TRILINEAR_SAMPLINGMODE,
+        undefined,
+        (message) => console.warn(`[imagePlane] Failed to load ${data.img}: ${message}`),
+    );
     texture.hasAlpha = true;
-    if (highlightMode !== "border") {
-        texture.updateSamplingMode(Texture.TRILINEAR_SAMPLINGMODE);
-    }
 
-    const mat = new StandardMaterial(`${data.title}Mat`, scene);
-    mat.diffuseTexture = texture;
-    mat.emissiveColor = new Color3(1, 1, 1);
-    mat.backFaceCulling = false;
+    const material = new StandardMaterial(`${data.title}Mat`, scene);
+    material.diffuseTexture = texture;
+    material.emissiveColor = Color3.White();
+    material.backFaceCulling = false;
     if (highlightMode === "border") {
-        mat.opacityTexture = texture;
+        material.opacityTexture = texture;
     } else {
-        mat.useAlphaFromDiffuseTexture = true;
-        mat.transparencyMode =
+        material.useAlphaFromDiffuseTexture = true;
+        material.transparencyMode =
             highlightMode === "selectionOutline"
                 ? Material.MATERIAL_ALPHATESTANDBLEND
                 : Material.MATERIAL_ALPHATEST;
-        mat.alphaCutOff = 0.4;
+        material.alphaCutOff = 0.4;
     }
-    plane.material = mat;
+    plane.material = material;
 
     if (highlightMode === "border") {
         const border = MeshBuilder.CreatePlane(
             `${data.title}Border`,
-            { width: PLANE_WIDTH + BORDER_WIDTH * 2, height: PLANE_HEIGHT + BORDER_WIDTH * 2 },
+            { width: width + BORDER_WIDTH * 2, height: height + BORDER_WIDTH * 2 },
             scene,
         );
         border.parent = plane;
         border.position.z = -0.005;
         border.isVisible = false;
         border.isPickable = false;
-
-        const borderMat = new StandardMaterial(`${data.title}BorderMat`, scene);
-        borderMat.emissiveColor = Color3.White();
-        borderMat.disableLighting = true;
-        border.material = borderMat;
+        const borderMaterial = new StandardMaterial(`${data.title}BorderMat`, scene);
+        borderMaterial.emissiveColor = Color3.White();
+        borderMaterial.disableLighting = true;
+        border.material = borderMaterial;
         border.renderingGroupId = 0;
         plane.renderingGroupId = 1;
         plane.metadata = { border };
@@ -75,8 +84,6 @@ export function createImagePlane(
 
     return {
         mesh: plane,
-        dispose() {
-            plane.dispose(false, true);
-        },
+        dispose: () => plane.dispose(false, true),
     };
 }

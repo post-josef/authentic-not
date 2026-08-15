@@ -1,4 +1,5 @@
 import path from "path";
+import CopyWebpackPlugin from "copy-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import { fileURLToPath } from "url";
@@ -45,6 +46,18 @@ export default (_env, argv) => {
         },
 
         plugins: [
+            new CopyWebpackPlugin({
+                patterns: [
+                    {
+                        from: path.resolve(__dirname, "src/assets"),
+                        to: "assets",
+                        globOptions: {
+                            ignore: ["**/.DS_Store", "**/.gitkeep"],
+                        },
+                        noErrorOnMissing: true,
+                    },
+                ],
+            }),
             new MiniCssExtractPlugin({
                 filename: isDevelopment ? "[name].css" : "[name].[contenthash:8].css",
             }),

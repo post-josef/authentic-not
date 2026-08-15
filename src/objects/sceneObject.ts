@@ -1,5 +1,6 @@
 import type { AbstractMesh } from "@babylonjs/core";
-import type { SceneContext } from "../managers/types";
+import { highlightManager } from "../managers/highlight";
+import { modalManager } from "../managers/modal";
 import type { ModalConfig } from "../modal/types";
 
 export interface SceneObject {
@@ -7,19 +8,13 @@ export interface SceneObject {
     dispose(): void;
 }
 
-export interface InteractiveObjectOptions {
-    ctx: SceneContext;
-    onPick: () => void;
-}
-
-export function wireInteractive(object: SceneObject, options: InteractiveObjectOptions): void {
-    const { ctx, onPick } = options;
-    ctx.highlight.makeInteractive(object.mesh, {
-        isInteractionBlocked: ctx.isInteractionBlocked,
-        onPick,
+export function wireInteractive(object: SceneObject, onClick: () => void): void {
+    highlightManager.makeInteractive(object.mesh, {
+        isInteractionBlocked: () => modalManager.isOpen(),
+        onPick: onClick,
     });
 }
 
-export function openModal(ctx: SceneContext, config: ModalConfig): void {
-    ctx.modal.show(config);
+export function openModal(config: ModalConfig): void {
+    modalManager.open(config);
 }

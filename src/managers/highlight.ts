@@ -6,23 +6,23 @@ import {
     ActionManager,
     ExecuteCodeAction,
     Color3,
-    Scene,
-    AbstractMesh,
-    Mesh,
+    type Scene,
+    type AbstractMesh,
+    type Mesh,
 } from "@babylonjs/core";
 
 export type HighlightMode = "border" | "highlightLayer" | "glowLayer" | "selectionOutline";
 
 export class HighlightManager {
-    private readonly scene: Scene;
+    private scene: Scene | null = null;
     private mode: HighlightMode = "selectionOutline";
     private hovered: Mesh | null = null;
-
     private highlightLayer: HighlightLayer | null = null;
     private glowLayer: GlowLayer | null = null;
     private selectionLayer: SelectionOutlineLayer | null = null;
 
-    constructor(scene: Scene) {
+    init(scene: Scene): void {
+        this.dispose();
         this.scene = scene;
         this.initBackend();
     }
@@ -32,7 +32,7 @@ export class HighlightManager {
     }
 
     setMode(mode: HighlightMode): void {
-        if (this.mode === mode) return;
+        if (this.mode === mode && this.hasBackend()) return;
         this.clear();
         this.disposeBackend();
         this.mode = mode;
@@ -41,13 +41,10 @@ export class HighlightManager {
 
     setHovered(mesh: AbstractMesh | null): void {
         if (this.hovered === mesh) return;
-
         this.clearHovered();
-
         if (!mesh) return;
 
         this.hovered = mesh as Mesh;
-
         switch (this.mode) {
             case "border":
                 this.setBorderHighlight(mesh, true);
@@ -64,33 +61,20 @@ export class HighlightManager {
         }
     }
 
-    clear(): void {
-        this.clearHovered();
-    }
-
-    dispose(): void {
-        this.clear();
-        this.disposeBackend();
-    }
-
     makeInteractive(
         mesh: AbstractMesh,
-        options: {
-            isInteractionBlocked: () => boolean;
-            onPick: () => void;
-        },
+        options: { isInteractionBlocked: () => boolean; onPick: () => void },
     ): void {
-        mesh.actionManager = new ActionManager(this.scene);
+        const scene = this.requireScene();
+        mesh.isPickable = true;
+        mesh.actionManager = new ActionManager(scene);
         mesh.actionManager.registerAction(
             new ExecuteCodeAction(ActionManager.OnPointerOverTrigger, () => {
-                if (options.isInteractionBlocked()) return;
-                this.setHovered(mesh);
+                if (!options.isInteractionBlocked()) this.setHovered(mesh);
             }),
         );
         mesh.actionManager.registerAction(
-            new ExecuteCodeAction(ActionManager.OnPointerOutTrigger, () => {
-                this.setHovered(null);
-            }),
+            new ExecuteCodeAction(ActionManager.OnPointerOutTrigger, () => this.setHovered(null)),
         );
         mesh.actionManager.registerAction(
             new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
@@ -101,9 +85,28 @@ export class HighlightManager {
         );
     }
 
+    clear(): void {
+        this.clearHovered();
+    }
+
+    dispose(): void {
+        this.clear();
+        this.disposeBackend();
+        this.scene = null;
+    }
+
+    private requireScene(): Scene {
+        if (!this.scene) throw new Error("highlightManager.init(scene) must be called first");
+        return this.scene;
+    }
+
+    private hasBackend(): boolean {
+        if (this.mode === "border") return this.scene !== null;
+        return Boolean(this.highlightLayer || this.glowLayer || this.selectionLayer);
+    }
+
     private clearHovered(): void {
         if (!this.hovered) return;
-
         switch (this.mode) {
             case "border":
                 this.setBorderHighlight(this.hovered, false);
@@ -118,19 +121,19 @@ export class HighlightManager {
                 this.selectionLayer?.clearSelection();
                 break;
         }
-
         this.hovered = null;
     }
 
-    private setBorderHighlight(mesh: AbstractMesh, on: boolean): void {
+    private setBorderHighlight(mesh: AbstractMesh, visible: boolean): void {
         const border = mesh.metadata?.border as AbstractMesh | undefined;
-        if (border) border.isVisible = on;
+        if (border) border.isVisible = visible;
     }
 
     private initBackend(): void {
+        const scene = this.requireScene();
         switch (this.mode) {
             case "highlightLayer":
-                this.highlightLayer = new HighlightLayer("hoverHighlight", this.scene, {
+                this.highlightLayer = new HighlightLayer("hoverHighlight", scene, {
                     isStroke: true,
                     mainTextureRatio: 2,
                     blurHorizontalSize: 1,
@@ -140,15 +143,12 @@ export class HighlightManager {
                 this.highlightLayer.outerGlow = true;
                 break;
             case "glowLayer":
-                this.glowLayer = new GlowLayer("hoverGlow", this.scene, {
-                    // mainTextureRatio: 0.5,
-                    // blurKernelSize: 28,
-                });
+                this.glowLayer = new GlowLayer("hoverGlow", scene);
                 this.glowLayer.intensity = 0.25;
                 this.glowLayer.setExcludedByDefault(true);
                 break;
             case "selectionOutline":
-                this.selectionLayer = new SelectionOutlineLayer("hoverOutline", this.scene, {
+                this.selectionLayer = new SelectionOutlineLayer("hoverOutline", scene, {
                     mainTextureRatio: 1,
                     mainTextureSamples: 4,
                     useDepthOcclusion: true,
@@ -172,3 +172,5 @@ export class HighlightManager {
         this.selectionLayer = null;
     }
 }
+
+export const highlightManager = new HighlightManager();

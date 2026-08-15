@@ -1,6 +1,6 @@
 import type { AbstractMesh } from "@babylonjs/core";
 import type { HighlightMode } from "../managers/highlight";
-import type { SceneContext } from "../managers/types";
+import type { EmbedProvider } from "../modal/embeds";
 
 export interface WindowConfig {
     color: string;
@@ -16,14 +16,21 @@ export interface GalleryItem {
     z?: number;
     r: number;
     text: string;
+    embedSrc?: string;
+    embed?: {
+        provider: EmbedProvider;
+        videoId?: string;
+        src?: string;
+        autoplay?: boolean;
+        muted?: boolean;
+    };
     nextSceneId?: string;
 }
 
 export interface GameScene {
     readonly id: string;
     readonly highlightMode: HighlightMode;
-    load(ctx: SceneContext): void;
+    load(): void;
     unload(): void;
     getMeshes(): AbstractMesh[];
-    setMeshesPickable(pickable: boolean): void;
 }
