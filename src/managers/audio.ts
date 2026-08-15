@@ -1,4 +1,14 @@
-import { Sound, Vector3, type AbstractMesh, type Observer, type Scene } from "@babylonjs/core";
+import {
+    Engine,
+    Sound,
+    Vector3,
+    type AbstractMesh,
+    type Observer,
+    type Scene,
+} from "@babylonjs/core";
+// Registers AbstractEngine.AudioEngineFactory. Without it the engine never creates an
+// audio engine and every Sound.play() is a silent no-op.
+import "@babylonjs/core/Audio/audioEngine";
 import "@babylonjs/core/Audio/audioSceneComponent";
 import { cameraManager } from "./camera";
 
@@ -10,6 +20,13 @@ export interface SoundOptions {
     maxDistance?: number;
     playbackRate?: number;
     attachToMesh?: AbstractMesh;
+    /** Keeps the sound alive across scene switches so playback is not cut short. */
+    persist?: boolean;
+}
+
+export interface PlayOptions {
+    waitUntilEnded?: boolean;
+    timeoutMs?: number;
 }
 
 export interface AudioZone {
@@ -31,7 +48,8 @@ interface ZoneState {
 export class AudioManager {
     private scene: Scene | null = null;
     private sounds = new Map<string, Sound>();
-    private generatedUrls = new Set<string>();
+    private generatedUrls = new Map<string, string>();
+    private persistent = new Set<string>();
     private zones: ZoneState[] = [];
     private zoneObserver: Observer<Scene> | null = null;
     private unlocked = false;
@@ -44,9 +62,15 @@ export class AudioManager {
     unlock(): void {
         this.unlocked = true;
         if (this.scene) this.scene.audioEnabled = true;
+        const audioEngine = Engine.audioEngine;
+        if (audioEngine && !audioEngine.unlocked) audioEngine.unlock();
     }
 
     load(id: string, url: string, options: SoundOptions = {}): Sound {
+        // Reloading a persistent sound mid-playback would cut it off on scene re-entry.
+        const existing = this.sounds.get(id);
+        if (existing && options.persist && existing.isPlaying) return existing;
+
         this.removeSound(id);
         const sound = new Sound(id, url, this.requireScene(), undefined, {
             autoplay: false,
@@ -67,6 +91,7 @@ export class AudioManager {
             sound.loop = true;
         }
         this.sounds.set(id, sound);
+        if (options.persist) this.persistent.add(id);
         return sound;
     }
 
@@ -76,19 +101,36 @@ export class AudioManager {
         options: SoundOptions & { frequency?: number; durationMs?: number } = {},
     ): Sound {
         const url = this.createToneUrl(options.frequency ?? 520, options.durationMs ?? 90);
-        this.generatedUrls.add(url);
-        return this.load(id, url, options);
+        const sound = this.load(id, url, options);
+        this.generatedUrls.set(id, url);
+        return sound;
     }
 
-    play(id: string): void {
+    play(id: string, options: PlayOptions = {}): Promise<void> {
         const sound = this.sounds.get(id);
         if (!sound) {
             console.warn(`[audioManager] Unknown sound "${id}"`);
-            return;
+            return Promise.resolve();
         }
         this.unlock();
         if (sound.isPlaying) sound.stop();
-        sound.play();
+        if (!options.waitUntilEnded) {
+            sound.play();
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
+            let finished = false;
+            const finish = () => {
+                if (finished) return;
+                finished = true;
+                window.clearTimeout(timeout);
+                resolve();
+            };
+            const timeout = window.setTimeout(finish, options.timeoutMs ?? 10_000);
+            sound.onEndedObservable.addOnce(finish);
+            sound.play();
+        });
     }
 
     pause(id: string): void {
@@ -112,27 +154,17 @@ export class AudioManager {
         this.ensureZoneObserver();
     }
 
+    /** Scene-switch cleanup. Sounds loaded with `persist` keep playing. */
     clear(): void {
-        this.sounds.forEach((sound) => {
-            try {
-                sound.stop();
-            } catch (error) {
-                console.warn("[audioManager] Failed to stop a sound during cleanup", error);
-            }
-            try {
-                sound.dispose();
-            } catch (error) {
-                console.warn("[audioManager] Failed to dispose a sound during cleanup", error);
-            }
-        });
-        this.sounds.clear();
-        this.generatedUrls.forEach((url) => URL.revokeObjectURL(url));
-        this.generatedUrls.clear();
+        [...this.sounds.keys()]
+            .filter((id) => !this.persistent.has(id))
+            .forEach((id) => this.removeSound(id));
         this.zones = [];
         this.removeZoneObserver();
     }
 
     dispose(): void {
+        this.persistent.clear();
         this.clear();
         this.scene = null;
         this.unlocked = false;
@@ -145,8 +177,18 @@ export class AudioManager {
 
     private removeSound(id: string): void {
         const previous = this.sounds.get(id);
-        previous?.stop();
-        previous?.dispose();
+        if (previous) {
+            try {
+                previous.stop();
+                previous.dispose();
+            } catch (error) {
+                console.warn(`[audioManager] Failed to dispose sound "${id}"`, error);
+            }
+        }
+        const generatedUrl = this.generatedUrls.get(id);
+        if (generatedUrl) URL.revokeObjectURL(generatedUrl);
+        this.generatedUrls.delete(id);
+        this.persistent.delete(id);
         this.sounds.delete(id);
     }
 

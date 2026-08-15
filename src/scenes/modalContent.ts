@@ -3,10 +3,15 @@ import { sceneManager } from "../managers/scene";
 import type { ModalButton, ModalConfig, ModalContentItem } from "../modal/types";
 import type { GalleryItem, WindowConfig } from "./types";
 
+interface GalleryModalOptions {
+    onNext?: () => void;
+}
+
 export function createGalleryModal(
     item: GalleryItem,
     windowConfig: WindowConfig,
     sceneModalClass?: string,
+    options: GalleryModalOptions = {},
 ): ModalConfig {
     const buttons: ModalButton[] = [
         {
@@ -21,7 +26,10 @@ export function createGalleryModal(
         buttons.push({
             label: "Next",
             className: "modal-btn modal-btn-next",
-            onClick: () => modalManager.close(() => sceneManager.switchTo(nextSceneId)),
+            onClick: () => {
+                options.onNext?.();
+                modalManager.close(() => sceneManager.switchTo(nextSceneId));
+            },
         });
     }
 

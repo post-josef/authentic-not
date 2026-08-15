@@ -1,5 +1,6 @@
 import type { AbstractMesh } from "@babylonjs/core";
 import { animationManager } from "../managers/animation";
+import { audioManager } from "../managers/audio";
 import { fogManager } from "../managers/fog";
 import { sceneManager } from "../managers/scene";
 import { createImagePlane } from "../objects/imagePlane";
@@ -16,6 +17,9 @@ const SCENE2_WINDOW_CONFIGS: WindowConfig[] = [
 ];
 
 const MODAL_CLASS = "modal-scene2";
+const KICK_SOUND = "scene2-kick";
+const COWBELL_SOUND = "scene2-cowbell";
+const MICROWAVE_SOUND = "scene2-microwave";
 const GALLERY_ITEMS: GalleryItem[] = [
     {
         title: "Drift One",
@@ -72,6 +76,13 @@ export class Scene2 implements GameScene {
 
     load(): void {
         const scene = sceneManager.getBabylonScene();
+        audioManager.load(KICK_SOUND, "assets/audio/kick.wav", { volume: 0.55 });
+        audioManager.load(COWBELL_SOUND, "assets/audio/cowbell.wav", { volume: 0.45 });
+        audioManager.load(MICROWAVE_SOUND, "assets/audio/microwave.wav", {
+            volume: 0.55,
+            persist: true,
+        });
+
         fogManager.set({
             mode: "exp2",
             color: [0.16, 0.19, 0.26],
@@ -90,9 +101,14 @@ export class Scene2 implements GameScene {
 
         this.objects = GALLERY_ITEMS.map((item, index) => {
             const object = createImagePlane(scene, item, this.highlightMode);
-            wireInteractive(object, () =>
-                openModal(createGalleryModal(item, SCENE2_WINDOW_CONFIGS[index], MODAL_CLASS)),
-            );
+            wireInteractive(object, () => {
+                audioManager.play(index % 2 === 0 ? KICK_SOUND : COWBELL_SOUND);
+                openModal(
+                    createGalleryModal(item, SCENE2_WINDOW_CONFIGS[index], MODAL_CLASS, {
+                        onNext: () => audioManager.play(MICROWAVE_SOUND),
+                    }),
+                );
+            });
             animationManager.addMany(`scene2-${index}`, object.mesh, [
                 {
                     preset: "drift",

@@ -20,7 +20,9 @@ export class App {
         const canvas = document.getElementById("canvas");
         if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Canvas element not found");
 
-        this.engine = new Engine(canvas, true, { stencil: true });
+        // Babylon 9 has no default for `audioEngine`; without it Engine.audioEngine stays null
+        // and every Sound.play() is a silent no-op.
+        this.engine = new Engine(canvas, true, { stencil: true, audioEngine: true });
         this.scene = new Scene(this.engine);
         this.scene.clearColor = new Color4(0.05, 0.05, 0.08, 1);
 

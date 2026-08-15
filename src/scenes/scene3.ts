@@ -1,6 +1,5 @@
 import type { AbstractMesh } from "@babylonjs/core";
 import { animationManager } from "../managers/animation";
-import { audioManager } from "../managers/audio";
 import { lightManager } from "../managers/light";
 import { sceneManager } from "../managers/scene";
 import { subtitleManager } from "../managers/subtitle";
@@ -77,17 +76,11 @@ export class Scene3 implements GameScene {
 
     load(): void {
         const scene = sceneManager.getBabylonScene();
-        audioManager.loadTone("scene3-click", {
-            frequency: 580,
-            durationMs: 80,
-            volume: 0.25,
-        });
 
         this.objects = GALLERY_ITEMS.map((item, index) => {
             const baseAngle = (index / PANEL_COUNT) * Math.PI * 2 - Math.PI / 2;
             const object = createImagePlane(scene, item, this.highlightMode);
             wireInteractive(object, () => {
-                audioManager.play("scene3-click");
                 subtitleManager.show(item.title, 1600);
                 openModal(createGalleryModal(item, SCENE3_WINDOW_CONFIGS[index], MODAL_CLASS));
             });
