@@ -71,7 +71,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
 
 export class Scene3 implements GameScene {
     readonly id = "scene3";
-    readonly highlightMode = "selectionOutline" as const;
+    readonly highlightMode: GameScene["highlightMode"] = "selectionOutline";
     private objects: SceneObject[] = [];
 
     load(): void {
@@ -80,10 +80,17 @@ export class Scene3 implements GameScene {
         this.objects = GALLERY_ITEMS.map((item, index) => {
             const baseAngle = (index / PANEL_COUNT) * Math.PI * 2 - Math.PI / 2;
             const object = createImagePlane(scene, item, this.highlightMode);
-            wireInteractive(object, () => {
-                subtitleManager.show(item.title, 1600);
-                openModal(createGalleryModal(item, SCENE3_WINDOW_CONFIGS[index], MODAL_CLASS));
-            });
+            wireInteractive(
+                object,
+                () => {
+                    subtitleManager.hide();
+                    openModal(createGalleryModal(item, SCENE3_WINDOW_CONFIGS[index], MODAL_CLASS));
+                },
+                {
+                    onHover: () => subtitleManager.show(item.title),
+                    onHoverEnd: () => subtitleManager.hide(),
+                },
+            );
             animationManager.add(`scene3-${index}`, object.mesh, {
                 preset: "orbit",
                 center: RING_CENTER,

@@ -71,7 +71,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
 
 export class Scene2 implements GameScene {
     readonly id = "scene2";
-    readonly highlightMode = "highlightLayer" as const;
+    readonly highlightMode: GameScene["highlightMode"] = "highlightLayer";
     private objects: SceneObject[] = [];
 
     load(): void {

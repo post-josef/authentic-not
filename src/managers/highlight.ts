@@ -6,9 +6,9 @@ import {
     ActionManager,
     ExecuteCodeAction,
     Color3,
+    AbstractMesh,
+    Mesh,
     type Scene,
-    type AbstractMesh,
-    type Mesh,
 } from "@babylonjs/core";
 
 export type HighlightMode = "border" | "highlightLayer" | "glowLayer" | "selectionOutline";
@@ -43,8 +43,11 @@ export class HighlightManager {
         if (this.hovered === mesh) return;
         this.clearHovered();
         if (!mesh) return;
+        if (!(mesh instanceof Mesh)) {
+            throw new Error("HighlightManager only supports Babylon Mesh instances");
+        }
 
-        this.hovered = mesh as Mesh;
+        this.hovered = mesh;
         switch (this.mode) {
             case "border":
                 this.setBorderHighlight(mesh, true);
@@ -63,18 +66,28 @@ export class HighlightManager {
 
     makeInteractive(
         mesh: AbstractMesh,
-        options: { isInteractionBlocked: () => boolean; onPick: () => void },
+        options: {
+            isInteractionBlocked: () => boolean;
+            onPick: () => void;
+            onPointerOver?: () => void;
+            onPointerOut?: () => void;
+        },
     ): void {
         const scene = this.requireScene();
         mesh.isPickable = true;
         mesh.actionManager = new ActionManager(scene);
         mesh.actionManager.registerAction(
             new ExecuteCodeAction(ActionManager.OnPointerOverTrigger, () => {
-                if (!options.isInteractionBlocked()) this.setHovered(mesh);
+                if (options.isInteractionBlocked()) return;
+                this.setHovered(mesh);
+                options.onPointerOver?.();
             }),
         );
         mesh.actionManager.registerAction(
-            new ExecuteCodeAction(ActionManager.OnPointerOutTrigger, () => this.setHovered(null)),
+            new ExecuteCodeAction(ActionManager.OnPointerOutTrigger, () => {
+                this.setHovered(null);
+                options.onPointerOut?.();
+            }),
         );
         mesh.actionManager.registerAction(
             new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
@@ -125,8 +138,8 @@ export class HighlightManager {
     }
 
     private setBorderHighlight(mesh: AbstractMesh, visible: boolean): void {
-        const border = mesh.metadata?.border as AbstractMesh | undefined;
-        if (border) border.isVisible = visible;
+        const border: unknown = mesh.metadata?.border;
+        if (border instanceof AbstractMesh) border.isVisible = visible;
     }
 
     private initBackend(): void {

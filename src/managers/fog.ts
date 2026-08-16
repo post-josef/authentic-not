@@ -38,7 +38,7 @@ const MODES = {
     linear: Scene.FOGMODE_LINEAR,
     exp: Scene.FOGMODE_EXP,
     exp2: Scene.FOGMODE_EXP2,
-} as const;
+};
 
 /** Babylon's built-in fog is global and camera-distance based, not position-local. */
 export class FogManager {
@@ -116,7 +116,8 @@ export class FogManager {
         this.mistTexture = this.createPuffTexture(scene);
         const system = new ParticleSystem("sceneMist", count, scene);
         system.particleTexture = this.mistTexture;
-        system.emitter = new Vector3(...center);
+        const emitter = new Vector3(...center);
+        system.emitter = emitter;
         system.minEmitBox = new Vector3(-extents[0], -extents[1], -extents[2]);
         system.maxEmitBox = new Vector3(...extents);
         system.blendMode = ParticleSystem.BLENDMODE_STANDARD;
@@ -151,7 +152,6 @@ export class FogManager {
         this.mist = system;
 
         if (config.followCamera) {
-            const emitter = system.emitter as Vector3;
             this.mistFollow = scene.onBeforeRenderObservable.add(() => {
                 const position = cameraManager.getCamera().position;
                 emitter.set(position.x, center[1], position.z);

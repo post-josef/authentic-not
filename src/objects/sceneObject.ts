@@ -8,10 +8,21 @@ export interface SceneObject {
     dispose(): void;
 }
 
-export function wireInteractive(object: SceneObject, onClick: () => void): void {
+interface InteractiveOptions {
+    onHover?: () => void;
+    onHoverEnd?: () => void;
+}
+
+export function wireInteractive(
+    object: SceneObject,
+    onClick: () => void,
+    options: InteractiveOptions = {},
+): void {
     highlightManager.makeInteractive(object.mesh, {
         isInteractionBlocked: () => modalManager.isOpen(),
         onPick: onClick,
+        onPointerOver: options.onHover,
+        onPointerOut: options.onHoverEnd,
     });
 }
 

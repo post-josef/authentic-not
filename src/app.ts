@@ -1,6 +1,7 @@
 import { Color4, Engine, Scene } from "@babylonjs/core";
 import { animationManager } from "./managers/animation";
 import { audioManager } from "./managers/audio";
+import { backgroundManager } from "./managers/background";
 import { cameraManager } from "./managers/camera";
 import { fogManager } from "./managers/fog";
 import { highlightManager } from "./managers/highlight";
@@ -28,6 +29,7 @@ export class App {
 
         highlightManager.init(this.scene);
         lightManager.init(this.scene);
+        backgroundManager.init(this.scene);
         animationManager.init(this.scene);
         fogManager.init(this.scene);
         subtitleManager.init();
@@ -66,6 +68,7 @@ export class App {
         subtitleManager.dispose();
         fogManager.dispose();
         animationManager.dispose();
+        backgroundManager.dispose();
         lightManager.dispose();
         highlightManager.dispose();
         cameraManager.dispose();

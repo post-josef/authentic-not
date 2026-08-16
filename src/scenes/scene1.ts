@@ -62,7 +62,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
 
 export class Scene1 implements GameScene {
     readonly id = "scene1";
-    readonly highlightMode = "border" as const;
+    readonly highlightMode: GameScene["highlightMode"] = "border";
     private objects: SceneObject[] = [];
 
     load(): void {

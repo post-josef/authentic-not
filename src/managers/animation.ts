@@ -70,6 +70,10 @@ function smoothstep(value: number): number {
     return clamped * clamped * (3 - 2 * clamped);
 }
 
+function copyVec3(value: Vec3): Vec3 {
+    return [value[0], value[1], value[2]];
+}
+
 export class AnimationManager {
     private scene: Scene | null = null;
     private tracks = new Map<string, Track>();
@@ -190,9 +194,9 @@ export class AnimationManager {
     }
 
     private updateTrack(track: Track, time: number): void {
-        const position = [...track.basePosition] as Vec3;
-        const rotation = [...track.baseRotation] as Vec3;
-        const scaling = [...track.baseScaling] as Vec3;
+        const position = copyVec3(track.basePosition);
+        const rotation = copyVec3(track.baseRotation);
+        const scaling = copyVec3(track.baseScaling);
 
         for (const config of track.proceduralConfigs) {
             const phase = "phase" in config ? (config.phase ?? 0) : 0;

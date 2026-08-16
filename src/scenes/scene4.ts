@@ -1,5 +1,6 @@
 import type { AbstractMesh } from "@babylonjs/core";
 import { animationManager } from "../managers/animation";
+import { backgroundManager } from "../managers/background";
 import { lightManager } from "../managers/light";
 import { sceneManager } from "../managers/scene";
 import { createImagePlane } from "../objects/imagePlane";
@@ -20,6 +21,7 @@ const LOOP_WIDTH = 4.2;
 const LOOP_CENTER_Z = 5.5;
 const LOOP_SPEED = 0.14;
 const PANEL_COUNT = 5;
+const ENVIRONMENT_URL = "https://assets.babylonjs.com/environments/environmentSpecular.env";
 const GALLERY_ITEMS: GalleryItem[] = [
     {
         title: "Loop One",
@@ -71,11 +73,18 @@ const GALLERY_ITEMS: GalleryItem[] = [
 
 export class Scene4 implements GameScene {
     readonly id = "scene4";
-    readonly highlightMode = "glowLayer" as const;
+    readonly highlightMode: GameScene["highlightMode"] = "glowLayer";
     private objects: SceneObject[] = [];
 
     load(): void {
         const scene = sceneManager.getBabylonScene();
+        backgroundManager.setEnvironment(ENVIRONMENT_URL, {
+            intensity: 0.7,
+            rotation: Math.PI * 0.15,
+            size: 500,
+            blur: 0.15,
+        });
+
         this.objects = GALLERY_ITEMS.map((item, index) => {
             const object = createImagePlane(scene, item, this.highlightMode);
             wireInteractive(object, () =>

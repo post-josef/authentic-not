@@ -111,14 +111,13 @@ export class ModalManager {
             this.closing = false;
             this.runCloseCallbacks();
         };
-        this.transitionHandler = (event) => {
+        const transitionHandler = (event: TransitionEvent) => {
             if (event.target !== event.currentTarget || event.propertyName !== "opacity") return;
             remaining -= 1;
             if (remaining <= 0) finish();
         };
-        elements.forEach((element) =>
-            element.addEventListener("transitionend", this.transitionHandler!),
-        );
+        this.transitionHandler = transitionHandler;
+        elements.forEach((element) => element.addEventListener("transitionend", transitionHandler));
         this.closeTimer = window.setTimeout(finish, 250);
     }
 

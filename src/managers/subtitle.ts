@@ -19,7 +19,7 @@ export class SubtitleManager {
         this.line = line;
     }
 
-    show(text: string, durationMs: number, options: SubtitleOptions = {}): void {
+    show(text: string, durationMs?: number, options: SubtitleOptions = {}): void {
         this.clear();
         const reveal = () => {
             if (!this.root || !this.line) return;
@@ -33,7 +33,9 @@ export class SubtitleManager {
                 );
             }
             this.root.classList.add("is-visible");
-            this.hideTimer = setTimeout(() => this.hide(), durationMs);
+            if (durationMs !== undefined && durationMs > 0) {
+                this.hideTimer = setTimeout(() => this.hide(), durationMs);
+            }
         };
 
         if (options.delayMs && options.delayMs > 0) {

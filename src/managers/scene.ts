@@ -2,6 +2,7 @@ import type { AbstractMesh, Scene } from "@babylonjs/core";
 import type { GameScene } from "../scenes/types";
 import { animationManager } from "./animation";
 import { audioManager } from "./audio";
+import { backgroundManager } from "./background";
 import { cameraManager } from "./camera";
 import { fogManager } from "./fog";
 import { highlightManager } from "./highlight";
@@ -77,6 +78,7 @@ export class SceneManager {
             ["subtitles", () => subtitleManager.clear()],
             ["audio", () => audioManager.clear()],
             ["animations", () => animationManager.clear()],
+            ["background", () => backgroundManager.clear()],
             ["fog", () => fogManager.clear()],
             ["lights", () => lightManager.clear()],
             ["camera", () => cameraManager.resetSceneConfig()],
