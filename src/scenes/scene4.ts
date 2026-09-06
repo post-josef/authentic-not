@@ -1,12 +1,12 @@
 import type { AbstractMesh } from "@babylonjs/core";
+import "./scene4.css";
 import { animationManager } from "../managers/animation";
 import { backgroundManager } from "../managers/background";
 import { lightManager } from "../managers/light";
-import { sceneManager } from "../managers/scene";
-import { createImagePlane } from "../objects/imagePlane";
-import { openModal, wireInteractive, type SceneObject } from "../objects/sceneObject";
+import { modalManager } from "../managers/modal";
+import { objectManager } from "../managers/object";
+import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../types";
 import { createGalleryModal } from "./modalContent";
-import type { GalleryItem, GameScene, WindowConfig } from "./types";
 
 const SCENE4_WINDOW_CONFIGS: WindowConfig[] = [
     { color: "#4a302099", left: "-280px", top: "90px" },
@@ -24,8 +24,9 @@ const PANEL_COUNT = 5;
 const ENVIRONMENT_URL = "https://assets.babylonjs.com/environments/environmentSpecular.env";
 const GALLERY_ITEMS: GalleryItem[] = [
     {
-        title: "Loop One",
-        img: "assets/images/i3.png",
+        id: "1",
+        subtitle: "Loop One",
+        source: "assets/images/i3.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
@@ -33,8 +34,9 @@ const GALLERY_ITEMS: GalleryItem[] = [
         text: "The path bends into a figure-eight — panels trace an endless crossing.",
     },
     {
-        title: "Loop Two",
-        img: "assets/images/i2.png",
+        id: "2",
+        subtitle: "Loop Two",
+        source: "assets/images/i2.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
@@ -42,8 +44,9 @@ const GALLERY_ITEMS: GalleryItem[] = [
         text: "At the crossover, heights diverge — one rises as another dips below.",
     },
     {
-        title: "Loop Three",
-        img: "assets/images/i5.png",
+        id: "3",
+        subtitle: "Loop Three",
+        source: "assets/images/i5.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
@@ -51,8 +54,9 @@ const GALLERY_ITEMS: GalleryItem[] = [
         text: "A warm ember light hangs at the knot, catching every passing frame.",
     },
     {
-        title: "Loop Four",
-        img: "assets/images/i1.png",
+        id: "4",
+        subtitle: "Loop Four",
+        source: "assets/images/i1.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
@@ -60,8 +64,9 @@ const GALLERY_ITEMS: GalleryItem[] = [
         text: "Hover brings a soft bloom — the glow layer answers like a held breath.",
     },
     {
-        title: "Loop Five",
-        img: "assets/images/i4.png",
+        id: "5",
+        subtitle: "Loop Five",
+        source: "assets/images/i4.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
@@ -76,8 +81,7 @@ export class Scene4 implements GameScene {
     readonly highlightMode: GameScene["highlightMode"] = "glowLayer";
     private objects: SceneObject[] = [];
 
-    load(): void {
-        const scene = sceneManager.getBabylonScene();
+    async load(): Promise<void> {
         backgroundManager.setEnvironment(ENVIRONMENT_URL, {
             intensity: 0.7,
             rotation: Math.PI * 0.15,
@@ -85,22 +89,25 @@ export class Scene4 implements GameScene {
             blur: 0.15,
         });
 
-        this.objects = GALLERY_ITEMS.map((item, index) => {
-            const object = createImagePlane(scene, item, this.highlightMode);
-            wireInteractive(object, () =>
-                openModal(createGalleryModal(item, SCENE4_WINDOW_CONFIGS[index], MODAL_CLASS)),
-            );
-            animationManager.add(`scene4-${index}`, object.mesh, {
-                preset: "figureEight",
-                center: [0, 2.2, LOOP_CENTER_Z],
-                width: LOOP_WIDTH,
-                height: 0.65,
-                speed: LOOP_SPEED,
-                phase: (index / PANEL_COUNT) * Math.PI * 2,
-                tiltPhase: index,
-            });
-            return object;
-        });
+        this.objects = await Promise.all(
+            GALLERY_ITEMS.map(async (item, index) => {
+                const object = await objectManager.create(item, this.highlightMode);
+                objectManager.interactive(object, {
+                    onClick: () =>
+                        modalManager.open(createGalleryModal(item, SCENE4_WINDOW_CONFIGS[index], MODAL_CLASS)),
+                });
+                animationManager.add(`scene4-${index}`, object.mesh, {
+                    preset: "figureEight",
+                    center: [0, 2.2, LOOP_CENTER_Z],
+                    width: LOOP_WIDTH,
+                    height: 0.65,
+                    speed: LOOP_SPEED,
+                    phase: (index / PANEL_COUNT) * Math.PI * 2,
+                    tiltPhase: index,
+                });
+                return object;
+            }),
+        );
 
         lightManager.createPoint("scene4Ember", [0, 2.8, LOOP_CENTER_Z], {
             diffuse: [1, 0.55, 0.25],

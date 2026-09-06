@@ -18,10 +18,12 @@ fog, animations, and interaction callbacks. Scenes import manager singletons
 directly and can combine them freely:
 
 ```ts
-wireInteractive(object, () => {
-    audioManager.play("click");
-    subtitleManager.show("Selected artwork", 1600);
-    modalManager.open(artworkModal);
+objectManager.interactive(object, {
+    onClick: () => {
+        audioManager.play("click");
+        subtitleManager.show("Selected artwork", 1600);
+        modalManager.open(artworkModal);
+    },
 });
 ```
 

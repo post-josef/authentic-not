@@ -1,0 +1,12 @@
+.modal-panel.modal-scene3 {
+    border-radius: 16px;
+    border-color: #8ab4f8;
+}
+
+.modal-scene3 .modal-title {
+    font-style: italic;
+}
+
+.modal-scene3 .modal-btn-next {
+    background-image: linear-gradient(to right, #2a4a72 0%, #3a5a8a 51%, #2a4a72 100%);
+}

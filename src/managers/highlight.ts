@@ -10,13 +10,15 @@ import {
     Mesh,
     type Scene,
 } from "@babylonjs/core";
+import type { HighlightMode } from "../types";
 
-export type HighlightMode = "border" | "highlightLayer" | "glowLayer" | "selectionOutline";
+export type { HighlightMode } from "../types";
 
 export class HighlightManager {
     private scene: Scene | null = null;
     private mode: HighlightMode = "selectionOutline";
     private hovered: Mesh | null = null;
+    private hoveredMode: HighlightMode | null = null;
     private highlightLayer: HighlightLayer | null = null;
     private glowLayer: GlowLayer | null = null;
     private selectionLayer: SelectionOutlineLayer | null = null;
@@ -24,7 +26,7 @@ export class HighlightManager {
     init(scene: Scene): void {
         this.dispose();
         this.scene = scene;
-        this.initBackend();
+        this.ensureBackend(this.mode);
     }
 
     getMode(): HighlightMode {
@@ -36,7 +38,7 @@ export class HighlightManager {
         this.clear();
         this.disposeBackend();
         this.mode = mode;
-        this.initBackend();
+        this.ensureBackend(this.mode);
     }
 
     setHovered(mesh: AbstractMesh | null): void {
@@ -47,8 +49,11 @@ export class HighlightManager {
             throw new Error("HighlightManager only supports Babylon Mesh instances");
         }
 
+        const mode = mesh.metadata?.highlightMode ?? this.mode;
+        this.ensureBackend(mode);
         this.hovered = mesh;
-        switch (this.mode) {
+        this.hoveredMode = mode;
+        switch (mode) {
             case "border":
                 this.setBorderHighlight(mesh, true);
                 break;
@@ -120,7 +125,7 @@ export class HighlightManager {
 
     private clearHovered(): void {
         if (!this.hovered) return;
-        switch (this.mode) {
+        switch (this.hoveredMode ?? this.mode) {
             case "border":
                 this.setBorderHighlight(this.hovered, false);
                 break;
@@ -135,6 +140,7 @@ export class HighlightManager {
                 break;
         }
         this.hovered = null;
+        this.hoveredMode = null;
     }
 
     private setBorderHighlight(mesh: AbstractMesh, visible: boolean): void {
@@ -142,10 +148,11 @@ export class HighlightManager {
         if (border instanceof AbstractMesh) border.isVisible = visible;
     }
 
-    private initBackend(): void {
+    private ensureBackend(mode: HighlightMode): void {
         const scene = this.requireScene();
-        switch (this.mode) {
+        switch (mode) {
             case "highlightLayer":
+                if (this.highlightLayer) return;
                 this.highlightLayer = new HighlightLayer("hoverHighlight", scene, {
                     isStroke: true,
                     mainTextureRatio: 2,
@@ -156,11 +163,13 @@ export class HighlightManager {
                 this.highlightLayer.outerGlow = true;
                 break;
             case "glowLayer":
+                if (this.glowLayer) return;
                 this.glowLayer = new GlowLayer("hoverGlow", scene);
                 this.glowLayer.intensity = 0.25;
                 this.glowLayer.setExcludedByDefault(true);
                 break;
             case "selectionOutline":
+                if (this.selectionLayer) return;
                 this.selectionLayer = new SelectionOutlineLayer("hoverOutline", scene, {
                     mainTextureRatio: 1,
                     mainTextureSamples: 4,

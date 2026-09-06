@@ -1,12 +1,12 @@
 import type { AbstractMesh } from "@babylonjs/core";
+import "./scene2.css";
 import { animationManager } from "../managers/animation";
 import { audioManager } from "../managers/audio";
 import { fogManager } from "../managers/fog";
-import { sceneManager } from "../managers/scene";
-import { createImagePlane } from "../objects/imagePlane";
-import { openModal, wireInteractive, type SceneObject } from "../objects/sceneObject";
+import { modalManager } from "../managers/modal";
+import { objectManager } from "../managers/object";
+import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../types";
 import { createGalleryModal } from "./modalContent";
-import type { GalleryItem, GameScene, WindowConfig } from "./types";
 
 const SCENE2_WINDOW_CONFIGS: WindowConfig[] = [
     { color: "#21432b99", left: "-320px", top: "140px" },
@@ -22,8 +22,9 @@ const COWBELL_SOUND = "scene2-cowbell";
 const MICROWAVE_SOUND = "scene2-microwave";
 const GALLERY_ITEMS: GalleryItem[] = [
     {
-        title: "Drift One",
-        img: "assets/images/i2.png",
+        id: "1",
+        subtitle: "Drift One",
+        source: "assets/images/i2.png",
         x: -4.5,
         y: 2.4,
         z: 3,
@@ -31,8 +32,9 @@ const GALLERY_ITEMS: GalleryItem[] = [
         text: "Orbiting gallery — each panel drifts on its own path.",
     },
     {
-        title: "Drift Two",
-        img: "assets/images/i4.png",
+        id: "2",
+        subtitle: "Drift Two",
+        source: "assets/images/i4.png",
         x: -1.8,
         y: 1.2,
         z: 6,
@@ -40,8 +42,9 @@ const GALLERY_ITEMS: GalleryItem[] = [
         text: "Depth layers create a staggered, cinematic feel.",
     },
     {
-        title: "Drift Three",
-        img: "assets/images/i1.png",
+        id: "3",
+        subtitle: "Drift Three",
+        source: "assets/images/i1.png",
         x: 0,
         y: 2.8,
         z: 4.5,
@@ -49,8 +52,9 @@ const GALLERY_ITEMS: GalleryItem[] = [
         text: "Center piece rises and falls with a slow pulse.",
     },
     {
-        title: "Drift Four",
-        img: "assets/images/i5.png",
+        id: "4",
+        subtitle: "Drift Four",
+        source: "assets/images/i5.png",
         x: 2.2,
         y: 1.5,
         z: 5.5,
@@ -58,8 +62,9 @@ const GALLERY_ITEMS: GalleryItem[] = [
         text: "Gentle yaw oscillation adds life without distraction.",
     },
     {
-        title: "Drift Five",
-        img: "assets/images/i3.png",
+        id: "5",
+        subtitle: "Drift Five",
+        source: "assets/images/i3.png",
         x: 4.8,
         y: 2.1,
         z: 3.5,
@@ -74,8 +79,7 @@ export class Scene2 implements GameScene {
     readonly highlightMode: GameScene["highlightMode"] = "highlightLayer";
     private objects: SceneObject[] = [];
 
-    load(): void {
-        const scene = sceneManager.getBabylonScene();
+    async load(): Promise<void> {
         audioManager.load(KICK_SOUND, "assets/audio/kick.wav", { volume: 0.55 });
         audioManager.load(COWBELL_SOUND, "assets/audio/cowbell.wav", { volume: 0.45 });
         audioManager.load(MICROWAVE_SOUND, "assets/audio/microwave.wav", {
@@ -99,35 +103,39 @@ export class Scene2 implements GameScene {
             followCamera: true,
         });
 
-        this.objects = GALLERY_ITEMS.map((item, index) => {
-            const object = createImagePlane(scene, item, this.highlightMode);
-            wireInteractive(object, () => {
-                audioManager.play(index % 2 === 0 ? KICK_SOUND : COWBELL_SOUND);
-                openModal(
-                    createGalleryModal(item, SCENE2_WINDOW_CONFIGS[index], MODAL_CLASS, {
-                        onNext: () => audioManager.play(MICROWAVE_SOUND),
-                    }),
-                );
-            });
-            animationManager.addMany(`scene2-${index}`, object.mesh, [
-                {
-                    preset: "drift",
-                    amplitude: [0.25, 0.35, 0.2],
-                    speed: [0.7, 1.1, 0.5],
-                    yawAmplitude: 0.12,
-                    yawSpeed: 0.9,
-                    phase: index * 1.2,
-                },
-                {
-                    preset: "pulse",
-                    min: 0.97,
-                    max: 1.03,
-                    speed: 2,
-                    phase: index * 1.2,
-                },
-            ]);
-            return object;
-        });
+        this.objects = await Promise.all(
+            GALLERY_ITEMS.map(async (item, index) => {
+                const object = await objectManager.create(item, this.highlightMode);
+                objectManager.interactive(object, {
+                    onClick: () => {
+                        audioManager.play(index % 2 === 0 ? KICK_SOUND : COWBELL_SOUND);
+                        modalManager.open(
+                            createGalleryModal(item, SCENE2_WINDOW_CONFIGS[index], MODAL_CLASS, {
+                                onNext: () => audioManager.play(MICROWAVE_SOUND),
+                            }),
+                        );
+                    },
+                });
+                animationManager.addMany(`scene2-${index}`, object.mesh, [
+                    {
+                        preset: "drift",
+                        amplitude: [0.25, 0.35, 0.2],
+                        speed: [0.7, 1.1, 0.5],
+                        yawAmplitude: 0.12,
+                        yawSpeed: 0.9,
+                        phase: index * 1.2,
+                    },
+                    {
+                        preset: "pulse",
+                        min: 0.97,
+                        max: 1.03,
+                        speed: 2,
+                        phase: index * 1.2,
+                    },
+                ]);
+                return object;
+            }),
+        );
     }
 
     unload(): void {

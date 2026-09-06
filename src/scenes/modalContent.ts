@@ -1,17 +1,14 @@
+import { isImageSource } from "../managers/object";
+import type { ModalButton, ModalConfig, ModalContentItem } from "../managers/modal";
 import { modalManager } from "../managers/modal";
 import { sceneManager } from "../managers/scene";
-import type { ModalButton, ModalConfig, ModalContentItem } from "../modal/types";
-import type { GalleryItem, WindowConfig } from "./types";
-
-interface GalleryModalOptions {
-    onNext?: () => void;
-}
+import type { GalleryItem, WindowConfig } from "../types";
 
 export function createGalleryModal(
     item: GalleryItem,
     windowConfig: WindowConfig,
     sceneModalClass?: string,
-    options: GalleryModalOptions = {},
+    options: { onNext?: () => void } = {},
 ): ModalConfig {
     const buttons: ModalButton[] = [
         {
@@ -33,7 +30,7 @@ export function createGalleryModal(
         });
     }
 
-    let media: ModalContentItem;
+    let media: ModalContentItem | undefined;
     if (item.embed) {
         media = {
             type: "embed",
@@ -45,17 +42,15 @@ export function createGalleryModal(
             className: "modal-embed",
         };
     } else if (item.embedSrc) {
-        media = {
-            type: "embed",
-            provider: "generic",
-            src: item.embedSrc,
-            className: "modal-embed",
-        };
-    } else {
-        media = { type: "image", src: item.img, alt: item.title, className: "modal-image" };
+        media = { type: "embed", provider: "generic", src: item.embedSrc, className: "modal-embed" };
+    } else if (isImageSource(item.source)) {
+        media = { type: "image", src: item.source, alt: item.subtitle ?? item.id, className: "modal-image" };
     }
 
+    const title = item.subtitle ?? item.id;
+
     return {
+        pickableMeshes: sceneManager.getMeshes(),
         style: {
             className: sceneModalClass,
             vars: {
@@ -65,9 +60,9 @@ export function createGalleryModal(
             },
         },
         content: [
-            { type: "text", content: item.title, tag: "h2", className: "modal-title" },
-            media,
-            { type: "text", content: item.text, className: "modal-body" },
+            { type: "text", content: title, tag: "h2", className: "modal-title" },
+            ...(media ? [media] : []),
+            ...(item.text ? [{ type: "text" as const, content: item.text, className: "modal-body" }] : []),
             { type: "buttons", className: "modal-actions", buttons },
         ],
     };

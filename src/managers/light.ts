@@ -3,20 +3,87 @@ import {
     DirectionalLight,
     HemisphericLight,
     Light,
+    MeshBuilder,
     PointLight,
+    Quaternion,
     SpotLight,
+    StandardMaterial,
     Vector3,
     type AbstractMesh,
+    type Mesh,
     type Scene,
 } from "@babylonjs/core";
-import {
-    createDirectionalFixture,
-    createPointFixture,
-    type LightFixtureOptions,
-} from "../objects/lightHelpers";
 
 export type Vec3 = [number, number, number];
 export type Color3Value = [number, number, number];
+
+interface LightFixtureOptions {
+    scale?: number;
+    color?: [number, number, number];
+}
+
+function createFixtureMaterial(
+    name: string,
+    scene: Scene,
+    color: [number, number, number],
+): StandardMaterial {
+    const material = new StandardMaterial(`${name}Material`, scene);
+    material.emissiveColor = new Color3(...color);
+    material.disableLighting = true;
+    return material;
+}
+
+function createPointFixture(
+    name: string,
+    position: Vector3,
+    scene: Scene,
+    options: LightFixtureOptions = {},
+): Mesh {
+    const fixture = MeshBuilder.CreateSphere(
+        `${name}Fixture`,
+        { diameter: options.scale ?? 0.3, segments: 8 },
+        scene,
+    );
+    fixture.position.copyFrom(position);
+    fixture.material = createFixtureMaterial(name, scene, options.color ?? [1, 0.9, 0.6]);
+    fixture.isPickable = false;
+    return fixture;
+}
+
+function createDirectionalFixture(
+    name: string,
+    position: Vector3,
+    direction: Vector3,
+    scene: Scene,
+    options: LightFixtureOptions = {},
+): Mesh {
+    const size = options.scale ?? 0.5;
+    const fixture = MeshBuilder.CreateCylinder(
+        `${name}Fixture`,
+        {
+            diameterTop: 0,
+            diameterBottom: size * 0.7,
+            height: size,
+            tessellation: 8,
+        },
+        scene,
+    );
+    fixture.position.copyFrom(position);
+    fixture.material = createFixtureMaterial(name, scene, options.color ?? [1, 0.9, 0.6]);
+    fixture.isPickable = false;
+
+    const from = Vector3.Down();
+    const normalized = direction.normalize();
+    const dot = Math.max(-1, Math.min(1, Vector3.Dot(from, normalized)));
+    const axis = Vector3.Cross(from, normalized);
+    fixture.rotationQuaternion =
+        axis.lengthSquared() < 0.000001
+            ? dot > 0
+                ? Quaternion.Identity()
+                : Quaternion.RotationAxis(Vector3.Right(), Math.PI)
+            : Quaternion.RotationAxis(axis.normalize(), Math.acos(dot));
+    return fixture;
+}
 
 interface CommonLightOptions {
     intensity?: number;

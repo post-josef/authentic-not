@@ -1,9 +1,100 @@
 import type { AbstractMesh } from "@babylonjs/core";
-import { buildEmbedSrc } from "../modal/embeds";
-import type { ModalConfig, ModalContentItem } from "../modal/types";
+import type { EmbedProvider } from "../types";
 import { cameraManager } from "./camera";
 import { highlightManager } from "./highlight";
-import { sceneManager } from "./scene";
+
+type ModalCallback = () => void | Promise<void>;
+type ModalItemStyle = Record<string, string>;
+
+interface ModalItemBase {
+    id?: string;
+    className?: string;
+    style?: ModalItemStyle;
+}
+
+export type ModalContentItem =
+    | (ModalItemBase & { type: "text"; content: string; tag?: "p" | "h1" | "h2" | "h3" | "div" })
+    | (ModalItemBase & { type: "image"; src: string; alt?: string })
+    | (ModalItemBase & {
+          type: "video";
+          src: string;
+          poster?: string;
+          controls?: boolean;
+          autoplay?: boolean;
+          muted?: boolean;
+          loop?: boolean;
+      })
+    | (ModalItemBase & {
+          type: "embed";
+          provider?: EmbedProvider;
+          videoId?: string;
+          src?: string;
+          autoplay?: boolean;
+          muted?: boolean;
+          params?: Record<string, string>;
+      })
+    | (ModalItemBase & { type: "button"; label: string; onClick: ModalCallback })
+    | (ModalItemBase & { type: "buttons"; buttons: ModalButton[] })
+    | (ModalItemBase & { type: "spacer"; height?: string })
+    | (ModalItemBase & { type: "divider" });
+
+export interface ModalButton {
+    label: string;
+    className?: string;
+    style?: ModalItemStyle;
+    onClick: ModalCallback;
+}
+
+export interface ModalConfig {
+    style?: {
+        className?: string;
+        vars?: Record<string, string>;
+        width?: string;
+        maxHeight?: string;
+    };
+    content: ModalContentItem[];
+    dismissOnBackdrop?: boolean;
+    pickableMeshes?: AbstractMesh[];
+}
+
+function buildEmbedSrc(item: Extract<ModalContentItem, { type: "embed" }>): string {
+    const provider = item.provider ?? "generic";
+    const autoplay = item.autoplay ?? false;
+    const muted = item.muted ?? autoplay;
+    const extra = item.params ?? {};
+    const withParams = (base: string, params: Record<string, string>) => {
+        const url = new URL(base);
+        for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+        return url.toString();
+    };
+
+    if (provider === "youtube") {
+        const id = item.videoId;
+        if (!id && item.src) return item.src;
+        if (!id) throw new Error("YouTube embed requires videoId or src");
+        return withParams(`https://www.youtube.com/embed/${id}`, {
+            autoplay: autoplay ? "1" : "0",
+            mute: muted ? "1" : "0",
+            rel: "0",
+            ...extra,
+        });
+    }
+
+    if (provider === "vimeo") {
+        const id = item.videoId;
+        if (!id && item.src) return item.src;
+        if (!id) throw new Error("Vimeo embed requires videoId or src");
+        return withParams(`https://player.vimeo.com/video/${id}`, {
+            autoplay: autoplay ? "1" : "0",
+            muted: muted ? "1" : "0",
+            autopause: "0",
+            ...extra,
+        });
+    }
+
+    if (!item.src) throw new Error("Generic embed requires src");
+    return item.src;
+}
 
 export class ModalManager {
     private root: HTMLElement | null = null;
@@ -29,9 +120,7 @@ export class ModalManager {
         const backdrop = root?.querySelector<HTMLElement>(".modal-backdrop");
         const panel = root?.querySelector<HTMLElement>(".modal-panel");
         const content = root?.querySelector<HTMLElement>(".modal-content");
-        if (!root || !backdrop || !panel || !content) {
-            throw new Error("Modal markup is incomplete");
-        }
+        if (!root || !backdrop || !panel || !content) throw new Error("Modal markup is incomplete");
         this.root = root;
         this.backdrop = backdrop;
         this.panel = panel;
@@ -48,11 +137,10 @@ export class ModalManager {
 
     open(config: ModalConfig): void {
         const root = this.requireRoot();
-        const panel = this.requirePanel();
         if (this.openState || this.closing) return;
 
         this.openState = true;
-        this.activeMeshes = (config.pickableMeshes ?? sceneManager.getMeshes()).map((mesh) => ({
+        this.activeMeshes = (config.pickableMeshes ?? []).map((mesh) => ({
             mesh,
             wasPickable: mesh.isPickable,
         }));
@@ -70,9 +158,6 @@ export class ModalManager {
         requestAnimationFrame(() => {
             if (!this.openState) return;
             root.classList.add("is-visible");
-            const firstFocusable = this.getFocusable()[0];
-            if (firstFocusable) firstFocusable.focus();
-            else panel.focus();
         });
 
         if (config.dismissOnBackdrop !== false) this.bindBackdrop();
@@ -266,9 +351,7 @@ export class ModalManager {
             if (performance.now() - openedAt >= 300) this.close();
         };
         requestAnimationFrame(() => {
-            if (this.backdropHandler) {
-                this.requireBackdrop().addEventListener("click", this.backdropHandler);
-            }
+            if (this.backdropHandler) this.requireBackdrop().addEventListener("click", this.backdropHandler);
         });
     }
 

@@ -10,7 +10,8 @@
         "lint": "eslint src"
     },
     "dependencies": {
-        "@babylonjs/core": "9.11.0"
+        "@babylonjs/core": "9.11.0",
+        "@babylonjs/loaders": "9.11.0"
     },
     "devDependencies": {
         "@types/node": "25.9.2",

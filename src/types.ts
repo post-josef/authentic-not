@@ -1,6 +1,12 @@
 import type { AbstractMesh } from "@babylonjs/core";
-import type { HighlightMode } from "../managers/highlight";
-import type { EmbedProvider } from "../modal/embeds";
+
+export type HighlightMode = "border" | "highlightLayer" | "glowLayer" | "selectionOutline";
+export type EmbedProvider = "youtube" | "vimeo" | "generic";
+
+export interface SceneObject {
+    readonly mesh: AbstractMesh;
+    dispose(): void;
+}
 
 export interface WindowConfig {
     color: string;
@@ -9,13 +15,19 @@ export interface WindowConfig {
 }
 
 export interface GalleryItem {
-    title: string;
-    img: string;
+    id: string;
+    source: string;
+    scale?: number;
+    width?: number;
+    height?: number;
     x: number;
     y?: number;
     z?: number;
-    r: number;
-    text: string;
+    r?: number;
+
+    highlight?: HighlightMode;
+    subtitle?: string;
+    text?: string;
     embedSrc?: string;
     embed?: {
         provider: EmbedProvider;
@@ -30,7 +42,7 @@ export interface GalleryItem {
 export interface GameScene {
     readonly id: string;
     readonly highlightMode: HighlightMode;
-    load(): void;
+    load(): Promise<void>;
     unload(): void;
     getMeshes(): AbstractMesh[];
 }

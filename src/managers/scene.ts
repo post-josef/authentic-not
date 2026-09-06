@@ -1,5 +1,5 @@
 import type { AbstractMesh, Scene } from "@babylonjs/core";
-import type { GameScene } from "../scenes/types";
+import type { GameScene } from "../types";
 import { animationManager } from "./animation";
 import { audioManager } from "./audio";
 import { backgroundManager } from "./background";
@@ -69,7 +69,7 @@ export class SceneManager {
         const next = factory();
         this.current = next;
         highlightManager.setMode(next.highlightMode);
-        next.load();
+        next.load().catch((error) => console.error(`[sceneManager] Failed to load ${id}`, error));
     }
 
     private clearSceneResources(): void {

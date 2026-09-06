@@ -1,10 +1,13 @@
 import {
+    Axis,
     Color3,
     FreeCameraKeyboardMoveInput,
     PointLight,
     SpotLight,
+    Space,
     UniversalCamera,
     Vector3,
+    type AbstractMesh,
     type Light,
     type Observer,
     type Scene,
@@ -134,6 +137,11 @@ export class CameraManager {
 
     attachControl(): void {
         if (this.camera && this.canvas) this.camera.attachControl(this.canvas, true);
+    }
+
+    faceMeshToCamera(mesh: AbstractMesh): void {
+        mesh.lookAt(this.getCamera().position);
+        mesh.rotate(Axis.Y, Math.PI, Space.LOCAL);
     }
 
     reset(instant: boolean): void {

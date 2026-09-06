@@ -1,12 +1,12 @@
 import type { AbstractMesh } from "@babylonjs/core";
+import "./scene3.css";
 import { animationManager } from "../managers/animation";
 import { lightManager } from "../managers/light";
-import { sceneManager } from "../managers/scene";
+import { modalManager } from "../managers/modal";
+import { objectManager } from "../managers/object";
 import { subtitleManager } from "../managers/subtitle";
-import { createImagePlane } from "../objects/imagePlane";
-import { openModal, wireInteractive, type SceneObject } from "../objects/sceneObject";
+import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../types";
 import { createGalleryModal } from "./modalContent";
-import type { GalleryItem, GameScene, WindowConfig } from "./types";
 
 const SCENE3_WINDOW_CONFIGS: WindowConfig[] = [
     { color: "#1a2d4d99", left: "-300px", top: "100px" },
@@ -22,8 +22,9 @@ const RING_CENTER: [number, number, number] = [0, 2.2, 8];
 const PANEL_COUNT = 5;
 const GALLERY_ITEMS: GalleryItem[] = [
     {
-        title: "Orbit One",
-        img: "assets/images/i3.png",
+        id: "1",
+        subtitle: "Orbit One",
+        source: "assets/images/i3.png",
         x: 0,
         y: 2.2,
         z: 8 + RING_RADIUS,
@@ -31,8 +32,9 @@ const GALLERY_ITEMS: GalleryItem[] = [
         text: "Panels ride a slow ring — the whole constellation turns together.",
     },
     {
-        title: "Orbit Two",
-        img: "assets/images/i5.png",
+        id: "2",
+        subtitle: "Orbit Two",
+        source: "assets/images/i5.png",
         x: 0,
         y: 2.5,
         z: 8,
@@ -40,8 +42,9 @@ const GALLERY_ITEMS: GalleryItem[] = [
         text: "Each frame faces the hub while the carousel drifts through space.",
     },
     {
-        title: "Orbit Three",
-        img: "assets/images/i1.png",
+        id: "3",
+        subtitle: "Orbit Three",
+        source: "assets/images/i1.png",
         x: 0,
         y: 1.9,
         z: 8,
@@ -49,8 +52,9 @@ const GALLERY_ITEMS: GalleryItem[] = [
         text: "A cool hub light catches the edges as panels pass in front of one another.",
     },
     {
-        title: "Orbit Four",
-        img: "assets/images/i4.png",
+        id: "4",
+        subtitle: "Orbit Four",
+        source: "assets/images/i4.png",
         x: 0,
         y: 2.4,
         z: 8,
@@ -58,8 +62,9 @@ const GALLERY_ITEMS: GalleryItem[] = [
         text: "Gentle tilt wobble keeps the ring from feeling mechanical.",
     },
     {
-        title: "Orbit Five",
-        img: "assets/images/i2.png",
+        id: "5",
+        subtitle: "Orbit Five",
+        source: "assets/images/i2.png",
         x: 0,
         y: 2.1,
         z: 8,
@@ -74,41 +79,38 @@ export class Scene3 implements GameScene {
     readonly highlightMode: GameScene["highlightMode"] = "selectionOutline";
     private objects: SceneObject[] = [];
 
-    load(): void {
-        const scene = sceneManager.getBabylonScene();
-
-        this.objects = GALLERY_ITEMS.map((item, index) => {
-            const baseAngle = (index / PANEL_COUNT) * Math.PI * 2 - Math.PI / 2;
-            const object = createImagePlane(scene, item, this.highlightMode);
-            wireInteractive(
-                object,
-                () => {
-                    subtitleManager.hide();
-                    openModal(createGalleryModal(item, SCENE3_WINDOW_CONFIGS[index], MODAL_CLASS));
-                },
-                {
-                    onHover: () => subtitleManager.show(item.title),
+    async load(): Promise<void> {
+        this.objects = await Promise.all(
+            GALLERY_ITEMS.map(async (item, index) => {
+                const baseAngle = (index / PANEL_COUNT) * Math.PI * 2 - Math.PI / 2;
+                const object = await objectManager.create(item, this.highlightMode);
+                objectManager.interactive(object, {
+                    onClick: () => {
+                        subtitleManager.hide();
+                        modalManager.open(createGalleryModal(item, SCENE3_WINDOW_CONFIGS[index], MODAL_CLASS));
+                    },
+                    onHover: () => item.subtitle && subtitleManager.show(item.subtitle),
                     onHoverEnd: () => subtitleManager.hide(),
-                },
-            );
-            animationManager.add(`scene3-${index}`, object.mesh, {
-                preset: "orbit",
-                center: RING_CENTER,
-                radius: RING_RADIUS,
-                speed: 0.18,
-                startAngle: baseAngle,
-                heightOffset: (index - 2) * 0.28,
-                floatAmplitude: 0.18,
-                floatSpeed: 1.3,
-                floatPhase: index * 0.9,
-                faceCamera: true,
-                cameraSpotAngle: -Math.PI / 2,
-                cameraSpotWidth: 0.55,
-                tiltPhaseX: index * 0.7,
-                tiltPhaseZ: index * 0.5,
-            });
-            return object;
-        });
+                });
+                animationManager.add(`scene3-${index}`, object.mesh, {
+                    preset: "orbit",
+                    center: RING_CENTER,
+                    radius: RING_RADIUS,
+                    speed: 0.18,
+                    startAngle: baseAngle,
+                    heightOffset: (index - 2) * 0.28,
+                    floatAmplitude: 0.18,
+                    floatSpeed: 1.3,
+                    floatPhase: index * 0.9,
+                    faceCamera: true,
+                    cameraSpotAngle: -Math.PI / 2,
+                    cameraSpotWidth: 0.55,
+                    tiltPhaseX: index * 0.7,
+                    tiltPhaseZ: index * 0.5,
+                });
+                return object;
+            }),
+        );
 
         lightManager.createPoint("scene3Hub", RING_CENTER, {
             diffuse: [0.45, 0.65, 1],

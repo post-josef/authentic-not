@@ -1,0 +1,7 @@
+.modal-panel.modal-scene2 {
+    border-radius: 12px;
+}
+
+.modal-scene2 .modal-btn-next {
+    background-image: linear-gradient(to right, #5a3a72 0%, #3a5a72 51%, #5a3a72 100%);
+}
