@@ -49,6 +49,13 @@ export default (_env, argv) => {
             new CopyWebpackPlugin({
                 patterns: [
                     {
+                        from: path.resolve(__dirname, "public"),
+                        to: ".",
+                        globOptions: {
+                            ignore: ["**/index.html", "**/.DS_Store", "**/.gitkeep"],
+                        },
+                    },
+                    {
                         from: path.resolve(__dirname, "src/assets"),
                         to: "assets",
                         globOptions: {
