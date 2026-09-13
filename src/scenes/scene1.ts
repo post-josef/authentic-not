@@ -81,19 +81,14 @@ export class Scene1 implements GameScene {
             GALLERY_ITEMS.map(async (item, index) => {
                 const object = await objectManager.create(item, this.highlightMode);
                 objectManager.interactive(object, {
-                    onClick:
-                        index === 0
-                            ? () => {
-                                  subtitleManager.hide();
-                                  if (item.nextSceneId) {
-                                      sceneManager.switchTo(item.nextSceneId);
-                                  }
-                              }
-                            : () => {
-                                  modalManager.open(
-                                      createGalleryModal(item, SCENE1_WINDOW_CONFIGS[index], MODAL_CLASS),
-                                  );
-                              },
+                    onClick: () => {
+                        subtitleManager.hide();
+                        if (item.nextSceneId) {
+                            sceneManager.switchTo(item.nextSceneId);
+                        } else {
+                            modalManager.open(createGalleryModal(item, SCENE1_WINDOW_CONFIGS[index], MODAL_CLASS));
+                        }
+                    },
                     onHover: () => item.subtitle && subtitleManager.show(item.subtitle),
                     onHoverEnd: () => subtitleManager.hide(),
                 });

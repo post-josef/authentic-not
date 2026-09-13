@@ -73,6 +73,35 @@ function applyPlaneMaterial(
 }
 
 export class ObjectManager {
+    meshes(object: SceneObject): AbstractMesh[] {
+        return [object.mesh, ...object.mesh.getChildMeshes()];
+    }
+
+    setPickable(object: SceneObject, pickable: boolean): void {
+        for (const mesh of this.meshes(object)) mesh.isPickable = pickable;
+    }
+
+    applyMappedVideoTextures(
+        object: SceneObject,
+        meshVideos: Record<string, string>,
+        highlightMode: HighlightMode,
+        options: { invertY?: boolean } = {},
+    ): SceneObject {
+        const textures: VideoTexture[] = [];
+        for (const mesh of this.meshes(object)) {
+            const source = meshVideos[mesh.name];
+            if (source) textures.push(this.applyVideoTexture(mesh, source, highlightMode, options));
+        }
+        const disposeObject = object.dispose.bind(object);
+        return {
+            mesh: object.mesh,
+            dispose: () => {
+                textures.forEach((texture) => this.disposeVideoTexture(texture));
+                disposeObject();
+            },
+        };
+    }
+
     interactive(
         object: SceneObject,
         events: {
@@ -87,7 +116,7 @@ export class ObjectManager {
             onPointerOver: events.onHover,
             onPointerOut: events.onHoverEnd,
         };
-        for (const mesh of [object.mesh, ...object.mesh.getChildMeshes()]) {
+        for (const mesh of this.meshes(object)) {
             if (mesh.name.endsWith("Border")) continue;
             highlightManager.makeInteractive(mesh, config);
         }
@@ -140,6 +169,47 @@ export class ObjectManager {
             mesh: plane,
             dispose: () => plane.dispose(false, true),
         };
+    }
+
+    applyVideoTexture(
+        mesh: AbstractMesh,
+        source: string,
+        highlightMode: HighlightMode,
+        options: { invertY?: boolean } = {},
+    ): VideoTexture {
+        const scene = sceneManager.getBabylonScene();
+        const videoTexture = new VideoTexture(
+            `${mesh.name}VideoTex`,
+            source,
+            scene,
+            false,
+            options.invertY ?? false,
+            undefined,
+            {
+                autoPlay: true,
+                loop: true,
+                muted: true,
+            },
+        );
+        const videoElement = videoTexture.video;
+        videoElement.playsInline = true;
+        videoElement.setAttribute("playsinline", "");
+        videoElement.setAttribute("webkit-playsinline", "");
+        applyPlaneMaterial(mesh, videoTexture, highlightMode, scene);
+
+        void videoElement
+            .play()
+            ?.catch((error) => console.warn(`[objectManager] Autoplay blocked for ${source}`, error));
+
+        return videoTexture;
+    }
+
+    disposeVideoTexture(videoTexture: VideoTexture): void {
+        const videoElement = videoTexture.video;
+        videoElement.pause();
+        videoElement.removeAttribute("src");
+        videoElement.load();
+        videoTexture.dispose();
     }
 
     createVideoPanel(

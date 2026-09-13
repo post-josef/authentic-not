@@ -92,7 +92,7 @@ export class SceneNs implements GameScene {
         const face = await objectManager.create(
             {
                 id: "nsFace",
-                source: "assets/models/face1.glb",
+                source: "assets/ns/face1.glb",
                 x: 0,
                 y: -2.3,
                 z: 16,
@@ -102,20 +102,17 @@ export class SceneNs implements GameScene {
             },
             this.highlightMode,
         );
-        face.mesh.lookAt(cameraManager.getCamera().position);
-        for (const mesh of [face.mesh, ...face.mesh.getChildMeshes()]) {
-            mesh.isPickable = false;
-        }
+        cameraManager.faceMeshToCamera(face.mesh);
+        objectManager.setPickable(face, false);
         this.objects.push(face);
 
-        const faceMeshes = [face.mesh, ...face.mesh.getChildMeshes()];
         lightManager.createSpot("sceneNsFace", [0, 6, 12], {
             target: [0, 0, 16],
             diffuse: [1, 0.8, 0.6],
             specular: [1, 0.6, 0.4],
             intensity: 12,
             range: 20,
-            includedOnlyMeshes: faceMeshes,
+            includedOnlyMeshes: objectManager.meshes(face),
             showFixture: true,
             fixture: { scale: 0.5, color: [1, 0.96, 0.9] },
         });
@@ -127,7 +124,7 @@ export class SceneNs implements GameScene {
     }
 
     getMeshes(): AbstractMesh[] {
-        return this.objects.flatMap((object) => [object.mesh, ...object.mesh.getChildMeshes()]);
+        return this.objects.flatMap((object) => objectManager.meshes(object));
     }
 
     private openModal(index: number): void {

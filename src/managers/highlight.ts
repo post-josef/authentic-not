@@ -80,6 +80,7 @@ export class HighlightManager {
     ): void {
         const scene = this.requireScene();
         mesh.isPickable = true;
+        mesh.metadata = { ...mesh.metadata, clickable: true };
         mesh.actionManager = new ActionManager(scene);
         mesh.actionManager.registerAction(
             new ExecuteCodeAction(ActionManager.OnPointerOverTrigger, () => {

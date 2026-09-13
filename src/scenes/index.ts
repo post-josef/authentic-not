@@ -4,6 +4,7 @@ import { Scene2 } from "./scene2";
 import { Scene3 } from "./scene3";
 import { Scene4 } from "./scene4";
 import { SceneNs } from "./scene-ns";
+import { SceneKv } from "./scene-kv";
 
 export const DEFAULT_SCENE_ID = "scene1";
 
@@ -13,4 +14,5 @@ export function registerScenes(scenes: SceneManager): void {
     scenes.register("scene3", () => new Scene3());
     scenes.register("scene4", () => new Scene4());
     scenes.register("scene-ns", () => new SceneNs());
+    scenes.register("scene-kv", () => new SceneKv());
 }
