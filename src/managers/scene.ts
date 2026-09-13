@@ -24,18 +24,30 @@ export class SceneManager {
         this.registry.set(id, factory);
     }
 
-    switchTo(id: string): void {
+    switchTo(id: string, skipHash = false): void {
         if (!this.registry.has(id)) throw new Error(`Unknown scene: ${id}`);
         if (this.switching) return;
+        const finish = () => {
+            this.performSwitch(id);
+            if (!skipHash) {
+                const hash = `#/${id}`;
+                if (location.hash !== hash) location.hash = hash;
+            }
+        };
         if (modalManager.isOpen()) {
             this.switching = true;
             modalManager.close(() => {
                 this.switching = false;
-                this.performSwitch(id);
+                finish();
             });
             return;
         }
-        this.performSwitch(id);
+        finish();
+    }
+
+    sceneIdFromHash(): string | null {
+        const match = location.hash.match(/^#\/([^/?#]+)/);
+        return match?.[1] ?? null;
     }
 
     getCurrent(): GameScene | null {

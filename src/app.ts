@@ -9,7 +9,7 @@ import { lightManager } from "./managers/light";
 import { modalManager } from "./managers/modal";
 import { sceneManager } from "./managers/scene";
 import { subtitleManager } from "./managers/subtitle";
-import { DEFAULT_SCENE_ID, registerScenes } from "./scenes";
+import { registerScenes } from "./scenes";
 
 export class App {
     engine: Engine | null = null;
@@ -46,7 +46,6 @@ export class App {
         window.addEventListener("keydown", this.unlockAudioHandler);
 
         registerScenes(sceneManager);
-        sceneManager.switchTo(DEFAULT_SCENE_ID);
         this.engine.runRenderLoop(() => {
             this.scene?.render();
             if (process.env.NODE_ENV === "development") this.updateFps();

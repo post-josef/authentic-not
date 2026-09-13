@@ -5,8 +5,6 @@ import { Scene3 } from "./demo/scene3";
 import { Scene4 } from "./demo/scene4";
 // import { SceneStart } from "./sceneStart";
 
-export const DEFAULT_SCENE_ID = "scene1"; // change to a real scene ID
-
 export function registerScenes(scenes: SceneManager): void {
     // demo:
     scenes.register("scene1", () => new Scene1());
