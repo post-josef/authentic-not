@@ -1,5 +1,5 @@
 import type { AbstractMesh } from "@babylonjs/core";
-import type { EmbedProvider } from "../types";
+import type { EmbedProvider, GalleryItem, WindowConfig } from "../types";
 import { cameraManager } from "./camera";
 import { highlightManager } from "./highlight";
 
@@ -135,12 +135,82 @@ export class ModalManager {
         return this.openState || this.closing;
     }
 
+    openGallery(
+        item: GalleryItem,
+        windowConfig: WindowConfig,
+        sceneModalClass?: string,
+        options: { onNext?: () => void } = {},
+    ): void {
+        const sceneManager = this.getSceneManager();
+        const buttons: ModalButton[] = [
+            {
+                label: "Close",
+                className: "modal-btn modal-btn-close",
+                onClick: () => this.close(),
+            },
+        ];
+
+        if (item.nextSceneId) {
+            const nextSceneId = item.nextSceneId;
+            buttons.push({
+                label: "Next",
+                className: "modal-btn modal-btn-next",
+                onClick: () => {
+                    options.onNext?.();
+                    this.close(() => sceneManager.switchTo(nextSceneId));
+                },
+            });
+        }
+
+        let media: ModalContentItem | undefined;
+        if (item.embed) {
+            media = {
+                type: "embed",
+                provider: item.embed.provider,
+                videoId: item.embed.videoId,
+                src: item.embed.src,
+                autoplay: item.embed.autoplay ?? true,
+                muted: item.embed.muted ?? true,
+                className: "modal-embed",
+            };
+        } else if (item.embedSrc) {
+            media = { type: "embed", provider: "generic", src: item.embedSrc, className: "modal-embed" };
+        } else if (this.isImageSource(item.source)) {
+            media = {
+                type: "image",
+                src: item.source,
+                alt: item.subtitle ?? item.id,
+                className: "modal-image",
+            };
+        }
+
+        const title = item.subtitle ?? item.id;
+
+        this.open({
+            style: {
+                className: sceneModalClass,
+                vars: {
+                    "--modal-color": windowConfig.color,
+                    "--modal-offset-x": windowConfig.left,
+                    "--modal-offset-y": windowConfig.top,
+                },
+            },
+            content: [
+                { type: "text", content: title, tag: "h2", className: "modal-title" },
+                ...(media ? [media] : []),
+                ...(item.text ? [{ type: "text" as const, content: item.text, className: "modal-body" }] : []),
+                { type: "buttons", className: "modal-actions", buttons },
+            ],
+        });
+    }
+
     open(config: ModalConfig): void {
         const root = this.requireRoot();
         if (this.openState || this.closing) return;
 
         this.openState = true;
-        this.activeMeshes = (config.pickableMeshes ?? []).map((mesh) => ({
+        const pickableMeshes = config.pickableMeshes ?? this.getSceneManager().getMeshes();
+        this.activeMeshes = pickableMeshes.map((mesh) => ({
             mesh,
             wasPickable: mesh.isPickable,
         }));
@@ -437,6 +507,14 @@ export class ModalManager {
     private requirePanel(): HTMLElement {
         if (!this.panel) throw new Error("modalManager.init() must be called first");
         return this.panel;
+    }
+
+    private getSceneManager() {
+        return (require("./scene") as typeof import("./scene")).sceneManager;
+    }
+
+    private isImageSource(source: string): boolean {
+        return /\.(png|jpe?g|gif|webp)$/i.test(source.split(/[?#]/, 1)[0]);
     }
 }
 

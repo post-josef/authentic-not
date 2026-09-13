@@ -1,13 +1,11 @@
 import type { AbstractMesh } from "@babylonjs/core";
+import { animationManager } from "../../managers/animation";
+import { lightManager } from "../../managers/light";
+import { modalManager } from "../../managers/modal";
+import { objectManager } from "../../managers/object";
+import { subtitleManager } from "../../managers/subtitle";
+import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../../types";
 import "./scene1.css";
-import { animationManager } from "../managers/animation";
-import { lightManager } from "../managers/light";
-import { modalManager } from "../managers/modal";
-import { objectManager } from "../managers/object";
-import { sceneManager } from "../managers/scene";
-import { subtitleManager } from "../managers/subtitle";
-import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../types";
-import { createGalleryModal } from "./modalContent";
 
 const SCENE1_WINDOW_CONFIGS: WindowConfig[] = [
     { color: "#21432b99", left: "-320px", top: "140px" },
@@ -21,42 +19,37 @@ const MODAL_CLASS = "modal-scene1";
 const GALLERY_ITEMS: GalleryItem[] = [
     {
         id: "1",
+        source: "assets/images/i1.png",
         x: -6,
-        y: -3,
         r: -0.6,
-        scale: 5,
-        source: "assets/ns/face.glb",
-        subtitle: "NS",
-        nextSceneId: "scene-ns",
-        highlight: "highlightLayer",
+        subtitle: "Row One",
+        embed: { provider: "youtube", videoId: "mMD63t-W0Os", autoplay: true, muted: true },
+        text: "The line begins here — a soft red light spills across the first frame.",
     },
     {
         id: "2",
-        source: "assets/mm/mm1.jpeg",
-        subtitle: "MM",
-        nextSceneId: "scene2",
-        width: 2.3,
-        height: 2.3,
+        source: "assets/images/i2.png",
         x: -3,
         r: -0.2,
+        subtitle: "Row Two",
         embed: { provider: "youtube", videoId: "mMD63t-W0Os", autoplay: true, muted: true },
         text: "Each panel leans in slightly, drawing you further along the corridor.",
     },
     {
         id: "3",
         source: "assets/images/i3.png",
-        nextSceneId: "scene3",
         x: 0,
         r: 0,
+        subtitle: "Row Three",
         embed: { provider: "vimeo", videoId: "384166760", autoplay: true, muted: true },
         text: "At the center, the spot finds its mark and the image gently breathes.",
     },
     {
         id: "4",
         source: "assets/images/i4.png",
-        nextSceneId: "scene4",
         x: 3,
         r: 0.2,
+        subtitle: "Row Four",
         embed: { provider: "youtube", videoId: "mMD63t-W0Os", autoplay: true, muted: true },
         text: "The rhythm holds — quiet float, warm glow, one piece after another.",
     },
@@ -65,6 +58,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
         source: "assets/images/i5.png",
         x: 6,
         r: 0.6,
+        subtitle: "Row Five",
         embed: { provider: "youtube", videoId: "mMD63t-W0Os", autoplay: true, muted: true },
         text: "The row ends, but the gallery does not. Step into the drifting collection ahead.",
         nextSceneId: "scene2",
@@ -83,11 +77,7 @@ export class Scene1 implements GameScene {
                 objectManager.interactive(object, {
                     onClick: () => {
                         subtitleManager.hide();
-                        if (item.nextSceneId) {
-                            sceneManager.switchTo(item.nextSceneId);
-                        } else {
-                            modalManager.open(createGalleryModal(item, SCENE1_WINDOW_CONFIGS[index], MODAL_CLASS));
-                        }
+                        modalManager.openGallery(item, SCENE1_WINDOW_CONFIGS[index], MODAL_CLASS);
                     },
                     onHover: () => item.subtitle && subtitleManager.show(item.subtitle),
                     onHoverEnd: () => subtitleManager.hide(),
@@ -113,20 +103,6 @@ export class Scene1 implements GameScene {
             showFixture: true,
             fixture: { scale: 0.55, color: [1, 0.32, 0.32] },
         });
-
-        const face = GALLERY_ITEMS[0];
-        const faceTarget: [number, number, number] = [face.x, face.y ?? 1.8, face.z ?? 5];
-        const faceMeshes = [this.objects[0].mesh, ...this.objects[0].mesh.getChildMeshes()];
-        lightManager.createSpot("scene1Face", [face.x, 6.2, 2], {
-            target: faceTarget,
-            diffuse: [1, 0.96, 0.9],
-            specular: [1, 0.94, 0.88],
-            intensity: 12,
-            range: 14,
-            includedOnlyMeshes: faceMeshes,
-            showFixture: true,
-            fixture: { scale: 0.5, color: [1, 0.96, 0.9] },
-        });
     }
 
     unload(): void {
@@ -135,6 +111,6 @@ export class Scene1 implements GameScene {
     }
 
     getMeshes(): AbstractMesh[] {
-        return this.objects.map((object) => object.mesh);
+        return this.objects.flatMap((object) => objectManager.meshes(object));
     }
 }

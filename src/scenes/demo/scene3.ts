@@ -1,12 +1,11 @@
 import type { AbstractMesh } from "@babylonjs/core";
+import { animationManager } from "../../managers/animation";
+import { lightManager } from "../../managers/light";
+import { modalManager } from "../../managers/modal";
+import { objectManager } from "../../managers/object";
+import { subtitleManager } from "../../managers/subtitle";
+import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../../types";
 import "./scene3.css";
-import { animationManager } from "../managers/animation";
-import { lightManager } from "../managers/light";
-import { modalManager } from "../managers/modal";
-import { objectManager } from "../managers/object";
-import { subtitleManager } from "../managers/subtitle";
-import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../types";
-import { createGalleryModal } from "./modalContent";
 
 const SCENE3_WINDOW_CONFIGS: WindowConfig[] = [
     { color: "#1a2d4d99", left: "-300px", top: "100px" },
@@ -87,7 +86,7 @@ export class Scene3 implements GameScene {
                 objectManager.interactive(object, {
                     onClick: () => {
                         subtitleManager.hide();
-                        modalManager.open(createGalleryModal(item, SCENE3_WINDOW_CONFIGS[index], MODAL_CLASS));
+                        modalManager.openGallery(item, SCENE3_WINDOW_CONFIGS[index], MODAL_CLASS);
                     },
                     onHover: () => item.subtitle && subtitleManager.show(item.subtitle),
                     onHoverEnd: () => subtitleManager.hide(),

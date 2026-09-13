@@ -1,12 +1,11 @@
 import type { AbstractMesh } from "@babylonjs/core";
+import { animationManager } from "../../managers/animation";
+import { audioManager } from "../../managers/audio";
+import { fogManager } from "../../managers/fog";
+import { modalManager } from "../../managers/modal";
+import { objectManager } from "../../managers/object";
+import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../../types";
 import "./scene2.css";
-import { animationManager } from "../managers/animation";
-import { audioManager } from "../managers/audio";
-import { fogManager } from "../managers/fog";
-import { modalManager } from "../managers/modal";
-import { objectManager } from "../managers/object";
-import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../types";
-import { createGalleryModal } from "./modalContent";
 
 const SCENE2_WINDOW_CONFIGS: WindowConfig[] = [
     { color: "#21432b99", left: "-320px", top: "140px" },
@@ -80,6 +79,7 @@ export class Scene2 implements GameScene {
     private objects: SceneObject[] = [];
 
     async load(): Promise<void> {
+        // audio assets are not provided, it will throw error
         audioManager.load(KICK_SOUND, "assets/audio/kick.wav", { volume: 0.55 });
         audioManager.load(COWBELL_SOUND, "assets/audio/cowbell.wav", { volume: 0.45 });
         audioManager.load(MICROWAVE_SOUND, "assets/audio/microwave.wav", {
@@ -109,11 +109,9 @@ export class Scene2 implements GameScene {
                 objectManager.interactive(object, {
                     onClick: () => {
                         audioManager.play(index % 2 === 0 ? KICK_SOUND : COWBELL_SOUND);
-                        modalManager.open(
-                            createGalleryModal(item, SCENE2_WINDOW_CONFIGS[index], MODAL_CLASS, {
-                                onNext: () => audioManager.play(MICROWAVE_SOUND),
-                            }),
-                        );
+                        modalManager.openGallery(item, SCENE2_WINDOW_CONFIGS[index], MODAL_CLASS, {
+                            onNext: () => audioManager.play(MICROWAVE_SOUND),
+                        });
                     },
                 });
                 animationManager.addMany(`scene2-${index}`, object.mesh, [
