@@ -6,7 +6,7 @@ Online art exhibition space
 
 <br>
 <picture>
-    <img src="public/an3.png" alt="" width="100">
+    <img src="public/an1.png" alt="" width="100">
 </picture>
 
 </div>
