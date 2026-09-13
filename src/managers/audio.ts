@@ -1,15 +1,9 @@
-import {
-    Engine,
-    Sound,
-    Vector3,
-    type AbstractMesh,
-    type Observer,
-    type Scene,
-} from "@babylonjs/core";
+import { Sound, Vector3, type AbstractMesh, type Observer, type Scene } from "@babylonjs/core";
 // Registers AbstractEngine.AudioEngineFactory. Without it the engine never creates an
 // audio engine and every Sound.play() is a silent no-op.
 import "@babylonjs/core/Audio/audioEngine";
 import "@babylonjs/core/Audio/audioSceneComponent";
+import { LastCreatedAudioEngine } from "@babylonjs/core/AudioV2/abstractAudio/audioEngineV2";
 import { cameraManager } from "./camera";
 
 export interface SoundOptions {
@@ -57,13 +51,16 @@ export class AudioManager {
     init(scene: Scene): void {
         this.dispose();
         this.scene = scene;
+        if (process.env.NODE_ENV !== "development") {
+            const style = document.createElement("style");
+            style.textContent = "#babylonUnmuteButton,.babylonUnmute{display:none!important}";
+            document.head.appendChild(style);
+        }
     }
 
     unlock(): void {
         this.unlocked = true;
-        if (this.scene) this.scene.audioEnabled = true;
-        const audioEngine = Engine.audioEngine;
-        if (audioEngine && !audioEngine.unlocked) audioEngine.unlock();
+        void LastCreatedAudioEngine()?.unlockAsync();
     }
 
     load(id: string, url: string, options: SoundOptions = {}): Sound {
@@ -82,12 +79,7 @@ export class AudioManager {
         });
         if (options.position) sound.setPosition(new Vector3(...options.position));
         if (options.attachToMesh) sound.attachToMesh(options.attachToMesh);
-        if (
-            this.zones.some(
-                ({ zone }) =>
-                    zone.soundId === id && zone.behavior === "loopWhileInside",
-            )
-        ) {
+        if (this.zones.some(({ zone }) => zone.soundId === id && zone.behavior === "loopWhileInside")) {
             sound.loop = true;
         }
         this.sounds.set(id, sound);
@@ -96,10 +88,7 @@ export class AudioManager {
     }
 
     /** Creates a small offline WAV tone, useful for interactions and prototypes. */
-    loadTone(
-        id: string,
-        options: SoundOptions & { frequency?: number; durationMs?: number } = {},
-    ): Sound {
+    loadTone(id: string, options: SoundOptions & { frequency?: number; durationMs?: number } = {}): Sound {
         const url = this.createToneUrl(options.frequency ?? 520, options.durationMs ?? 90);
         const sound = this.load(id, url, options);
         this.generatedUrls.set(id, url);
@@ -156,9 +145,7 @@ export class AudioManager {
 
     /** Scene-switch cleanup. Sounds loaded with `persist` keep playing. */
     clear(): void {
-        [...this.sounds.keys()]
-            .filter((id) => !this.persistent.has(id))
-            .forEach((id) => this.removeSound(id));
+        [...this.sounds.keys()].filter((id) => !this.persistent.has(id)).forEach((id) => this.removeSound(id));
         this.zones = [];
         this.removeZoneObserver();
     }
