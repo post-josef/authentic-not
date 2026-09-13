@@ -2,8 +2,8 @@ import type { AbstractMesh } from "@babylonjs/core";
 import { animationManager } from "../../managers/animation";
 import { audioManager } from "../../managers/audio";
 import { fogManager } from "../../managers/fog";
-import { modalManager } from "../../managers/modal";
 import { objectManager } from "../../managers/object";
+import { openGalleryItemModal } from "../../managers/scene";
 import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../../types";
 import "./scene2.css";
 
@@ -109,7 +109,7 @@ export class Scene2 implements GameScene {
                 objectManager.interactive(object, {
                     onClick: () => {
                         audioManager.play(index % 2 === 0 ? KICK_SOUND : COWBELL_SOUND);
-                        modalManager.openGallery(item, SCENE2_WINDOW_CONFIGS[index], MODAL_CLASS, {
+                        openGalleryItemModal(item, SCENE2_WINDOW_CONFIGS[index], MODAL_CLASS, this.getMeshes(), {
                             onNext: () => audioManager.play(MICROWAVE_SOUND),
                         });
                     },

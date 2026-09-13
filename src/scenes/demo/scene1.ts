@@ -1,8 +1,8 @@
 import type { AbstractMesh } from "@babylonjs/core";
 import { animationManager } from "../../managers/animation";
 import { lightManager } from "../../managers/light";
-import { modalManager } from "../../managers/modal";
 import { objectManager } from "../../managers/object";
+import { openGalleryItemModal } from "../../managers/scene";
 import { subtitleManager } from "../../managers/subtitle";
 import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../../types";
 import "./scene1.css";
@@ -77,7 +77,7 @@ export class Scene1 implements GameScene {
                 objectManager.interactive(object, {
                     onClick: () => {
                         subtitleManager.hide();
-                        modalManager.openGallery(item, SCENE1_WINDOW_CONFIGS[index], MODAL_CLASS);
+                        openGalleryItemModal(item, SCENE1_WINDOW_CONFIGS[index], MODAL_CLASS, this.getMeshes());
                     },
                     onHover: () => item.subtitle && subtitleManager.show(item.subtitle),
                     onHoverEnd: () => subtitleManager.hide(),

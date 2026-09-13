@@ -2,8 +2,8 @@ import type { AbstractMesh } from "@babylonjs/core";
 import { animationManager } from "../../managers/animation";
 import { backgroundManager } from "../../managers/background";
 import { lightManager } from "../../managers/light";
-import { modalManager } from "../../managers/modal";
 import { objectManager } from "../../managers/object";
+import { openGalleryItemModal } from "../../managers/scene";
 import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../../types";
 import "./scene4.css";
 
@@ -93,7 +93,7 @@ export class Scene4 implements GameScene {
                 const object = await objectManager.create(item, this.highlightMode);
                 objectManager.interactive(object, {
                     onClick: () =>
-                        modalManager.openGallery(item, SCENE4_WINDOW_CONFIGS[index], MODAL_CLASS),
+                        openGalleryItemModal(item, SCENE4_WINDOW_CONFIGS[index], MODAL_CLASS, this.getMeshes()),
                 });
                 animationManager.add(`scene4-${index}`, object.mesh, {
                     preset: "figureEight",
