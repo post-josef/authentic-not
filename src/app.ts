@@ -16,6 +16,7 @@ export class App {
     scene: Scene | null = null;
     private unlockAudioHandler: (() => void) | null = null;
     private fpsElement: HTMLElement | null = null;
+    private resizeObserver: ResizeObserver | null = null;
 
     init(): void {
         const canvas = document.getElementById("canvas");
@@ -38,6 +39,12 @@ export class App {
             isInteractionBlocked: () => modalManager.isOpen(),
         });
 
+        // CSS can load after JS on refresh; resize when the canvas actually has a size
+        this.resizeObserver = new ResizeObserver(() => {
+            if (canvas.clientWidth && canvas.clientHeight) this.engine?.resize();
+        });
+        this.resizeObserver.observe(canvas);
+
         this.unlockAudioHandler = () => {
             audioManager.unlock();
             this.removeAudioUnlockListeners();
@@ -57,6 +64,8 @@ export class App {
     }
 
     dispose(): void {
+        this.resizeObserver?.disconnect();
+        this.resizeObserver = null;
         this.removeAudioUnlockListeners();
         this.engine?.stopRenderLoop();
         modalManager.dispose();
