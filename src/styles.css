@@ -50,7 +50,7 @@ body {
     color: rgba(232, 228, 220, 0.45);
     font-family: "IBM Plex Mono", monospace;
     font-size: 11px;
-    font-weight: 300;
+    font-weight: 400;
     letter-spacing: 0.28em;
     text-transform: uppercase;
 }
@@ -101,7 +101,7 @@ body {
 }
 
 .welcome-copy {
-    margin: 0 auto 44px;
+    margin: 0 auto 32px;
     max-width: 53ch;
     text-align: left;
     font-weight: 300;
@@ -125,7 +125,8 @@ body {
 
 .welcome-enter {
     display: inline-block;
-    padding: 16px 40px;
+    padding: 20px 40px;
+    margin: 8px 0 48px;
     border: 1px solid rgba(232, 228, 220, 0.35);
     border-radius: 2px;
     background: linear-gradient(135deg, rgba(88, 68, 54, 0.5) 0%, rgba(18, 8, 100, 0.4) 100%);
