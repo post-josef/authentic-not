@@ -2,7 +2,7 @@
 
 # Authentic Not
 
-Interactive online curatorial and research art exhibition.
+Interactive online curatorial and research art exhibition
 
 <br>
 <picture>
@@ -17,7 +17,7 @@ All artworks presented within Authentic-not remain the intellectual property of 
 
 ## Exhibition engine
 
-Each file in `src/scenes/` owns that scene's objects, lights, modal content, sounds, fog, animations, and interaction callbacks. Scenes import manager singletons directly and can combine them freely. `sceneManager` only registers, loads, unloads, and switches scenes. On a switch it clears all scene-scoped resources before loading the next scene.
+Each file in `src/scenes/` takes care of that scene's objects, lights, modal content, sounds, fog, animations, and interaction callbacks. Scenes import manager singletons directly and can combine them freely. `sceneManager` only registers, loads, unloads, and switches scenes. On a switch it clears all scene-scoped resources before loading the next scene.
 
 Available managers:
 
