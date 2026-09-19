@@ -13,7 +13,3 @@ yarn.lock
 
 *.log
 .DS_Store
-
-
-# exhibition:
-assets/

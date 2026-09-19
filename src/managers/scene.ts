@@ -14,6 +14,7 @@ export class SceneManager {
     private babylonScene: Scene | null = null;
     private registry = new Map<string, () => GameScene>();
     private current: GameScene | null = null;
+    private routeId: string | null = null;
     private switching = false;
 
     init(scene: Scene): void {
@@ -28,6 +29,13 @@ export class SceneManager {
         if (!this.registry.has(id)) throw new Error(`Unknown scene: ${id}`);
         if (this.switching) return;
         const finish = () => {
+            if (this.routeId === id) {
+                if (!skipHash) {
+                    const hash = `#/${id}`;
+                    if (location.hash !== hash) location.hash = hash;
+                }
+                return;
+            }
             this.performSwitch(id);
             if (!skipHash) {
                 const hash = `#/${id}`;
@@ -54,6 +62,10 @@ export class SceneManager {
         return this.current;
     }
 
+    getRouteId(): string | null {
+        return this.routeId;
+    }
+
     getBabylonScene(): Scene {
         if (!this.babylonScene) throw new Error("sceneManager.init(scene) must be called first");
         return this.babylonScene;
@@ -67,6 +79,7 @@ export class SceneManager {
         this.clearSceneResources();
         this.current?.unload();
         this.current = null;
+        this.routeId = null;
         this.registry.clear();
         this.babylonScene = null;
     }
@@ -80,8 +93,17 @@ export class SceneManager {
 
         const next = factory();
         this.current = next;
+        this.routeId = id;
         highlightManager.setMode(next.highlightMode);
-        next.load().catch((error) => console.error(`[sceneManager] Failed to load ${id}`, error));
+        void next.load().then(() => {
+            if (this.current !== next) next.unload();
+        }).catch((error) => {
+            if (this.current !== next) {
+                next.unload();
+                return;
+            }
+            console.error(`[sceneManager] Failed to load ${id}`, error);
+        });
     }
 
     private clearSceneResources(): void {

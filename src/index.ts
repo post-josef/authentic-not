@@ -24,7 +24,7 @@ function route(): void {
         app.init();
         app.resize();
     }
-    if (sceneManager.getCurrent()?.id !== id) {
+    if (sceneManager.getRouteId() !== id) {
         sceneManager.switchTo(id, true);
     }
 }

@@ -20,6 +20,11 @@ const PLANE_WIDTH = 2.3;
 const PLANE_HEIGHT = 3.2;
 const BORDER_WIDTH = 0.04;
 
+function videoTextureOnError(message?: string): void {
+    if (message?.includes("interrupted")) return;
+    console.warn(`[objectManager] ${message ?? "Video texture error"}`);
+}
+
 export function isImageSource(source: string): boolean {
     return /\.(png|jpe?g|gif|webp)$/i.test(source.split(/[?#]/, 1)[0]);
 }
@@ -190,6 +195,7 @@ export class ObjectManager {
                 loop: true,
                 muted: true,
             },
+            videoTextureOnError,
         );
         const videoElement = videoTexture.video;
         videoElement.playsInline = true;
@@ -197,18 +203,10 @@ export class ObjectManager {
         videoElement.setAttribute("webkit-playsinline", "");
         applyPlaneMaterial(mesh, videoTexture, highlightMode, scene);
 
-        void videoElement
-            .play()
-            ?.catch((error) => console.warn(`[objectManager] Autoplay blocked for ${source}`, error));
-
         return videoTexture;
     }
 
     disposeVideoTexture(videoTexture: VideoTexture): void {
-        const videoElement = videoTexture.video;
-        videoElement.pause();
-        videoElement.removeAttribute("src");
-        videoElement.load();
         videoTexture.dispose();
     }
 
@@ -263,11 +261,20 @@ export class ObjectManager {
             applyPlaneMaterial(host, frameTexture, highlightMode, scene, { frameOverlay: true });
         }
 
-        const videoTexture = new VideoTexture(`${item.title}VideoTex`, item.source, scene, false, false, undefined, {
-            autoPlay: true,
-            loop: true,
-            muted: true,
-        });
+        const videoTexture = new VideoTexture(
+            `${item.title}VideoTex`,
+            item.source,
+            scene,
+            false,
+            false,
+            undefined,
+            {
+                autoPlay: true,
+                loop: true,
+                muted: true,
+            },
+            videoTextureOnError,
+        );
         const videoElement = videoTexture.video;
         videoElement.playsInline = true;
         videoElement.setAttribute("playsinline", "");
@@ -277,17 +284,10 @@ export class ObjectManager {
             height: item.height,
         });
 
-        void videoElement
-            .play()
-            ?.catch((error) => console.warn(`[objectManager] Autoplay blocked for ${item.source}`, error));
-
         return {
             mesh: host,
             dispose: () => {
-                videoElement.pause();
-                videoElement.removeAttribute("src");
-                videoElement.load();
-                videoTexture.dispose();
+                this.disposeVideoTexture(videoTexture);
                 host.dispose(false, true);
             },
         };

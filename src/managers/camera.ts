@@ -211,9 +211,7 @@ export class CameraManager {
         scene.activeCamera = this.walkCam;
 
         this.walkHeight = config.walkHeight ?? DEFAULT_WALK_HEIGHT;
-        this.spawnPosition = config.position
-            ? toVector3(config.position)
-            : new Vector3(0, this.walkHeight, -10);
+        this.spawnPosition = config.position ? toVector3(config.position) : new Vector3(0, this.walkHeight, -10);
         this.spawnPosition.y = this.walkHeight;
         this.spawnRotation = config.rotation ? toVector3(config.rotation) : Vector3.Zero();
         this.walkCam.speed = config.speed ?? DEFAULT_SPEED;

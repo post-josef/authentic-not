@@ -22,28 +22,15 @@ interface LightFixtureOptions {
     color?: [number, number, number];
 }
 
-function createFixtureMaterial(
-    name: string,
-    scene: Scene,
-    color: [number, number, number],
-): StandardMaterial {
+function createFixtureMaterial(name: string, scene: Scene, color: [number, number, number]): StandardMaterial {
     const material = new StandardMaterial(`${name}Material`, scene);
     material.emissiveColor = new Color3(...color);
     material.disableLighting = true;
     return material;
 }
 
-function createPointFixture(
-    name: string,
-    position: Vector3,
-    scene: Scene,
-    options: LightFixtureOptions = {},
-): Mesh {
-    const fixture = MeshBuilder.CreateSphere(
-        `${name}Fixture`,
-        { diameter: options.scale ?? 0.3, segments: 8 },
-        scene,
-    );
+function createPointFixture(name: string, position: Vector3, scene: Scene, options: LightFixtureOptions = {}): Mesh {
+    const fixture = MeshBuilder.CreateSphere(`${name}Fixture`, { diameter: options.scale ?? 0.3, segments: 8 }, scene);
     fixture.position.copyFrom(position);
     fixture.material = createFixtureMaterial(name, scene, options.color ?? [1, 0.9, 0.6]);
     fixture.isPickable = false;
@@ -94,7 +81,6 @@ interface CommonLightOptions {
 
 export interface PointLightOptions extends CommonLightOptions {
     range?: number;
-    showFixture?: boolean;
     fixture?: LightFixtureOptions;
 }
 
@@ -105,13 +91,11 @@ export interface SpotLightOptions extends CommonLightOptions {
     innerAngle?: number;
     exponent?: number;
     range?: number;
-    showFixture?: boolean;
     fixture?: LightFixtureOptions;
 }
 
 export interface DirectionalLightOptions extends CommonLightOptions {
     position?: Vec3;
-    showFixture?: boolean;
     fixture?: LightFixtureOptions;
 }
 
@@ -151,13 +135,12 @@ export class LightManager {
         const light = new PointLight(name, vector, scene);
         this.applyCommon(light, options);
         if (options.range !== undefined) light.range = options.range;
-        const fixture =
-            options.showFixture === false
-                ? null
-                : createPointFixture(name, vector, scene, {
-                      color: options.fixture?.color ?? options.diffuse,
-                      ...options.fixture,
-                  });
+        const fixture = options.fixture
+            ? createPointFixture(name, vector, scene, {
+                  ...options.fixture,
+                  color: options.fixture.color ?? options.diffuse,
+              })
+            : null;
         this.tracked.push({ light, fixture });
         return light;
     }
@@ -180,36 +163,28 @@ export class LightManager {
         light.falloffType = Light.FALLOFF_GLTF;
         light.innerAngle = options.innerAngle ?? Math.PI / 11;
         if (options.range !== undefined) light.range = options.range;
-        const fixture =
-            options.showFixture === false
-                ? null
-                : createDirectionalFixture(name, source, direction, scene, {
-                      color: options.fixture?.color ?? options.diffuse,
-                      ...options.fixture,
-                  });
+        const fixture = options.fixture
+            ? createDirectionalFixture(name, source, direction, scene, {
+                  ...options.fixture,
+                  color: options.fixture.color ?? options.diffuse,
+              })
+            : null;
         this.tracked.push({ light, fixture });
         return light;
     }
 
-    createDirectional(
-        name: string,
-        direction: Vec3,
-        options: DirectionalLightOptions = {},
-    ): DirectionalLight {
+    createDirectional(name: string, direction: Vec3, options: DirectionalLightOptions = {}): DirectionalLight {
         const scene = this.requireScene();
         const vector = new Vector3(...direction).normalize();
         const light = new DirectionalLight(name, vector, scene);
         this.applyCommon(light, options);
         if (options.position) light.position = new Vector3(...options.position);
         const fixture =
-            options.showFixture && options.position
-                ? createDirectionalFixture(
-                      name,
-                      new Vector3(...options.position),
-                      vector,
-                      scene,
-                      { color: options.fixture?.color ?? options.diffuse, ...options.fixture },
-                  )
+            options.fixture && options.position
+                ? createDirectionalFixture(name, new Vector3(...options.position), vector, scene, {
+                      ...options.fixture,
+                      color: options.fixture.color ?? options.diffuse,
+                  })
                 : null;
         this.tracked.push({ light, fixture });
         return light;

@@ -113,7 +113,6 @@ export class Scene4 implements GameScene {
             specular: [1, 0.45, 0.2],
             intensity: 1.3,
             range: 18,
-            showFixture: true,
             fixture: { scale: 0.35, color: [1, 0.55, 0.25] },
         });
     }

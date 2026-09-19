@@ -100,7 +100,6 @@ export class Scene1 implements GameScene {
             intensity: 1.2,
             range: 14,
             includedOnlyMeshes: this.getMeshes(),
-            showFixture: true,
             fixture: { scale: 0.55, color: [1, 0.32, 0.32] },
         });
     }
