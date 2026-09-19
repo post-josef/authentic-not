@@ -9,6 +9,60 @@ body {
     font-family: "Carlito", sans-serif;
 }
 
+.terms {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    z-index: 10;
+    transform: translateX(-50%);
+    text-align: center;
+    font-size: 12px;
+    color: #9b958a;
+    background: #0a080b;
+    box-shadow: 0 0 8px #0a080b;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 4px 8px;
+}
+.terms-copyright,
+.terms-link {
+    white-space: nowrap;
+}
+.terms-link {
+    color: #c3baab;
+    cursor: pointer;
+    text-decoration: none;
+}
+.terms-link:hover {
+    color: #ddd0ba;
+}
+.terms:hover .terms-tooltip {
+    opacity: 1;
+    transition-delay: 800ms;
+}
+.terms-tooltip {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    box-sizing: border-box;
+    width: min(420px, calc(100vw - 16px));
+    padding: 4px 8px;
+    transform: translateX(-50%);
+    border: 1px solid rgba(195, 186, 171, 0.22);
+    border-radius: 4px;
+    background: rgba(12, 14, 18, 0.96);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    color: #d8d2c6;
+    font-size: 11px;
+    line-height: 1.4;
+    pointer-events: none;
+    opacity: 0;
+    transition:
+        opacity 0.18s ease,
+        visibility 0.18s ease;
+    transition-delay: 0ms;
+}
+
 #welcome {
     position: fixed;
     inset: 0;

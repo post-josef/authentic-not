@@ -2,7 +2,7 @@
 
 # Authentic Not
 
-Online art exhibition space
+Interactive online curatorial and research art exhibition.
 
 <br>
 <picture>
@@ -11,24 +11,13 @@ Online art exhibition space
 
 </div>
 
+## Terms of Use & Copyright
+
+All artworks presented within Authentic-not remain the intellectual property of their respective artists. Unless explicitly stated otherwise, all rights to individual artworks, including digital artworks, videos, images, sound works, 3D objects and other artistic content, are reserved by their respective copyright holders. The public accessibility of an artwork through Authentic-not does not constitute permission or a licence to reproduce, download for further use, publish, distribute, modify, commercially exploit or otherwise use the artwork.
+
 ## Exhibition engine
 
-Each file in `src/scenes/` owns that scene's objects, lights, modal content, sounds,
-fog, animations, and interaction callbacks. Scenes import manager singletons
-directly and can combine them freely:
-
-```ts
-objectManager.interactive(object, {
-    onClick: () => {
-        audioManager.play("click");
-        subtitleManager.show("Selected artwork", 1600);
-        modalManager.open(artworkModal);
-    },
-});
-```
-
-`sceneManager` only registers, loads, unloads, and switches scenes. On a switch it
-clears all scene-scoped resources before loading the next scene.
+Each file in `src/scenes/` owns that scene's objects, lights, modal content, sounds, fog, animations, and interaction callbacks. Scenes import manager singletons directly and can combine them freely. `sceneManager` only registers, loads, unloads, and switches scenes. On a switch it clears all scene-scoped resources before loading the next scene.
 
 Available managers:
 
