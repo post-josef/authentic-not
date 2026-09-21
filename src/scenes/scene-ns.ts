@@ -84,7 +84,7 @@ export class SceneNs implements Scene {
         });
     }
 
-    unload(): void {
+    unload() {
         this.objects.forEach((object) => object.dispose());
         this.objects = [];
     }
@@ -93,7 +93,7 @@ export class SceneNs implements Scene {
         return this.objects.flatMap((object) => objectManager.meshes(object));
     }
 
-    private openModal(index: number): void {
+    private openModal(index: number) {
         modalManager.open({
             className: "modal-scene-ns",
             width: "min(92vw, 800px)",

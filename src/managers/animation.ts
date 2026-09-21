@@ -79,16 +79,16 @@ export class AnimationManager {
     private tracks = new Map<string, Track>();
     private observer: Observer<Scene> | null = null;
 
-    init(scene: Scene): void {
+    init(scene: Scene) {
         this.dispose();
         this.scene = scene;
     }
 
-    add(id: string, mesh: AbstractMesh, config: AnimationConfig): void {
+    add(id: string, mesh: AbstractMesh, config: AnimationConfig) {
         this.addMany(id, mesh, [config]);
     }
 
-    addMany(id: string, mesh: AbstractMesh, configs: AnimationConfig[]): void {
+    addMany(id: string, mesh: AbstractMesh, configs: AnimationConfig[]) {
         this.remove(id);
         const scene = this.requireScene();
         const track: Track = {
@@ -126,21 +126,21 @@ export class AnimationManager {
         if (track.proceduralConfigs.length > 0) this.ensureObserver();
     }
 
-    play(id: string): void {
+    play(id: string) {
         const track = this.tracks.get(id);
         if (!track) return;
         track.paused = false;
         track.animatables.forEach((item) => item.restart());
     }
 
-    pause(id: string): void {
+    pause(id: string) {
         const track = this.tracks.get(id);
         if (!track) return;
         track.paused = true;
         track.animatables.forEach((item) => item.pause());
     }
 
-    stop(id: string): void {
+    stop(id: string) {
         const track = this.tracks.get(id);
         if (!track) return;
         track.paused = true;
@@ -148,7 +148,7 @@ export class AnimationManager {
         this.restoreBase(track);
     }
 
-    remove(id: string): void {
+    remove(id: string) {
         const track = this.tracks.get(id);
         if (!track) return;
         track.animatables.forEach((item) => item.stop());
@@ -156,12 +156,12 @@ export class AnimationManager {
         if (this.tracks.size === 0) this.removeObserver();
     }
 
-    clear(): void {
+    clear() {
         [...this.tracks.keys()].forEach((id) => this.remove(id));
         this.removeObserver();
     }
 
-    dispose(): void {
+    dispose() {
         this.clear();
         this.scene = null;
     }
@@ -171,7 +171,7 @@ export class AnimationManager {
         return this.scene;
     }
 
-    private ensureObserver(): void {
+    private ensureObserver() {
         if (this.observer) return;
         const scene = this.requireScene();
         this.observer = scene.onBeforeRenderObservable.add(() => {
@@ -182,18 +182,18 @@ export class AnimationManager {
         });
     }
 
-    private removeObserver(): void {
+    private removeObserver() {
         if (this.scene && this.observer) this.scene.onBeforeRenderObservable.remove(this.observer);
         this.observer = null;
     }
 
-    private restoreBase(track: Track): void {
+    private restoreBase(track: Track) {
         track.mesh.position.set(...track.basePosition);
         track.mesh.rotation.set(...track.baseRotation);
         track.mesh.scaling.set(...track.baseScaling);
     }
 
-    private updateTrack(track: Track, time: number): void {
+    private updateTrack(track: Track, time: number) {
         const position = copyVec3(track.basePosition);
         const rotation = copyVec3(track.baseRotation);
         const scaling = copyVec3(track.baseScaling);

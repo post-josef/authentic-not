@@ -66,7 +66,7 @@ export class ModalManager {
     private previouslyFocused: HTMLElement | null = null;
     private readonly panelClickHandler = (event: Event) => event.stopPropagation();
 
-    init(): void {
+    init() {
         this.dispose();
         const root = document.getElementById("modal-root");
         const backdrop = root?.querySelector<HTMLElement>(".modal-backdrop");
@@ -87,7 +87,7 @@ export class ModalManager {
         return this.openState || this.closing;
     }
 
-    open(config: ModalConfig): void {
+    open(config: ModalConfig) {
         const root = this.requireRoot();
         if (this.openState || this.closing) return;
 
@@ -117,7 +117,7 @@ export class ModalManager {
         this.bindKeyboard();
     }
 
-    close(afterClose?: () => void): void {
+    close(afterClose?: () => void) {
         if (this.closing) return;
         if (afterClose) this.closeCallbacks.push(afterClose);
         if (!this.openState) {
@@ -160,7 +160,7 @@ export class ModalManager {
         this.closeTimer = window.setTimeout(finish, 250);
     }
 
-    dispose(): void {
+    dispose() {
         const hadInteractionLock = this.openState || this.closing;
         this.unbindEvents();
         this.clearCloseWait();
@@ -182,7 +182,7 @@ export class ModalManager {
         this.content = null;
     }
 
-    private renderContent(items: ModalRuntimeItem[]): void {
+    private renderContent(items: ModalRuntimeItem[]) {
         const content = this.content;
         if (!content) throw new Error("modalManager.init() must be called first");
         content.replaceChildren(...items.map((item) => this.createItem(item)));
@@ -259,7 +259,7 @@ export class ModalManager {
         return element;
     }
 
-    private runButtonAction(action: ModalButtonAction): void {
+    private runButtonAction(action: ModalButtonAction) {
         if (action === "close") {
             this.close();
             return;
@@ -267,7 +267,7 @@ export class ModalManager {
         this.close(() => this.onSceneSwitch?.(action.scene));
     }
 
-    private applyConfigStyle(config: ModalConfig): void {
+    private applyConfigStyle(config: ModalConfig) {
         const panel = this.requirePanel();
         this.appliedClasses = (config.className ?? "").split(/\s+/).filter(Boolean);
         this.appliedClasses.forEach((name) => panel.classList.add(name));
@@ -281,7 +281,7 @@ export class ModalManager {
         }
     }
 
-    private clearConfigStyle(): void {
+    private clearConfigStyle() {
         if (!this.panel) return;
         this.appliedClasses.forEach((name) => this.panel?.classList.remove(name));
         this.appliedClasses = [];
@@ -289,7 +289,7 @@ export class ModalManager {
         this.appliedStyles = [];
     }
 
-    private bindBackdrop(): void {
+    private bindBackdrop() {
         const openedAt = performance.now();
         this.backdropHandler = () => {
             if (performance.now() - openedAt >= 300) this.close();
@@ -299,7 +299,7 @@ export class ModalManager {
         });
     }
 
-    private bindKeyboard(): void {
+    private bindKeyboard() {
         this.keydownHandler = (event) => {
             if (event.key === "Escape") {
                 event.preventDefault();
@@ -326,7 +326,7 @@ export class ModalManager {
         document.addEventListener("keydown", this.keydownHandler);
     }
 
-    private unbindEvents(): void {
+    private unbindEvents() {
         if (this.backdrop && this.backdropHandler) {
             this.backdrop.removeEventListener("click", this.backdropHandler);
         }
@@ -345,7 +345,7 @@ export class ModalManager {
             : [];
     }
 
-    private clearCloseWait(): void {
+    private clearCloseWait() {
         if (this.transitionHandler) {
             this.backdrop?.removeEventListener("transitionend", this.transitionHandler);
             this.panel?.removeEventListener("transitionend", this.transitionHandler);
@@ -355,14 +355,14 @@ export class ModalManager {
         this.closeTimer = null;
     }
 
-    private restoreMeshPickability(): void {
+    private restoreMeshPickability() {
         this.activeMeshes.forEach(({ mesh, wasPickable }) => {
             if (!mesh.isDisposed()) mesh.isPickable = wasPickable;
         });
         this.activeMeshes = [];
     }
 
-    private runCloseCallbacks(): void {
+    private runCloseCallbacks() {
         const callbacks = this.closeCallbacks;
         this.closeCallbacks = [];
         callbacks.forEach((callback) => callback());

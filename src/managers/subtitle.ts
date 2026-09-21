@@ -10,7 +10,7 @@ export class SubtitleManager {
     private showTimer: ReturnType<typeof setTimeout> | null = null;
     private hideTimer: ReturnType<typeof setTimeout> | null = null;
 
-    init(): void {
+    init() {
         this.dispose();
         const root = document.getElementById("subtitle-root");
         const line = root?.querySelector<HTMLElement>(".subtitle-line");
@@ -19,7 +19,7 @@ export class SubtitleManager {
         this.line = line;
     }
 
-    show(text: string, durationMs?: number, options: SubtitleOptions = {}): void {
+    show(text: string, durationMs?: number, options: SubtitleOptions = {}) {
         this.clear();
         const reveal = () => {
             if (!this.root || !this.line) return;
@@ -45,13 +45,13 @@ export class SubtitleManager {
         }
     }
 
-    hide(): void {
+    hide() {
         this.clearTimers();
         this.root?.classList.remove("is-visible");
         if (this.line) this.line.textContent = "";
     }
 
-    clear(): void {
+    clear() {
         this.hide();
         if (this.line) {
             this.line.className = "subtitle-line";
@@ -59,13 +59,13 @@ export class SubtitleManager {
         }
     }
 
-    dispose(): void {
+    dispose() {
         this.clear();
         this.root = null;
         this.line = null;
     }
 
-    private clearTimers(): void {
+    private clearTimers() {
         if (this.showTimer) clearTimeout(this.showTimer);
         if (this.hideTimer) clearTimeout(this.hideTimer);
         this.showTimer = null;

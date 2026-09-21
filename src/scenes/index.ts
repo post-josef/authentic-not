@@ -7,7 +7,7 @@ import { Scene2 } from "./demo/scene2";
 import { Scene3 } from "./demo/scene3";
 import { Scene4 } from "./demo/scene4";
 
-export function registerScenes(scenes: SceneManager): void {
+export function registerScenes(scenes: SceneManager) {
     // demo & testing:
     scenes.register("scene1", () => new Scene1());
     scenes.register("scene2", () => new Scene2());

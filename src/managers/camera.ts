@@ -22,7 +22,7 @@ export class CameraManager {
     private walkRotation = Vector3.Zero();
     private orbitSpawn: { alpha: number; beta: number; radius: number; target: Vector3 } | null = null;
 
-    init(scene: Scene, canvas: HTMLCanvasElement): void {
+    init(scene: Scene, canvas: HTMLCanvasElement) {
         this.dispose();
         this.scene = scene;
         this.canvas = canvas;
@@ -59,7 +59,7 @@ export class CameraManager {
             maxDistance?: number;
             minDistance?: number;
         } = {},
-    ): void {
+    ) {
         if (!this.scene || !this.canvas) throw new Error("cameraManager.init(scene, canvas) must be called first");
 
         this.stopReset();
@@ -93,7 +93,7 @@ export class CameraManager {
         this.scene.activeCamera = camera;
     }
 
-    resetSceneConfig(): void {
+    resetSceneConfig() {
         this.stopReset();
         this.orbitCam?.dispose();
         this.orbitCam = null;
@@ -106,15 +106,15 @@ export class CameraManager {
         this.walkRotation.copyFrom(this.walkCam.rotation);
     }
 
-    detachControl(): void {
+    detachControl() {
         this.getCamera().detachControl();
     }
 
-    attachControl(): void {
+    attachControl() {
         if (this.canvas) this.getCamera().attachControl(this.canvas, true);
     }
 
-    dispose(): void {
+    dispose() {
         this.stopReset();
         if (this.scene && this.heightObserver) {
             this.scene.onBeforeRenderObservable.remove(this.heightObserver);
@@ -129,7 +129,7 @@ export class CameraManager {
         this.scene = null;
     }
 
-    private readonly onDoubleClick = (): void => {
+    private readonly onDoubleClick = () => {
         const scene = this.scene;
         if (!scene) return;
         const camera = this.getCamera();
@@ -171,7 +171,7 @@ export class CameraManager {
         });
     };
 
-    private stopReset(): void {
+    private stopReset() {
         if (this.scene && this.resetObserver) {
             this.scene.onBeforeRenderObservable.remove(this.resetObserver);
         }

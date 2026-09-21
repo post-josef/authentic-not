@@ -21,7 +21,7 @@ const PLANE_WIDTH = 2.3;
 const PLANE_HEIGHT = 3.2;
 const BORDER_WIDTH = 0.04;
 
-function videoTextureOnError(message?: string): void {
+function videoTextureOnError(message?: string) {
     if (message?.includes("interrupted")) return;
     console.warn(`[objectManager] ${message ?? "Video texture error"}`);
 }
@@ -31,7 +31,7 @@ function applyPlaneMaterial(
     texture: BaseTexture,
     scene: Scene,
     options: { width?: number; height?: number; frameOverlay?: boolean; highlight?: HighlightMode } = {},
-): void {
+) {
     const highlightMode = options.highlight ?? "outline";
     const material = new StandardMaterial(`${mesh.name}Mat`, scene);
     material.diffuseTexture = texture;
@@ -81,7 +81,7 @@ export class ObjectManager {
         return [object.mesh, ...object.mesh.getChildMeshes()];
     }
 
-    setPickable(object: SceneObject, pickable: boolean): void {
+    setPickable(object: SceneObject, pickable: boolean) {
         for (const mesh of this.meshes(object)) mesh.isPickable = pickable;
     }
 
@@ -113,7 +113,7 @@ export class ObjectManager {
             onHover?: () => void;
             onHoverEnd?: () => void;
         },
-    ): void {
+    ) {
         const config = {
             isInteractionBlocked: () => modalManager.isOpen(),
             onPick: events.onClick,
@@ -126,7 +126,7 @@ export class ObjectManager {
         }
     }
 
-    openModal(object: Object3D, hooks: { onSceneSwitch?: (sceneId: string) => void } = {}): void {
+    openModal(object: Object3D, hooks: { onSceneSwitch?: (sceneId: string) => void } = {}) {
         if (!object.modal?.length) return;
         modalManager.open({
             pickableMeshes: sceneManager.getMeshes(),

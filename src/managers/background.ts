@@ -19,7 +19,7 @@ export class BackgroundManager {
     private environment: BaseTexture | null = null;
     private background: Mesh | null = null;
 
-    init(scene: Scene): void {
+    init(scene: Scene) {
         this.dispose();
         this.scene = scene;
     }
@@ -51,7 +51,7 @@ export class BackgroundManager {
         return texture;
     }
 
-    clear(): void {
+    clear() {
         this.background?.dispose(false, true);
         this.background = null;
 
@@ -63,7 +63,7 @@ export class BackgroundManager {
         this.environment = null;
     }
 
-    dispose(): void {
+    dispose() {
         this.clear();
         this.scene = null;
     }

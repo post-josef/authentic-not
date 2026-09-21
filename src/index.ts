@@ -5,12 +5,12 @@ import "./styles.css";
 
 let app: App | null = null;
 
-function setView(mode: "welcome" | "exhibition"): void {
+function setView(mode: "welcome" | "exhibition") {
     document.body.classList.toggle("is-welcome", mode === "welcome");
     document.body.classList.toggle("is-exhibition", mode === "exhibition");
 }
 
-function route(): void {
+function route() {
     const id = sceneManager.sceneIdFromHash();
     if (!id) {
         app?.dispose();

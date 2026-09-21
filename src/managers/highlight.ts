@@ -20,7 +20,7 @@ export class HighlightManager {
     private glowLayer: GlowLayer | null = null;
     private selectionLayer: SelectionOutlineLayer | null = null;
 
-    init(scene: Scene): void {
+    init(scene: Scene) {
         this.dispose();
         this.scene = scene;
     }
@@ -33,7 +33,7 @@ export class HighlightManager {
             onPointerOver?: () => void;
             onPointerOut?: () => void;
         },
-    ): void {
+    ) {
         const scene = this.requireScene();
         mesh.isPickable = true;
         mesh.actionManager = new ActionManager(scene);
@@ -58,11 +58,11 @@ export class HighlightManager {
         );
     }
 
-    clear(): void {
+    clear() {
         this.clearHovered();
     }
 
-    dispose(): void {
+    dispose() {
         this.clear();
         this.highlightLayer?.dispose();
         this.highlightLayer = null;
@@ -78,7 +78,7 @@ export class HighlightManager {
         return this.scene;
     }
 
-    private setHovered(mesh: AbstractMesh | null): void {
+    private setHovered(mesh: AbstractMesh | null) {
         if (this.hovered === mesh) return;
         this.clearHovered();
         if (!mesh || !(mesh instanceof Mesh)) return;
@@ -105,7 +105,7 @@ export class HighlightManager {
         }
     }
 
-    private clearHovered(): void {
+    private clearHovered() {
         if (!this.hovered || !this.hoveredMode) return;
         switch (this.hoveredMode) {
             case "border":
@@ -125,12 +125,12 @@ export class HighlightManager {
         this.hoveredMode = null;
     }
 
-    private setBorderHighlight(mesh: AbstractMesh, visible: boolean): void {
+    private setBorderHighlight(mesh: AbstractMesh, visible: boolean) {
         const border: unknown = mesh.metadata?.border;
         if (border instanceof AbstractMesh) border.isVisible = visible;
     }
 
-    private ensureBackend(mode: HighlightMode): void {
+    private ensureBackend(mode: HighlightMode) {
         const scene = this.requireScene();
         switch (mode) {
             case "highlightLayer":

@@ -51,7 +51,7 @@ export class SceneKv implements Scene {
         });
     }
 
-    unload(): void {
+    unload() {
         this.objects.forEach((object) => object.dispose());
         this.objects = [];
     }

@@ -48,7 +48,7 @@ export class AudioManager {
     private zoneObserver: Observer<Scene> | null = null;
     private unlocked = false;
 
-    init(scene: Scene): void {
+    init(scene: Scene) {
         this.dispose();
         this.scene = scene;
         if (process.env.NODE_ENV !== "development") {
@@ -58,7 +58,7 @@ export class AudioManager {
         }
     }
 
-    unlock(): void {
+    unlock() {
         this.unlocked = true;
         void LastCreatedAudioEngine()?.unlockAsync();
     }
@@ -122,19 +122,19 @@ export class AudioManager {
         });
     }
 
-    pause(id: string): void {
+    pause(id: string) {
         this.sounds.get(id)?.pause();
     }
 
-    stop(id: string): void {
+    stop(id: string) {
         this.sounds.get(id)?.stop();
     }
 
-    setVolume(id: string, volume: number): void {
+    setVolume(id: string, volume: number) {
         this.sounds.get(id)?.setVolume(volume);
     }
 
-    addZone(zone: AudioZone): void {
+    addZone(zone: AudioZone) {
         this.zones.push({ zone, inside: false, played: false });
         if (zone.behavior === "loopWhileInside") {
             const sound = this.sounds.get(zone.soundId);
@@ -144,13 +144,13 @@ export class AudioManager {
     }
 
     /** Scene-switch cleanup. Sounds loaded with `persist` keep playing. */
-    clear(): void {
+    clear() {
         [...this.sounds.keys()].filter((id) => !this.persistent.has(id)).forEach((id) => this.removeSound(id));
         this.zones = [];
         this.removeZoneObserver();
     }
 
-    dispose(): void {
+    dispose() {
         this.persistent.clear();
         this.clear();
         this.scene = null;
@@ -162,7 +162,7 @@ export class AudioManager {
         return this.scene;
     }
 
-    private removeSound(id: string): void {
+    private removeSound(id: string) {
         const previous = this.sounds.get(id);
         if (previous) {
             try {
@@ -179,7 +179,7 @@ export class AudioManager {
         this.sounds.delete(id);
     }
 
-    private ensureZoneObserver(): void {
+    private ensureZoneObserver() {
         if (this.zoneObserver) return;
         const scene = this.requireScene();
         this.zoneObserver = scene.onBeforeRenderObservable.add(() => {
@@ -200,7 +200,7 @@ export class AudioManager {
         });
     }
 
-    private removeZoneObserver(): void {
+    private removeZoneObserver() {
         if (this.scene && this.zoneObserver) {
             this.scene.onBeforeRenderObservable.remove(this.zoneObserver);
         }

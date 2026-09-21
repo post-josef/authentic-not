@@ -48,12 +48,12 @@ export class FogManager {
     private mistTexture: DynamicTexture | null = null;
     private mistFollow: Observer<Scene> | null = null;
 
-    init(scene: Scene): void {
+    init(scene: Scene) {
         this.dispose();
         this.scene = scene;
     }
 
-    set(config: FogConfig): void {
+    set(config: FogConfig) {
         this.cancelTransition();
         const scene = this.requireScene();
         scene.fogMode = MODES[config.mode];
@@ -63,7 +63,7 @@ export class FogManager {
         if (config.end !== undefined) scene.fogEnd = config.end;
     }
 
-    tweenTo(config: FogConfig, durationMs: number): void {
+    tweenTo(config: FogConfig, durationMs: number) {
         this.cancelTransition();
         const scene = this.requireScene();
         const fromColor = scene.fogColor.clone();
@@ -102,7 +102,7 @@ export class FogManager {
      * Distance fog only tints geometry, so an empty room shows nothing. This layers soft
      * billboard puffs through the space to read as actual mist.
      */
-    setMist(config: MistConfig = {}): void {
+    setMist(config: MistConfig = {}) {
         this.clearMist();
         const scene = this.requireScene();
         const [red, green, blue] = config.color ?? [0.62, 0.68, 0.8];
@@ -159,7 +159,7 @@ export class FogManager {
         }
     }
 
-    clearMist(): void {
+    clearMist() {
         if (this.scene && this.mistFollow) {
             this.scene.onBeforeRenderObservable.remove(this.mistFollow);
         }
@@ -170,13 +170,13 @@ export class FogManager {
         this.mistTexture = null;
     }
 
-    clear(): void {
+    clear() {
         this.cancelTransition();
         this.clearMist();
         if (this.scene) this.scene.fogMode = Scene.FOGMODE_NONE;
     }
 
-    dispose(): void {
+    dispose() {
         this.clear();
         this.scene = null;
     }
@@ -208,7 +208,7 @@ export class FogManager {
         return this.scene;
     }
 
-    private cancelTransition(): void {
+    private cancelTransition() {
         if (this.scene && this.transition) {
             this.scene.onBeforeRenderObservable.remove(this.transition);
         }

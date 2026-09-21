@@ -18,7 +18,7 @@ export class App {
     private fpsElement: HTMLElement | null = null;
     private resizeObserver: ResizeObserver | null = null;
 
-    init(): void {
+    init() {
         const canvas = document.getElementById("canvas");
         if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Canvas element not found");
 
@@ -57,11 +57,11 @@ export class App {
         });
     }
 
-    resize(): void {
+    resize() {
         this.engine?.resize();
     }
 
-    dispose(): void {
+    dispose() {
         this.resizeObserver?.disconnect();
         this.resizeObserver = null;
         this.removeAudioUnlockListeners();
@@ -84,14 +84,14 @@ export class App {
         this.engine = null;
     }
 
-    private removeAudioUnlockListeners(): void {
+    private removeAudioUnlockListeners() {
         if (!this.unlockAudioHandler) return;
         window.removeEventListener("pointerdown", this.unlockAudioHandler);
         window.removeEventListener("keydown", this.unlockAudioHandler);
         this.unlockAudioHandler = null;
     }
 
-    private updateFps(): void {
+    private updateFps() {
         if (!this.fpsElement) {
             this.fpsElement = document.createElement("div");
             this.fpsElement.id = "fps";

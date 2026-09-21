@@ -17,15 +17,15 @@ export class SceneManager {
     private routeId: string | null = null;
     private switching = false;
 
-    init(scene: BabylonScene): void {
+    init(scene: BabylonScene) {
         this.babylonScene = scene;
     }
 
-    register(id: string, factory: () => Scene): void {
+    register(id: string, factory: () => Scene) {
         this.registry.set(id, factory);
     }
 
-    switchTo(id: string, skipHash = false): void {
+    switchTo(id: string, skipHash = false) {
         if (!this.registry.has(id)) throw new Error(`Unknown scene: ${id}`);
         if (this.switching) return;
         const finish = () => {
@@ -75,7 +75,7 @@ export class SceneManager {
         return this.current?.getMeshes() ?? [];
     }
 
-    dispose(): void {
+    dispose() {
         this.clearSceneResources();
         this.current?.unload();
         this.current = null;
@@ -84,7 +84,7 @@ export class SceneManager {
         this.babylonScene = null;
     }
 
-    private performSwitch(id: string): void {
+    private performSwitch(id: string) {
         const factory = this.registry.get(id);
         if (!factory) throw new Error(`Unknown scene: ${id}`);
         this.clearSceneResources();
@@ -108,7 +108,7 @@ export class SceneManager {
             });
     }
 
-    private clearSceneResources(): void {
+    private clearSceneResources() {
         const cleanups: Array<[string, () => void]> = [
             ["highlight", () => highlightManager.clear()],
             ["subtitles", () => subtitleManager.clear()],

@@ -109,7 +109,7 @@ export class LightManager {
     private globalLight: HemisphericLight | null = null;
     private tracked: TrackedLight[] = [];
 
-    init(scene: Scene): void {
+    init(scene: Scene) {
         this.dispose();
         this.scene = scene;
         this.globalLight = new HemisphericLight("globalFill", Vector3.Up(), scene);
@@ -199,7 +199,7 @@ export class LightManager {
         return this.tracked.find(({ light }) => light.name === name)?.light;
     }
 
-    clear(): void {
+    clear() {
         this.tracked.forEach(({ light, fixture }) => {
             fixture?.dispose(false, true);
             light.dispose();
@@ -207,7 +207,7 @@ export class LightManager {
         this.tracked = [];
     }
 
-    dispose(): void {
+    dispose() {
         this.clear();
         this.globalLight?.dispose();
         this.globalLight = null;
@@ -219,7 +219,7 @@ export class LightManager {
         return this.scene;
     }
 
-    private applyCommon(light: Light, options: CommonLightOptions): void {
+    private applyCommon(light: Light, options: CommonLightOptions) {
         light.intensity = options.intensity ?? 1;
         if (options.diffuse) light.diffuse = new Color3(...options.diffuse);
         if (options.specular) light.specular = new Color3(...options.specular);

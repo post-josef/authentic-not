@@ -166,7 +166,7 @@ export class Scene3 implements Scene {
         });
     }
 
-    unload(): void {
+    unload() {
         this.objects.forEach((object) => object.dispose());
         this.objects = [];
     }
