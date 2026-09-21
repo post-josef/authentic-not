@@ -51,8 +51,8 @@ export class SceneStart implements Scene {
             OBJECTS.map(async (object, index) => {
                 const { x, z } = portalSlot(index);
                 const instance = await objectManager.create({ ...object, x, z });
-                cameraManager.faceMeshToCamera(instance.mesh);
-                if (object.id === "portal-ns") {
+                instance.mesh.lookAt(cameraManager.getCamera().position);
+                if (object.id !== "portal-ns") {
                     instance.mesh.rotate(Axis.Y, Math.PI, Space.LOCAL);
                 }
                 const targetScene = object.id === "portal-ns" ? "ns" : "kv";

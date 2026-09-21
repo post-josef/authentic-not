@@ -8,12 +8,13 @@ import { Scene3 } from "./demo/scene3";
 import { Scene4 } from "./demo/scene4";
 
 export function registerScenes(scenes: SceneManager): void {
-    // demo:
+    // demo & testing:
     scenes.register("scene1", () => new Scene1());
     scenes.register("scene2", () => new Scene2());
     scenes.register("scene3", () => new Scene3());
     scenes.register("scene4", () => new Scene4());
 
+    // exhibition:
     scenes.register("start", () => new SceneStart());
     scenes.register("kv", () => new SceneKv());
     scenes.register("ns", () => new SceneNs());

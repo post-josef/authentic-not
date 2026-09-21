@@ -52,8 +52,10 @@ export class SceneNs implements Scene {
                 height: 2.2,
                 highlight: "border",
             });
-            cameraManager.faceMeshToCamera(frame.mesh);
-            cameraManager.faceMeshToCamera(panel.mesh);
+            frame.mesh.lookAt(cameraManager.getCamera().position);
+            frame.mesh.rotate(Axis.Y, Math.PI, Space.LOCAL);
+            panel.mesh.lookAt(cameraManager.getCamera().position);
+            panel.mesh.rotate(Axis.Y, Math.PI, Space.LOCAL);
             objectManager.setPickable(frame, false);
             objectManager.interactive(panel, { onClick: () => this.openModal(index) });
             this.objects.push(frame, panel);
@@ -67,8 +69,7 @@ export class SceneNs implements Scene {
             z: 16,
             scale: 5,
         });
-        cameraManager.faceMeshToCamera(face.mesh);
-        face.mesh.rotate(Axis.Y, Math.PI, Space.LOCAL);
+        face.mesh.lookAt(cameraManager.getCamera().position);
         objectManager.setPickable(face, false);
         this.objects.push(face);
 

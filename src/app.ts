@@ -35,9 +35,7 @@ export class App {
         sceneManager.init(this.scene);
         modalManager.init();
         audioManager.init(this.scene);
-        cameraManager.init(this.scene, canvas, {
-            isInteractionBlocked: () => modalManager.isOpen(),
-        });
+        cameraManager.init(this.scene, canvas);
 
         // CSS can load after JS on refresh; resize when the canvas actually has a size
         this.resizeObserver = new ResizeObserver(() => {

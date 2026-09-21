@@ -1,12 +1,12 @@
-import type { AbstractMesh } from "@babylonjs/core";
+import { Vector3, type AbstractMesh } from "@babylonjs/core";
 import { cameraManager } from "../managers/camera";
 import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
 import type { Scene, SceneObject } from "../types";
 
-const MASK_TARGET: [number, number, number] = [0, 0, 12];
+const MASK_TARGET = new Vector3(0, 0, 12);
 
-const CYLINDER_MESH_VIDEOS: Record<string, string> = {
+const CYLINDER_VIDEOS: Record<string, string> = {
     "valec-vrsek": "assets/kv/valec-vrsek.mp4",
     "valec-spodek": "assets/kv/valec-spodek.mp4",
     "valec-bok1": "assets/kv/valec-bok1.mp4",
@@ -18,7 +18,10 @@ export class SceneKv implements Scene {
     private objects: SceneObject[] = [];
 
     async load(): Promise<void> {
-        cameraManager.setOrbit(MASK_TARGET);
+        cameraManager.setOrbit({
+            target: MASK_TARGET,
+            distance: 30,
+        });
 
         const cylinder = await objectManager.create({
             id: "kv-cylinder",
@@ -27,7 +30,7 @@ export class SceneKv implements Scene {
             y: 0,
             z: 12,
         });
-        this.objects.push(objectManager.applyMappedVideoTextures(cylinder, CYLINDER_MESH_VIDEOS, { invertY: true }));
+        this.objects.push(objectManager.applyMappedVideoTextures(cylinder, CYLINDER_VIDEOS, { invertY: true }));
 
         const face = await objectManager.create({
             id: "kv-mask",
@@ -39,7 +42,7 @@ export class SceneKv implements Scene {
         this.objects.push(face);
 
         lightManager.createSpot("sceneKvFace", [0, 6, 6], {
-            target: MASK_TARGET,
+            target: [MASK_TARGET.x, MASK_TARGET.y, MASK_TARGET.z],
             diffuse: [1, 0.8, 0.6],
             specular: [1, 0.6, 0.4],
             intensity: 40,
