@@ -11,10 +11,11 @@ import {
     type Scene,
 } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
-import type { GalleryItem, HighlightMode, SceneObject } from "../types";
+import type { HighlightMode, Object3D, SceneObject } from "../types";
 import { highlightManager } from "./highlight";
 import { modalManager } from "./modal";
 import { sceneManager } from "./scene";
+import { subtitleManager } from "./subtitle";
 
 const PLANE_WIDTH = 2.3;
 const PLANE_HEIGHT = 3.2;
@@ -25,17 +26,13 @@ function videoTextureOnError(message?: string): void {
     console.warn(`[objectManager] ${message ?? "Video texture error"}`);
 }
 
-export function isImageSource(source: string): boolean {
-    return /\.(png|jpe?g|gif|webp)$/i.test(source.split(/[?#]/, 1)[0]);
-}
-
 function applyPlaneMaterial(
     mesh: AbstractMesh,
     texture: BaseTexture,
-    highlightMode: HighlightMode,
     scene: Scene,
-    options: { width?: number; height?: number; frameOverlay?: boolean } = {},
+    options: { width?: number; height?: number; frameOverlay?: boolean; highlight?: HighlightMode } = {},
 ): void {
+    const highlightMode = options.highlight ?? "outline";
     const material = new StandardMaterial(`${mesh.name}Mat`, scene);
     material.diffuseTexture = texture;
     material.emissiveColor = Color3.White();
@@ -50,12 +47,14 @@ function applyPlaneMaterial(
     } else {
         material.useAlphaFromDiffuseTexture = true;
         material.transparencyMode =
-            highlightMode === "selectionOutline" ? Material.MATERIAL_ALPHATESTANDBLEND : Material.MATERIAL_ALPHATEST;
+            highlightMode === "outline" ? Material.MATERIAL_ALPHATESTANDBLEND : Material.MATERIAL_ALPHATEST;
         material.alphaCutOff = 0.4;
     }
 
     mesh.material = material;
-    mesh.metadata = { ...mesh.metadata, highlightMode };
+    if (options.highlight !== undefined) {
+        mesh.metadata = { ...mesh.metadata, highlightMode: options.highlight };
+    }
 
     if (highlightMode !== "border" || options.width === undefined || options.height === undefined) return;
 
@@ -74,7 +73,7 @@ function applyPlaneMaterial(
     border.material = borderMaterial;
     border.renderingGroupId = 0;
     mesh.renderingGroupId = 1;
-    mesh.metadata = { ...mesh.metadata, highlightMode, border };
+    mesh.metadata = { ...mesh.metadata, highlightMode: options.highlight, border };
 }
 
 export class ObjectManager {
@@ -89,19 +88,19 @@ export class ObjectManager {
     applyMappedVideoTextures(
         object: SceneObject,
         meshVideos: Record<string, string>,
-        highlightMode: HighlightMode,
         options: { invertY?: boolean } = {},
     ): SceneObject {
+        const highlight = (object.mesh.metadata?.highlightMode as HighlightMode | undefined) ?? undefined;
         const textures: VideoTexture[] = [];
         for (const mesh of this.meshes(object)) {
             const source = meshVideos[mesh.name];
-            if (source) textures.push(this.applyVideoTexture(mesh, source, highlightMode, options));
+            if (source) textures.push(this.applyVideoTexture(mesh, source, highlight, options));
         }
         const disposeObject = object.dispose.bind(object);
         return {
             mesh: object.mesh,
             dispose: () => {
-                textures.forEach((texture) => this.disposeVideoTexture(texture));
+                textures.forEach((texture) => texture.dispose());
                 disposeObject();
             },
         };
@@ -127,59 +126,112 @@ export class ObjectManager {
         }
     }
 
-    async create(item: GalleryItem, defaultHighlightMode: HighlightMode): Promise<SceneObject> {
-        const highlightMode = item.highlight ?? defaultHighlightMode;
-        const scene = sceneManager.getBabylonScene();
+    openModal(object: Object3D, hooks: { onSceneSwitch?: (sceneId: string) => void } = {}): void {
+        if (!object.modal?.length) return;
+        modalManager.open({
+            pickableMeshes: sceneManager.getMeshes(),
+            className: object.modalClassName,
+            content: object.modal,
+            onSceneSwitch: (sceneId) => {
+                hooks.onSceneSwitch?.(sceneId);
+                sceneManager.switchTo(sceneId);
+            },
+        });
+    }
 
-        if (item.source.split(/[?#]/, 1)[0].toLowerCase().endsWith(".glb")) {
-            const container = await LoadAssetContainerAsync(item.source, scene);
+    async create(object: Object3D): Promise<SceneObject> {
+        const scene = sceneManager.getBabylonScene();
+        const path = object.source.split(/[?#]/, 1)[0].toLowerCase();
+        let sceneObject: SceneObject;
+
+        if (path.endsWith(".glb")) {
+            const container = await LoadAssetContainerAsync(object.source, scene);
             container.addAllToScene();
             const root = container.meshes[0];
-            root.position.set(item.x, item.y ?? 1.8, item.z ?? 5);
-            root.rotation.y = item.r ?? 0;
-            if (item.scale !== undefined) root.scaling.set(item.scale, item.scale, item.scale);
+            root.position.set(object.x, object.y, object.z);
+            root.rotation.set(object.rx ?? 0, object.ry ?? 0, object.rz ?? 0);
+            if (object.scale !== undefined) root.scaling.set(object.scale, object.scale, object.scale);
             root.isPickable = false;
-            container.meshes.forEach((mesh) => {
-                mesh.metadata = { ...mesh.metadata, highlightMode };
-            });
-            return {
+            if (object.highlight !== undefined) {
+                container.meshes.forEach((mesh) => {
+                    mesh.metadata = { ...mesh.metadata, highlightMode: object.highlight };
+                });
+            }
+            sceneObject = {
                 mesh: root,
                 dispose: () => {
                     container.removeAllFromScene();
                     container.dispose();
                 },
             };
+        } else {
+            const width = object.width ?? PLANE_WIDTH;
+            const height = object.height ?? PLANE_HEIGHT;
+            const plane = MeshBuilder.CreatePlane(object.id, { width, height }, scene);
+            plane.position.set(object.x, object.y, object.z);
+            plane.rotation.set(object.rx ?? 0, object.ry ?? 0, object.rz ?? 0);
+            plane.isPickable = false;
+
+            if (path.endsWith(".mp4")) {
+                const videoTexture = new VideoTexture(
+                    `${object.id}VideoTex`,
+                    object.source,
+                    scene,
+                    false,
+                    false,
+                    undefined,
+                    { autoPlay: true, loop: true, muted: true },
+                    videoTextureOnError,
+                );
+                const videoElement = videoTexture.video;
+                videoElement.playsInline = true;
+                videoElement.setAttribute("playsinline", "");
+                videoElement.setAttribute("webkit-playsinline", "");
+                applyPlaneMaterial(plane, videoTexture, scene, { width, height, highlight: object.highlight });
+                sceneObject = {
+                    mesh: plane,
+                    dispose: () => {
+                        videoTexture.dispose();
+                        plane.dispose(false, true);
+                    },
+                };
+            } else {
+                const texture = new Texture(
+                    object.source,
+                    scene,
+                    false,
+                    true,
+                    Texture.TRILINEAR_SAMPLINGMODE,
+                    undefined,
+                    (message) => console.warn(`[objectManager] Failed to load ${object.source}: ${message}`),
+                );
+                texture.hasAlpha = true;
+                applyPlaneMaterial(plane, texture, scene, { width, height, highlight: object.highlight });
+                sceneObject = {
+                    mesh: plane,
+                    dispose: () => plane.dispose(false, true),
+                };
+            }
         }
 
-        const width = item.width ?? PLANE_WIDTH;
-        const height = item.height ?? PLANE_HEIGHT;
-        const plane = MeshBuilder.CreatePlane(item.id, { width, height }, scene);
-        plane.position.set(item.x, item.y ?? 1.8, item.z ?? 5);
-        plane.rotation.y = item.r ?? 0;
-        plane.isPickable = false;
+        if (object.modal?.length || object.highlight !== undefined) {
+            this.interactive(sceneObject, {
+                onClick: () => {
+                    subtitleManager.hide();
+                    if (object.modal?.length) this.openModal(object);
+                },
+                onHover: () => object.subtitle && subtitleManager.show(object.subtitle),
+                onHoverEnd: () => subtitleManager.hide(),
+            });
+        }
 
-        const texture = new Texture(
-            item.source,
-            scene,
-            false,
-            true,
-            Texture.TRILINEAR_SAMPLINGMODE,
-            undefined,
-            (message) => console.warn(`[objectManager] Failed to load ${item.source}: ${message}`),
-        );
-        texture.hasAlpha = true;
-        applyPlaneMaterial(plane, texture, highlightMode, scene, { width, height });
-
-        return {
-            mesh: plane,
-            dispose: () => plane.dispose(false, true),
-        };
+        return sceneObject;
     }
 
     applyVideoTexture(
         mesh: AbstractMesh,
         source: string,
-        highlightMode: HighlightMode,
+        highlight: HighlightMode | undefined,
         options: { invertY?: boolean } = {},
     ): VideoTexture {
         const scene = sceneManager.getBabylonScene();
@@ -190,107 +242,16 @@ export class ObjectManager {
             false,
             options.invertY ?? false,
             undefined,
-            {
-                autoPlay: true,
-                loop: true,
-                muted: true,
-            },
+            { autoPlay: true, loop: true, muted: true },
             videoTextureOnError,
         );
         const videoElement = videoTexture.video;
         videoElement.playsInline = true;
         videoElement.setAttribute("playsinline", "");
         videoElement.setAttribute("webkit-playsinline", "");
-        applyPlaneMaterial(mesh, videoTexture, highlightMode, scene);
+        applyPlaneMaterial(mesh, videoTexture, scene, { highlight });
 
         return videoTexture;
-    }
-
-    disposeVideoTexture(videoTexture: VideoTexture): void {
-        videoTexture.dispose();
-    }
-
-    createVideoPanel(
-        item: {
-            title: string;
-            source: string;
-            x: number;
-            y: number;
-            z: number;
-            width: number;
-            height: number;
-            frame?: {
-                source: string;
-                width: number;
-                height: number;
-                videoOffsetX?: number;
-                videoOffsetY?: number;
-            };
-        },
-        highlightMode: HighlightMode,
-    ): SceneObject {
-        const scene = sceneManager.getBabylonScene();
-        const host = item.frame
-            ? MeshBuilder.CreatePlane(
-                  `${item.title}Frame`,
-                  { width: item.frame.width, height: item.frame.height },
-                  scene,
-              )
-            : MeshBuilder.CreatePlane(item.title, { width: item.width, height: item.height }, scene);
-        host.position.set(item.x, item.y, item.z);
-        host.isPickable = false;
-
-        const video = item.frame
-            ? MeshBuilder.CreatePlane(`${item.title}Video`, { width: item.width, height: item.height }, scene)
-            : host;
-        if (item.frame) {
-            video.parent = host;
-            video.position.set(item.frame.videoOffsetX ?? 0, item.frame.videoOffsetY ?? 0, -0.001);
-            video.isPickable = false;
-
-            const frameTexture = new Texture(
-                item.frame.source,
-                scene,
-                false,
-                true,
-                Texture.TRILINEAR_SAMPLINGMODE,
-                undefined,
-                (message) => console.warn(`[objectManager] Failed to load ${item.frame?.source}: ${message}`),
-            );
-            frameTexture.hasAlpha = true;
-            applyPlaneMaterial(host, frameTexture, highlightMode, scene, { frameOverlay: true });
-        }
-
-        const videoTexture = new VideoTexture(
-            `${item.title}VideoTex`,
-            item.source,
-            scene,
-            false,
-            false,
-            undefined,
-            {
-                autoPlay: true,
-                loop: true,
-                muted: true,
-            },
-            videoTextureOnError,
-        );
-        const videoElement = videoTexture.video;
-        videoElement.playsInline = true;
-        videoElement.setAttribute("playsinline", "");
-        videoElement.setAttribute("webkit-playsinline", "");
-        applyPlaneMaterial(video, videoTexture, highlightMode, scene, {
-            width: item.width,
-            height: item.height,
-        });
-
-        return {
-            mesh: host,
-            dispose: () => {
-                this.disposeVideoTexture(videoTexture);
-                host.dispose(false, true);
-            },
-        };
     }
 }
 

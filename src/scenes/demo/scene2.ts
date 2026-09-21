@@ -3,79 +3,135 @@ import { animationManager } from "../../managers/animation";
 import { audioManager } from "../../managers/audio";
 import { fogManager } from "../../managers/fog";
 import { objectManager } from "../../managers/object";
-import { openGalleryItemModal } from "../../managers/scene";
-import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../../types";
+import { subtitleManager } from "../../managers/subtitle";
+import type { Scene, Object3D, SceneObject } from "../../types";
 import "./scene2.css";
 
-const SCENE2_WINDOW_CONFIGS: WindowConfig[] = [
-    { color: "#21432b99", left: "-320px", top: "140px" },
-    { color: "#501d2599", left: "-250px", top: "-120px" },
-    { color: "#3c284d99", left: "0px", top: "0px" },
-    { color: "#1b3b5899", left: "220px", top: "-80px" },
-    { color: "#39321899", left: "260px", top: "120px" },
-];
-
-const MODAL_CLASS = "modal-scene2";
 const KICK_SOUND = "scene2-kick";
 const COWBELL_SOUND = "scene2-cowbell";
 const MICROWAVE_SOUND = "scene2-microwave";
-const GALLERY_ITEMS: GalleryItem[] = [
+const OBJECTS: Object3D[] = [
     {
         id: "1",
+        highlight: "highlightLayer",
         subtitle: "Drift One",
         source: "assets/images/i2.png",
         x: -4.5,
         y: 2.4,
         z: 3,
-        r: 0.35,
-        text: "Orbiting gallery — each panel drifts on its own path.",
+        ry: 0.35,
+        modalClassName: "modal-scene2",
+        modal: [
+            { type: "text", content: "Drift One", tag: "h2" },
+            { type: "image", src: "assets/images/i2.png", alt: "Drift One" },
+            {
+                type: "text",
+                content: "Orbiting gallery — each panel drifts on its own path.",
+            },
+            {
+                type: "buttons",
+                buttons: [{ label: "Close", action: "close" }],
+            },
+        ],
     },
     {
         id: "2",
+        highlight: "highlightLayer",
         subtitle: "Drift Two",
         source: "assets/images/i4.png",
         x: -1.8,
         y: 1.2,
         z: 6,
-        r: -0.15,
-        text: "Depth layers create a staggered, cinematic feel.",
+        ry: -0.15,
+        modalClassName: "modal-scene2",
+        modal: [
+            { type: "text", content: "Drift Two", tag: "h2" },
+            { type: "image", src: "assets/images/i4.png", alt: "Drift Two" },
+            {
+                type: "text",
+                content: "Depth layers create a staggered, cinematic feel.",
+            },
+            {
+                type: "buttons",
+                buttons: [{ label: "Close", action: "close" }],
+            },
+        ],
     },
     {
         id: "3",
+        highlight: "highlightLayer",
         subtitle: "Drift Three",
         source: "assets/images/i1.png",
         x: 0,
         y: 2.8,
         z: 4.5,
-        r: 0,
-        text: "Center piece rises and falls with a slow pulse.",
+        ry: 0,
+        modalClassName: "modal-scene2",
+        modal: [
+            { type: "text", content: "Drift Three", tag: "h2" },
+            { type: "image", src: "assets/images/i1.png", alt: "Drift Three" },
+            {
+                type: "text",
+                content: "Center piece rises and falls with a slow pulse.",
+            },
+            {
+                type: "buttons",
+                buttons: [{ label: "Close", action: "close" }],
+            },
+        ],
     },
     {
         id: "4",
+        highlight: "highlightLayer",
         subtitle: "Drift Four",
         source: "assets/images/i5.png",
         x: 2.2,
         y: 1.5,
         z: 5.5,
-        r: 0.2,
-        text: "Gentle yaw oscillation adds life without distraction.",
+        ry: 0.2,
+        modalClassName: "modal-scene2",
+        modal: [
+            { type: "text", content: "Drift Four", tag: "h2" },
+            { type: "image", src: "assets/images/i5.png", alt: "Drift Four" },
+            {
+                type: "text",
+                content: "Gentle yaw oscillation adds life without distraction.",
+            },
+            {
+                type: "buttons",
+                buttons: [{ label: "Close", action: "close" }],
+            },
+        ],
     },
     {
         id: "5",
+        highlight: "highlightLayer",
         subtitle: "Drift Five",
         source: "assets/images/i3.png",
         x: 4.8,
         y: 2.1,
         z: 3.5,
-        r: -0.4,
-        text: "Continue to the orbital ring gallery.",
-        nextSceneId: "scene3",
+        ry: -0.4,
+        modalClassName: "modal-scene2",
+        modal: [
+            { type: "text", content: "Drift Five", tag: "h2" },
+            { type: "image", src: "assets/images/i3.png", alt: "Drift Five" },
+            {
+                type: "text",
+                content: "Continue to the orbital ring gallery.",
+            },
+            {
+                type: "buttons",
+                buttons: [
+                    { label: "Close", action: "close" },
+                    { label: "Next", action: { scene: "scene3" } },
+                ],
+            },
+        ],
     },
 ];
 
-export class Scene2 implements GameScene {
-    readonly id = "scene2";
-    readonly highlightMode: GameScene["highlightMode"] = "highlightLayer";
+export class Scene2 implements Scene {
     private objects: SceneObject[] = [];
 
     async load(): Promise<void> {
@@ -104,17 +160,21 @@ export class Scene2 implements GameScene {
         });
 
         this.objects = await Promise.all(
-            GALLERY_ITEMS.map(async (item, index) => {
-                const object = await objectManager.create(item, this.highlightMode);
-                objectManager.interactive(object, {
+            OBJECTS.map(async (object, index) => {
+                const instance = await objectManager.create(object);
+                objectManager.interactive(instance, {
                     onClick: () => {
                         audioManager.play(index % 2 === 0 ? KICK_SOUND : COWBELL_SOUND);
-                        openGalleryItemModal(item, SCENE2_WINDOW_CONFIGS[index], MODAL_CLASS, this.getMeshes(), {
-                            onNext: () => audioManager.play(MICROWAVE_SOUND),
+                        objectManager.openModal(object, {
+                            onSceneSwitch: (sceneId) => {
+                                if (sceneId === "scene3") audioManager.play(MICROWAVE_SOUND);
+                            },
                         });
                     },
+                    onHover: () => object.subtitle && subtitleManager.show(object.subtitle),
+                    onHoverEnd: () => subtitleManager.hide(),
                 });
-                animationManager.addMany(`scene2-${index}`, object.mesh, [
+                animationManager.addMany(`scene2-${index}`, instance.mesh, [
                     {
                         preset: "drift",
                         amplitude: [0.25, 0.35, 0.2],
@@ -131,7 +191,7 @@ export class Scene2 implements GameScene {
                         phase: index * 1.2,
                     },
                 ]);
-                return object;
+                return instance;
             }),
         );
     }

@@ -2,94 +2,137 @@ import type { AbstractMesh } from "@babylonjs/core";
 import { animationManager } from "../../managers/animation";
 import { lightManager } from "../../managers/light";
 import { objectManager } from "../../managers/object";
-import { openGalleryItemModal } from "../../managers/scene";
-import { subtitleManager } from "../../managers/subtitle";
-import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../../types";
+import type { Scene, Object3D, SceneObject } from "../../types";
 import "./scene1.css";
 
-const SCENE1_WINDOW_CONFIGS: WindowConfig[] = [
-    { color: "#21432b99", left: "-320px", top: "140px" },
-    { color: "#501d2599", left: "-250px", top: "-120px" },
-    { color: "#3c284d99", left: "0px", top: "0px" },
-    { color: "#1b3b5899", left: "220px", top: "-80px" },
-    { color: "#39321899", left: "260px", top: "120px" },
-];
-
-const MODAL_CLASS = "modal-scene1";
-const GALLERY_ITEMS: GalleryItem[] = [
+const OBJECTS: Object3D[] = [
     {
         id: "1",
+        highlight: "outline",
         source: "assets/images/i1.png",
         x: -6,
-        r: -0.6,
+        y: 1.8,
+        z: 5,
+        ry: -0.6,
         subtitle: "Row One",
-        embed: { provider: "youtube", videoId: "mMD63t-W0Os", autoplay: true, muted: true },
-        text: "The line begins here — a soft red light spills across the first frame.",
+        modalClassName: "modal-scene1",
+        modal: [
+            { type: "text", content: "Row One", tag: "h2" },
+            { type: "image", src: "assets/images/i1.png", alt: "Row One" },
+            { type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" },
+            {
+                type: "text",
+                content: "The line begins here — a soft red light spills across the first frame.",
+            },
+            { type: "buttons", buttons: [{ label: "Close", action: "close" }] },
+        ],
     },
     {
         id: "2",
+        highlight: "outline",
         source: "assets/images/i2.png",
         x: -3,
-        r: -0.2,
+        y: 1.8,
+        z: 5,
+        ry: -0.2,
         subtitle: "Row Two",
-        embed: { provider: "youtube", videoId: "mMD63t-W0Os", autoplay: true, muted: true },
-        text: "Each panel leans in slightly, drawing you further along the corridor.",
+        modalClassName: "modal-scene1",
+        modal: [
+            { type: "text", content: "Row Two", tag: "h2" },
+            { type: "image", src: "assets/images/i2.png", alt: "Row Two" },
+            { type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" },
+            {
+                type: "text",
+                content: "Each panel leans in slightly, drawing you further along the corridor.",
+            },
+            { type: "buttons", buttons: [{ label: "Close", action: "close" }] },
+        ],
     },
     {
         id: "3",
+        highlight: "outline",
         source: "assets/images/i3.png",
         x: 0,
-        r: 0,
+        y: 1.8,
+        z: 5,
+        ry: 0,
         subtitle: "Row Three",
-        embed: { provider: "vimeo", videoId: "384166760", autoplay: true, muted: true },
-        text: "At the center, the spot finds its mark and the image gently breathes.",
+        modalClassName: "modal-scene1",
+        modal: [
+            { type: "text", content: "Row Three", tag: "h2" },
+            { type: "image", src: "assets/images/i3.png", alt: "Row Three" },
+            { type: "embed", source: "https://vimeo.com/384166760" },
+            {
+                type: "text",
+                content: "At the center, the spot finds its mark and the image gently breathes.",
+            },
+            { type: "buttons", buttons: [{ label: "Close", action: "close" }] },
+        ],
     },
     {
         id: "4",
+        highlight: "outline",
         source: "assets/images/i4.png",
         x: 3,
-        r: 0.2,
+        y: 1.8,
+        z: 5,
+        ry: 0.2,
         subtitle: "Row Four",
-        embed: { provider: "youtube", videoId: "mMD63t-W0Os", autoplay: true, muted: true },
-        text: "The rhythm holds — quiet float, warm glow, one piece after another.",
+        modalClassName: "modal-scene1",
+        modal: [
+            { type: "text", content: "Row Four", tag: "h2" },
+            { type: "image", src: "assets/images/i4.png", alt: "Row Four" },
+            { type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" },
+            {
+                type: "text",
+                content: "The rhythm holds — quiet float, warm glow, one piece after another.",
+            },
+            { type: "buttons", buttons: [{ label: "Close", action: "close" }] },
+        ],
     },
     {
         id: "5",
+        highlight: "outline",
         source: "assets/images/i5.png",
         x: 6,
-        r: 0.6,
+        y: 1.8,
+        z: 5,
+        ry: 0.6,
         subtitle: "Row Five",
-        embed: { provider: "youtube", videoId: "mMD63t-W0Os", autoplay: true, muted: true },
-        text: "The row ends, but the gallery does not. Step into the drifting collection ahead.",
-        nextSceneId: "scene2",
+        modalClassName: "modal-scene1",
+        modal: [
+            { type: "text", content: "Row Five", tag: "h2" },
+            { type: "image", src: "assets/images/i5.png", alt: "Row Five" },
+            { type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" },
+            {
+                type: "text",
+                content: "The row ends, but the gallery does not. Step into the drifting collection ahead.",
+            },
+            {
+                type: "buttons",
+                buttons: [
+                    { label: "Close", action: "close" },
+                    { label: "Next", action: { scene: "scene2" } },
+                ],
+            },
+        ],
     },
 ];
 
-export class Scene1 implements GameScene {
-    readonly id = "scene1";
-    readonly highlightMode: GameScene["highlightMode"] = "selectionOutline";
+export class Scene1 implements Scene {
     private objects: SceneObject[] = [];
 
     async load(): Promise<void> {
         this.objects = await Promise.all(
-            GALLERY_ITEMS.map(async (item, index) => {
-                const object = await objectManager.create(item, this.highlightMode);
-                objectManager.interactive(object, {
-                    onClick: () => {
-                        subtitleManager.hide();
-                        openGalleryItemModal(item, SCENE1_WINDOW_CONFIGS[index], MODAL_CLASS, this.getMeshes());
-                    },
-                    onHover: () => item.subtitle && subtitleManager.show(item.subtitle),
-                    onHoverEnd: () => subtitleManager.hide(),
-                });
-
-                animationManager.add(`scene1-${index}`, object.mesh, {
+            OBJECTS.map(async (object, index) => {
+                const instance = await objectManager.create(object);
+                animationManager.add(`scene1-${index}`, instance.mesh, {
                     preset: "float",
                     amplitude: 0.15,
                     speed: 1.4,
                     phase: index,
                 });
-                return object;
+                return instance;
             }),
         );
 

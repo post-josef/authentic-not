@@ -2,7 +2,7 @@ import type { AbstractMesh } from "@babylonjs/core";
 import { cameraManager } from "../managers/camera";
 import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
-import type { GameScene, SceneObject } from "../types";
+import type { Scene, SceneObject } from "../types";
 
 const MASK_TARGET: [number, number, number] = [0, 0, 12];
 
@@ -14,45 +14,28 @@ const CYLINDER_MESH_VIDEOS: Record<string, string> = {
     "valec-bok3": "assets/kv/valec-bok3.mp4",
 };
 
-export class SceneKv implements GameScene {
-    readonly id = "scene-kv";
-    readonly highlightMode: GameScene["highlightMode"] = "highlightLayer";
+export class SceneKv implements Scene {
     private objects: SceneObject[] = [];
 
     async load(): Promise<void> {
         cameraManager.setOrbit(MASK_TARGET);
 
-        const cylinder = await objectManager.create(
-            {
-                id: "kv-cylinder",
-                source: "assets/kv/valec.glb",
-                x: 0,
-                y: 0,
-                z: 12,
-                r: 0,
-                text: "",
-            },
-            this.highlightMode,
-        );
-        this.objects.push(
-            objectManager.applyMappedVideoTextures(cylinder, CYLINDER_MESH_VIDEOS, this.highlightMode, {
-                invertY: true,
-            }),
-        );
+        const cylinder = await objectManager.create({
+            id: "kv-cylinder",
+            source: "assets/kv/valec.glb",
+            x: 0,
+            y: 0,
+            z: 12,
+        });
+        this.objects.push(objectManager.applyMappedVideoTextures(cylinder, CYLINDER_MESH_VIDEOS, { invertY: true }));
 
-        const face = await objectManager.create(
-            {
-                id: "kv-mask",
-                source: "assets/kv/mask.glb",
-                x: 0,
-                y: 0,
-                z: 12,
-                r: 0,
-                text: "",
-            },
-            this.highlightMode,
-        );
-        objectManager.setPickable(face, false);
+        const face = await objectManager.create({
+            id: "kv-mask",
+            source: "assets/kv/mask.glb",
+            x: 0,
+            y: 0,
+            z: 12,
+        });
         this.objects.push(face);
 
         lightManager.createSpot("sceneKvFace", [0, 6, 6], {

@@ -2,96 +2,142 @@ import type { AbstractMesh } from "@babylonjs/core";
 import { animationManager } from "../../managers/animation";
 import { lightManager } from "../../managers/light";
 import { objectManager } from "../../managers/object";
-import { openGalleryItemModal } from "../../managers/scene";
-import { subtitleManager } from "../../managers/subtitle";
-import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../../types";
+import type { Scene, Object3D, SceneObject } from "../../types";
 import "./scene3.css";
 
-const SCENE3_WINDOW_CONFIGS: WindowConfig[] = [
-    { color: "#1a2d4d99", left: "-300px", top: "100px" },
-    { color: "#2d1f4d99", left: "-180px", top: "-140px" },
-    { color: "#1f3d4a99", left: "40px", top: "-40px" },
-    { color: "#3d2a1f99", left: "200px", top: "60px" },
-    { color: "#1f3d2a99", left: "280px", top: "150px" },
-];
-
-const MODAL_CLASS = "modal-scene3";
 const RING_RADIUS = 5.5;
 const RING_CENTER: [number, number, number] = [0, 2.2, 8];
 const PANEL_COUNT = 5;
-const GALLERY_ITEMS: GalleryItem[] = [
+const OBJECTS: Object3D[] = [
     {
         id: "1",
+        highlight: "outline",
         subtitle: "Orbit One",
         source: "assets/images/i3.png",
         x: 0,
         y: 2.2,
         z: 8 + RING_RADIUS,
-        r: 0,
-        text: "Panels ride a slow ring — the whole constellation turns together.",
+        ry: 0,
+        modalClassName: "modal-scene3",
+        modal: [
+            { type: "text", content: "Orbit One", tag: "h2" },
+            { type: "image", src: "assets/images/i3.png", alt: "Orbit One" },
+            {
+                type: "text",
+                content: "Panels ride a slow ring — the whole constellation turns together.",
+            },
+            {
+                type: "buttons",
+                buttons: [{ label: "Close", action: "close" }],
+            },
+        ],
     },
     {
         id: "2",
+        highlight: "outline",
         subtitle: "Orbit Two",
         source: "assets/images/i5.png",
         x: 0,
         y: 2.5,
         z: 8,
-        r: 0,
-        text: "Each frame faces the hub while the carousel drifts through space.",
+        ry: 0,
+        modalClassName: "modal-scene3",
+        modal: [
+            { type: "text", content: "Orbit Two", tag: "h2" },
+            { type: "image", src: "assets/images/i5.png", alt: "Orbit Two" },
+            {
+                type: "text",
+                content: "Each frame faces the hub while the carousel drifts through space.",
+            },
+            {
+                type: "buttons",
+                buttons: [{ label: "Close", action: "close" }],
+            },
+        ],
     },
     {
         id: "3",
+        highlight: "outline",
         subtitle: "Orbit Three",
         source: "assets/images/i1.png",
         x: 0,
         y: 1.9,
         z: 8,
-        r: 0,
-        text: "A cool hub light catches the edges as panels pass in front of one another.",
+        ry: 0,
+        modalClassName: "modal-scene3",
+        modal: [
+            { type: "text", content: "Orbit Three", tag: "h2" },
+            { type: "image", src: "assets/images/i1.png", alt: "Orbit Three" },
+            {
+                type: "text",
+                content: "A cool hub light catches the edges as panels pass in front of one another.",
+            },
+            {
+                type: "buttons",
+                buttons: [{ label: "Close", action: "close" }],
+            },
+        ],
     },
     {
         id: "4",
+        highlight: "outline",
         subtitle: "Orbit Four",
         source: "assets/images/i4.png",
         x: 0,
         y: 2.4,
         z: 8,
-        r: 0,
-        text: "Gentle tilt wobble keeps the ring from feeling mechanical.",
+        ry: 0,
+        modalClassName: "modal-scene3",
+        modal: [
+            { type: "text", content: "Orbit Four", tag: "h2" },
+            { type: "image", src: "assets/images/i4.png", alt: "Orbit Four" },
+            {
+                type: "text",
+                content: "Gentle tilt wobble keeps the ring from feeling mechanical.",
+            },
+            {
+                type: "buttons",
+                buttons: [{ label: "Close", action: "close" }],
+            },
+        ],
     },
     {
         id: "5",
+        highlight: "outline",
         subtitle: "Orbit Five",
         source: "assets/images/i2.png",
         x: 0,
         y: 2.1,
         z: 8,
-        r: 0,
-        text: "Follow the figure-eight — a warmer loop lies ahead.",
-        nextSceneId: "scene4",
+        ry: 0,
+        modalClassName: "modal-scene3",
+        modal: [
+            { type: "text", content: "Orbit Five", tag: "h2" },
+            { type: "image", src: "assets/images/i2.png", alt: "Orbit Five" },
+            {
+                type: "text",
+                content: "Follow the figure-eight — a warmer loop lies ahead.",
+            },
+            {
+                type: "buttons",
+                buttons: [
+                    { label: "Close", action: "close" },
+                    { label: "Next", action: { scene: "scene4" } },
+                ],
+            },
+        ],
     },
 ];
 
-export class Scene3 implements GameScene {
-    readonly id = "scene3";
-    readonly highlightMode: GameScene["highlightMode"] = "selectionOutline";
+export class Scene3 implements Scene {
     private objects: SceneObject[] = [];
 
     async load(): Promise<void> {
         this.objects = await Promise.all(
-            GALLERY_ITEMS.map(async (item, index) => {
+            OBJECTS.map(async (object, index) => {
                 const baseAngle = (index / PANEL_COUNT) * Math.PI * 2 - Math.PI / 2;
-                const object = await objectManager.create(item, this.highlightMode);
-                objectManager.interactive(object, {
-                    onClick: () => {
-                        subtitleManager.hide();
-                        openGalleryItemModal(item, SCENE3_WINDOW_CONFIGS[index], MODAL_CLASS, this.getMeshes());
-                    },
-                    onHover: () => item.subtitle && subtitleManager.show(item.subtitle),
-                    onHoverEnd: () => subtitleManager.hide(),
-                });
-                animationManager.add(`scene3-${index}`, object.mesh, {
+                const instance = await objectManager.create(object);
+                animationManager.add(`scene3-${index}`, instance.mesh, {
                     preset: "orbit",
                     center: RING_CENTER,
                     radius: RING_RADIUS,
@@ -107,7 +153,7 @@ export class Scene3 implements GameScene {
                     tiltPhaseX: index * 0.7,
                     tiltPhaseZ: index * 0.5,
                 });
-                return object;
+                return instance;
             }),
         );
 

@@ -1,6 +1,6 @@
-import type { AbstractMesh, Scene } from "@babylonjs/core";
-import type { GalleryItem, GameScene, WindowConfig } from "../types";
-import { modalManager, type ModalButton, type ModalContentItem } from "./modal";
+import type { AbstractMesh, Scene as BabylonScene } from "@babylonjs/core";
+import type { Scene } from "../types";
+import { modalManager } from "./modal";
 import { animationManager } from "./animation";
 import { audioManager } from "./audio";
 import { backgroundManager } from "./background";
@@ -11,17 +11,17 @@ import { lightManager } from "./light";
 import { subtitleManager } from "./subtitle";
 
 export class SceneManager {
-    private babylonScene: Scene | null = null;
-    private registry = new Map<string, () => GameScene>();
-    private current: GameScene | null = null;
+    private babylonScene: BabylonScene | null = null;
+    private registry = new Map<string, () => Scene>();
+    private current: Scene | null = null;
     private routeId: string | null = null;
     private switching = false;
 
-    init(scene: Scene): void {
+    init(scene: BabylonScene): void {
         this.babylonScene = scene;
     }
 
-    register(id: string, factory: () => GameScene): void {
+    register(id: string, factory: () => Scene): void {
         this.registry.set(id, factory);
     }
 
@@ -58,7 +58,7 @@ export class SceneManager {
         return match?.[1] ?? null;
     }
 
-    getCurrent(): GameScene | null {
+    getCurrent(): Scene | null {
         return this.current;
     }
 
@@ -66,7 +66,7 @@ export class SceneManager {
         return this.routeId;
     }
 
-    getBabylonScene(): Scene {
+    getBabylonScene(): BabylonScene {
         if (!this.babylonScene) throw new Error("sceneManager.init(scene) must be called first");
         return this.babylonScene;
     }
@@ -94,16 +94,18 @@ export class SceneManager {
         const next = factory();
         this.current = next;
         this.routeId = id;
-        highlightManager.setMode(next.highlightMode);
-        void next.load().then(() => {
-            if (this.current !== next) next.unload();
-        }).catch((error) => {
-            if (this.current !== next) {
-                next.unload();
-                return;
-            }
-            console.error(`[sceneManager] Failed to load ${id}`, error);
-        });
+        void next
+            .load()
+            .then(() => {
+                if (this.current !== next) next.unload();
+            })
+            .catch((error) => {
+                if (this.current !== next) {
+                    next.unload();
+                    return;
+                }
+                console.error(`[sceneManager] Failed to load ${id}`, error);
+            });
     }
 
     private clearSceneResources(): void {
@@ -128,74 +130,3 @@ export class SceneManager {
 }
 
 export const sceneManager = new SceneManager();
-
-function isImageSource(source: string): boolean {
-    return /\.(png|jpe?g|gif|webp)$/i.test(source.split(/[?#]/, 1)[0]);
-}
-
-export function openGalleryItemModal(
-    item: GalleryItem,
-    windowConfig: WindowConfig,
-    modalClass: string,
-    meshes: AbstractMesh[],
-    options: { onNext?: () => void } = {},
-): void {
-    const buttons: ModalButton[] = [
-        {
-            label: "Close",
-            className: "modal-btn modal-btn-close",
-            onClick: () => modalManager.close(),
-        },
-    ];
-    if (item.nextSceneId) {
-        const nextSceneId = item.nextSceneId;
-        buttons.push({
-            label: "Next",
-            className: "modal-btn modal-btn-next",
-            onClick: () => {
-                options.onNext?.();
-                modalManager.close(() => sceneManager.switchTo(nextSceneId));
-            },
-        });
-    }
-
-    let media: ModalContentItem | undefined;
-    if (item.embed) {
-        media = {
-            type: "embed",
-            provider: item.embed.provider,
-            videoId: item.embed.videoId,
-            src: item.embed.src,
-            autoplay: item.embed.autoplay ?? true,
-            muted: item.embed.muted ?? true,
-            className: "modal-embed",
-        };
-    } else if (item.embedSrc) {
-        media = { type: "embed", provider: "generic", src: item.embedSrc, className: "modal-embed" };
-    } else if (isImageSource(item.source)) {
-        media = {
-            type: "image",
-            src: item.source,
-            alt: item.subtitle ?? item.id,
-            className: "modal-image",
-        };
-    }
-
-    modalManager.open({
-        pickableMeshes: meshes,
-        style: {
-            className: modalClass,
-            vars: {
-                "--modal-color": windowConfig.color,
-                "--modal-offset-x": windowConfig.left,
-                "--modal-offset-y": windowConfig.top,
-            },
-        },
-        content: [
-            { type: "text", content: item.subtitle ?? item.id, tag: "h2", className: "modal-title" },
-            ...(media ? [media] : []),
-            ...(item.text ? [{ type: "text" as const, content: item.text, className: "modal-body" }] : []),
-            { type: "buttons", className: "modal-actions", buttons },
-        ],
-    });
-}

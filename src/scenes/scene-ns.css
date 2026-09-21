@@ -1,49 +1,47 @@
 .modal-panel.modal-scene-ns {
-    padding: 16px 20px;
-    background: #000;
-    border: none;
-    border-radius: 28px;
-    backdrop-filter: none;
+    width: min(92vw, 800px);
+    max-height: min(92vh, 720px);
+    padding: 0;
+    background: transparent;
 }
 
 .modal-scene-ns .modal-content {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
-    max-height: none;
-    overflow: visible;
+    gap: 0;
+    padding: 0;
 }
 
-.modal-scene-ns-embed {
-    display: block;
+.modal-scene-ns .modal-content iframe {
     width: 100%;
     aspect-ratio: 16 / 9;
+    border: none;
+}
+
+.modal-scene-ns .modal-content button {
+    position: absolute;
+    z-index: 2;
     margin: 0;
-    border: none;
-    border-radius: 4px;
-}
-
-.modal-scene-ns-close,
-.modal-scene-ns-next {
-    margin-left: auto;
-    padding: 4px;
-    border: none;
-    background: transparent;
+    padding: 10px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    background: rgba(0, 0, 0, 0.55);
     color: #fff;
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    outline: none;
+    font-size: 14px;
+    letter-spacing: 0.08em;
 }
 
-.modal-scene-ns-close {
-    line-height: 1;
+.modal-scene-ns .modal-content button:first-of-type {
+    top: 12px;
+    right: 12px;
 }
 
-.modal-scene-ns-close:hover,
-.modal-scene-ns-next:hover {
-    opacity: 0.75;
+.modal-scene-ns .modal-content button:last-of-type {
+    right: 12px;
+    bottom: 12px;
+}
+
+.modal-scene-ns .modal-content button:hover {
+    background: rgba(0, 0, 0, 0.75);
 }

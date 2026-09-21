@@ -3,81 +3,136 @@ import { animationManager } from "../../managers/animation";
 import { backgroundManager } from "../../managers/background";
 import { lightManager } from "../../managers/light";
 import { objectManager } from "../../managers/object";
-import { openGalleryItemModal } from "../../managers/scene";
-import type { GalleryItem, GameScene, SceneObject, WindowConfig } from "../../types";
+import type { Scene, Object3D, SceneObject } from "../../types";
 import "./scene4.css";
 
-const SCENE4_WINDOW_CONFIGS: WindowConfig[] = [
-    { color: "#4a302099", left: "-280px", top: "90px" },
-    { color: "#3d281899", left: "-160px", top: "-130px" },
-    { color: "#5c3a1499", left: "20px", top: "-50px" },
-    { color: "#4a2d1a99", left: "210px", top: "40px" },
-    { color: "#3d351899", left: "290px", top: "140px" },
-];
-
-const MODAL_CLASS = "modal-scene4";
 const LOOP_WIDTH = 4.2;
 const LOOP_CENTER_Z = 5.5;
 const LOOP_SPEED = 0.14;
 const PANEL_COUNT = 5;
 const ENVIRONMENT_URL = "https://assets.babylonjs.com/environments/environmentSpecular.env";
-const GALLERY_ITEMS: GalleryItem[] = [
+const OBJECTS: Object3D[] = [
     {
         id: "1",
+        highlight: "glow",
         subtitle: "Loop One",
         source: "assets/images/i3.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
-        r: 0,
-        text: "The path bends into a figure-eight — panels trace an endless crossing.",
+        ry: 0,
+        modalClassName: "modal-scene4",
+        modal: [
+            { type: "text", content: "Loop One", tag: "h2" },
+            { type: "image", src: "assets/images/i3.png", alt: "Loop One" },
+            {
+                type: "text",
+                content: "The path bends into a figure-eight — panels trace an endless crossing.",
+            },
+            {
+                type: "buttons",
+                buttons: [{ label: "Close", action: "close" }],
+            },
+        ],
     },
     {
         id: "2",
+        highlight: "glow",
         subtitle: "Loop Two",
         source: "assets/images/i2.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
-        r: 0,
-        text: "At the crossover, heights diverge — one rises as another dips below.",
+        ry: 0,
+        modalClassName: "modal-scene4",
+        modal: [
+            { type: "text", content: "Loop Two", tag: "h2" },
+            { type: "image", src: "assets/images/i2.png", alt: "Loop Two" },
+            {
+                type: "text",
+                content: "At the crossover, heights diverge — one rises as another dips below.",
+            },
+            {
+                type: "buttons",
+                buttons: [{ label: "Close", action: "close" }],
+            },
+        ],
     },
     {
         id: "3",
+        highlight: "glow",
         subtitle: "Loop Three",
         source: "assets/images/i5.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
-        r: 0,
-        text: "A warm ember light hangs at the knot, catching every passing frame.",
+        ry: 0,
+        modalClassName: "modal-scene4",
+        modal: [
+            { type: "text", content: "Loop Three", tag: "h2" },
+            { type: "image", src: "assets/images/i5.png", alt: "Loop Three" },
+            {
+                type: "text",
+                content: "A warm ember light hangs at the knot, catching every passing frame.",
+            },
+            {
+                type: "buttons",
+                buttons: [{ label: "Close", action: "close" }],
+            },
+        ],
     },
     {
         id: "4",
+        highlight: "glow",
         subtitle: "Loop Four",
         source: "assets/images/i1.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
-        r: 0,
-        text: "Hover brings a soft bloom — the glow layer answers like a held breath.",
+        ry: 0,
+        modalClassName: "modal-scene4",
+        modal: [
+            { type: "text", content: "Loop Four", tag: "h2" },
+            { type: "image", src: "assets/images/i1.png", alt: "Loop Four" },
+            {
+                type: "text",
+                content: "Hover brings a soft bloom — the glow layer answers like a held breath.",
+            },
+            {
+                type: "buttons",
+                buttons: [{ label: "Close", action: "close" }],
+            },
+        ],
     },
     {
         id: "5",
+        highlight: "glow",
         subtitle: "Loop Five",
         source: "assets/images/i4.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
-        r: 0,
-        text: "The journey closes where it began. Return to the quiet row gallery.",
-        nextSceneId: "scene1",
+        ry: 0,
+        modalClassName: "modal-scene4",
+        modal: [
+            { type: "text", content: "Loop Five", tag: "h2" },
+            { type: "image", src: "assets/images/i4.png", alt: "Loop Five" },
+            {
+                type: "text",
+                content: "The journey closes where it began. Return to the quiet row gallery.",
+            },
+            {
+                type: "buttons",
+                buttons: [
+                    { label: "Close", action: "close" },
+                    { label: "Next", action: { scene: "scene1" } },
+                ],
+            },
+        ],
     },
 ];
 
-export class Scene4 implements GameScene {
-    readonly id = "scene4";
-    readonly highlightMode: GameScene["highlightMode"] = "glowLayer";
+export class Scene4 implements Scene {
     private objects: SceneObject[] = [];
 
     async load(): Promise<void> {
@@ -89,13 +144,9 @@ export class Scene4 implements GameScene {
         });
 
         this.objects = await Promise.all(
-            GALLERY_ITEMS.map(async (item, index) => {
-                const object = await objectManager.create(item, this.highlightMode);
-                objectManager.interactive(object, {
-                    onClick: () =>
-                        openGalleryItemModal(item, SCENE4_WINDOW_CONFIGS[index], MODAL_CLASS, this.getMeshes()),
-                });
-                animationManager.add(`scene4-${index}`, object.mesh, {
+            OBJECTS.map(async (object, index) => {
+                const instance = await objectManager.create(object);
+                animationManager.add(`scene4-${index}`, instance.mesh, {
                     preset: "figureEight",
                     center: [0, 2.2, LOOP_CENTER_Z],
                     width: LOOP_WIDTH,
@@ -104,7 +155,7 @@ export class Scene4 implements GameScene {
                     phase: (index / PANEL_COUNT) * Math.PI * 2,
                     tiltPhase: index,
                 });
-                return object;
+                return instance;
             }),
         );
 

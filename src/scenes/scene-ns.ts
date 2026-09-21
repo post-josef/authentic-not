@@ -4,12 +4,10 @@ import { fogManager } from "../managers/fog";
 import { lightManager } from "../managers/light";
 import { modalManager } from "../managers/modal";
 import { objectManager } from "../managers/object";
-import type { GameScene, SceneObject } from "../types";
+import type { Scene, SceneObject } from "../types";
 import "./scene-ns.css";
 
-export class SceneNs implements GameScene {
-    readonly id = "scene-ns";
-    readonly highlightMode: GameScene["highlightMode"] = "highlightLayer";
+export class SceneNs implements Scene {
     private objects: SceneObject[] = [];
 
     async load(): Promise<void> {
@@ -34,37 +32,41 @@ export class SceneNs implements GameScene {
             [1, 0],
             [2, 4.2],
         ] as const) {
-            const panel = objectManager.createVideoPanel(
-                {
-                    title: `nsPanel${index + 1}`,
-                    source: `assets/ns/${index + 1}.mp4`,
-                    x,
-                    y: 1.7,
-                    z: 6,
-                    width: 3.04,
-                    height: 2.2,
-                    frame: { source: "assets/ns/frame.png", width: 3.25, height: 2.7 },
-                },
-                "border",
-            );
+            const frame = await objectManager.create({
+                id: `nsPanel${index + 1}Frame`,
+                source: "assets/ns/frame.png",
+                x,
+                y: 1.7,
+                z: 6,
+                width: 3.25,
+                height: 2.7,
+                highlight: "border",
+            });
+            const panel = await objectManager.create({
+                id: `nsPanel${index + 1}`,
+                source: `assets/ns/${index + 1}.mp4`,
+                x,
+                y: 1.7,
+                z: 5.999,
+                width: 3.04,
+                height: 2.2,
+                highlight: "border",
+            });
+            cameraManager.faceMeshToCamera(frame.mesh);
             cameraManager.faceMeshToCamera(panel.mesh);
+            objectManager.setPickable(frame, false);
             objectManager.interactive(panel, { onClick: () => this.openModal(index) });
-            this.objects.push(panel);
+            this.objects.push(frame, panel);
         }
 
-        const face = await objectManager.create(
-            {
-                id: "nsFace",
-                source: "assets/ns/face.glb",
-                x: 0,
-                y: -2.3,
-                z: 16,
-                r: 0,
-                scale: 5,
-                text: "",
-            },
-            this.highlightMode,
-        );
+        const face = await objectManager.create({
+            id: "nsFace",
+            source: "assets/ns/face.glb",
+            x: 0,
+            y: -2.3,
+            z: 16,
+            scale: 5,
+        });
         cameraManager.faceMeshToCamera(face.mesh);
         face.mesh.rotate(Axis.Y, Math.PI, Space.LOCAL);
         objectManager.setPickable(face, false);
@@ -92,26 +94,15 @@ export class SceneNs implements GameScene {
 
     private openModal(index: number): void {
         modalManager.open({
-            style: { className: "modal-scene-ns", width: "min(92vw, 800px)" },
+            className: "modal-scene-ns",
+            width: "min(92vw, 800px)",
             content: [
-                {
-                    type: "button",
-                    label: "X",
-                    className: "modal-scene-ns-close",
-                    onClick: () => modalManager.close(),
-                },
-                {
-                    type: "embed",
-                    provider: "youtube",
-                    videoId: "mMD63t-W0Os",
-                    autoplay: true,
-                    muted: true,
-                    className: "modal-scene-ns-embed",
-                },
+                { type: "button", label: "X", className: "modal-btn", onClick: () => modalManager.close() },
+                { type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" },
                 {
                     type: "button",
                     label: "NEXT",
-                    className: "modal-scene-ns-next",
+                    className: "modal-btn modal-btn-next",
                     onClick: () => modalManager.close(() => this.openModal((index + 1) % 3)),
                 },
             ],

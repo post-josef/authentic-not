@@ -1,99 +1,50 @@
 import type { AbstractMesh } from "@babylonjs/core";
-import type { EmbedProvider } from "../types";
+import type { ModalButtonAction, ModalContent } from "../types";
 import { cameraManager } from "./camera";
 import { highlightManager } from "./highlight";
 
-type ModalCallback = () => void | Promise<void>;
-type ModalItemStyle = Record<string, string>;
-
-interface ModalItemBase {
-    id?: string;
-    className?: string;
-    style?: ModalItemStyle;
-}
-
-export type ModalContentItem =
-    | (ModalItemBase & { type: "text"; content: string; tag?: "p" | "h1" | "h2" | "h3" | "div" })
-    | (ModalItemBase & { type: "image"; src: string; alt?: string })
-    | (ModalItemBase & {
-          type: "video";
-          src: string;
-          poster?: string;
-          controls?: boolean;
-          autoplay?: boolean;
-          muted?: boolean;
-          loop?: boolean;
-      })
-    | (ModalItemBase & {
-          type: "embed";
-          provider?: EmbedProvider;
-          videoId?: string;
-          src?: string;
-          autoplay?: boolean;
-          muted?: boolean;
-          params?: Record<string, string>;
-      })
-    | (ModalItemBase & { type: "button"; label: string; onClick: ModalCallback })
-    | (ModalItemBase & { type: "buttons"; buttons: ModalButton[] })
-    | (ModalItemBase & { type: "spacer"; height?: string })
-    | (ModalItemBase & { type: "divider" });
-
-export interface ModalButton {
-    label: string;
-    className?: string;
-    style?: ModalItemStyle;
-    onClick: ModalCallback;
-}
+type ModalRuntimeItem = ModalContent | { type: "button"; label: string; onClick: () => void; className?: string };
 
 export interface ModalConfig {
-    style?: {
-        className?: string;
-        vars?: Record<string, string>;
-        width?: string;
-        maxHeight?: string;
-    };
-    content: ModalContentItem[];
-    dismissOnBackdrop?: boolean;
+    className?: string;
+    width?: string;
+    maxHeight?: string;
+    content: ModalRuntimeItem[];
+    onSceneSwitch?: (sceneId: string) => void;
     pickableMeshes?: AbstractMesh[];
+    dismissOnBackdrop?: boolean;
 }
 
-function buildEmbedSrc(item: Extract<ModalContentItem, { type: "embed" }>): string {
-    const provider = item.provider ?? "generic";
-    const autoplay = item.autoplay ?? false;
-    const muted = item.muted ?? autoplay;
-    const extra = item.params ?? {};
+function buildEmbedSrc(source: string): string {
     const withParams = (base: string, params: Record<string, string>) => {
         const url = new URL(base);
         for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
         return url.toString();
     };
 
-    if (provider === "youtube") {
-        const id = item.videoId;
-        if (!id && item.src) return item.src;
-        if (!id) throw new Error("YouTube embed requires videoId or src");
-        return withParams(`https://www.youtube.com/embed/${id}`, {
-            autoplay: autoplay ? "1" : "0",
-            mute: muted ? "1" : "0",
-            rel: "0",
-            ...extra,
-        });
+    let url: URL;
+    try {
+        url = new URL(source);
+    } catch {
+        return source;
     }
 
-    if (provider === "vimeo") {
-        const id = item.videoId;
-        if (!id && item.src) return item.src;
-        if (!id) throw new Error("Vimeo embed requires videoId or src");
-        return withParams(`https://player.vimeo.com/video/${id}`, {
-            autoplay: autoplay ? "1" : "0",
-            muted: muted ? "1" : "0",
-            autopause: "0",
-            ...extra,
-        });
+    const host = url.hostname.replace(/^www\./, "");
+    if (host === "youtube.com" || host === "m.youtube.com") {
+        const id =
+            url.searchParams.get("v") ?? (url.pathname.startsWith("/embed/") ? url.pathname.split("/")[2] : undefined);
+        if (id) return withParams(`https://www.youtube.com/embed/${id}`, { autoplay: "1", rel: "0" });
     }
-
-    if (!item.src) throw new Error("Generic embed requires src");
-    return item.src;
+    if (host === "youtu.be") {
+        const id = url.pathname.slice(1);
+        if (id) return withParams(`https://www.youtube.com/embed/${id}`, { autoplay: "1", rel: "0" });
+    }
+    if (host === "vimeo.com" || host === "player.vimeo.com") {
+        const id = url.pathname.split("/").filter(Boolean).pop();
+        if (id) return withParams(`https://player.vimeo.com/video/${id}`, { autoplay: "1", autopause: "0" });
+    }
+    if (url.pathname.includes("/embed")) return withParams(source, { autoplay: "1" });
+    return source;
 }
 
 export class ModalManager {
@@ -104,8 +55,9 @@ export class ModalManager {
     private openState = false;
     private closing = false;
     private activeMeshes: Array<{ mesh: AbstractMesh; wasPickable: boolean }> = [];
-    private appliedClass = "";
+    private appliedClasses: string[] = [];
     private appliedStyles: string[] = [];
+    private onSceneSwitch: ((sceneId: string) => void) | undefined;
     private backdropHandler: (() => void) | null = null;
     private keydownHandler: ((event: KeyboardEvent) => void) | null = null;
     private transitionHandler: ((event: TransitionEvent) => void) | null = null;
@@ -140,13 +92,13 @@ export class ModalManager {
         if (this.openState || this.closing) return;
 
         this.openState = true;
+        this.onSceneSwitch = config.onSceneSwitch;
         const pickableMeshes = config.pickableMeshes ?? [];
         this.activeMeshes = pickableMeshes.map((mesh) => ({
             mesh,
             wasPickable: mesh.isPickable,
         }));
-        this.previouslyFocused =
-            document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        this.previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         highlightManager.clear();
         this.activeMeshes.forEach(({ mesh }) => (mesh.isPickable = false));
         cameraManager.detachControl();
@@ -196,6 +148,7 @@ export class ModalManager {
             this.previouslyFocused = null;
             this.closing = false;
             this.runCloseCallbacks();
+            this.onSceneSwitch = undefined;
         };
         const transitionHandler = (event: TransitionEvent) => {
             if (event.target !== event.currentTarget || event.propertyName !== "opacity") return;
@@ -222,19 +175,29 @@ export class ModalManager {
         this.restoreMeshPickability();
         if (hadInteractionLock) cameraManager.attachControl();
         this.previouslyFocused = null;
+        this.onSceneSwitch = undefined;
         this.root = null;
         this.backdrop = null;
         this.panel = null;
         this.content = null;
     }
 
-    private renderContent(items: ModalContentItem[]): void {
+    private renderContent(items: ModalRuntimeItem[]): void {
         const content = this.content;
         if (!content) throw new Error("modalManager.init() must be called first");
         content.replaceChildren(...items.map((item) => this.createItem(item)));
     }
 
-    private createItem(item: ModalContentItem): HTMLElement {
+    private createItem(item: ModalRuntimeItem): HTMLElement {
+        if (item.type === "button") {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = item.label;
+            button.className = item.className ?? "modal-btn";
+            button.addEventListener("click", () => void item.onClick());
+            return button;
+        }
+
         let element: HTMLElement;
         switch (item.type) {
             case "text":
@@ -245,26 +208,23 @@ export class ModalManager {
                 const image = document.createElement("img");
                 image.src = item.src;
                 image.alt = item.alt ?? "";
-                image.addEventListener("error", () =>
-                    console.warn(`[modalManager] Failed to load image ${item.src}`),
-                );
+                if (item.width !== undefined) image.style.width = `${item.width}px`;
+                if (item.height !== undefined) image.style.height = `${item.height}px`;
+                image.addEventListener("error", () => console.warn(`[modalManager] Failed to load image ${item.src}`));
                 element = image;
                 break;
             }
             case "video": {
                 const video = document.createElement("video");
                 video.src = item.src;
-                video.controls = item.controls !== false;
-                video.autoplay = item.autoplay ?? false;
-                video.muted = item.muted ?? false;
-                video.loop = item.loop ?? false;
-                if (item.poster) video.poster = item.poster;
+                video.controls = true;
+                video.autoplay = true;
                 element = video;
                 break;
             }
             case "embed": {
                 const embed = document.createElement("iframe");
-                embed.src = buildEmbedSrc(item);
+                embed.src = buildEmbedSrc(item.source);
                 embed.allow =
                     "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
                 embed.allowFullscreen = true;
@@ -272,23 +232,16 @@ export class ModalManager {
                 element = embed;
                 break;
             }
-            case "button": {
-                const button = document.createElement("button");
-                button.type = "button";
-                button.textContent = item.label;
-                button.addEventListener("click", () => void item.onClick());
-                element = button;
-                break;
-            }
             case "buttons": {
                 const group = document.createElement("div");
+                group.className = "modal-actions";
                 item.buttons.forEach((definition) => {
                     const button = document.createElement("button");
                     button.type = "button";
                     button.textContent = definition.label;
-                    button.className = definition.className ?? "modal-btn";
-                    this.applyStyles(button, definition.style);
-                    button.addEventListener("click", () => void definition.onClick());
+                    button.className =
+                        definition.action === "close" ? "modal-btn modal-btn-close" : "modal-btn modal-btn-next";
+                    button.addEventListener("click", () => void this.runButtonAction(definition.action));
                     group.appendChild(button);
                 });
                 element = group;
@@ -303,47 +256,37 @@ export class ModalManager {
                 break;
         }
 
-        if (item.id) element.id = item.id;
-        if (item.className) element.className = item.className;
-        else if (item.type === "button") element.className = "modal-btn";
-        else if (item.type === "buttons") element.className = "modal-actions";
-        else if (item.type === "embed") element.className = "modal-embed";
-        else if (item.type === "spacer") element.className = "modal-spacer";
-        else if (item.type === "divider") element.className = "modal-divider";
-        this.applyStyles(element, item.style);
         return element;
+    }
+
+    private runButtonAction(action: ModalButtonAction): void {
+        if (action === "close") {
+            this.close();
+            return;
+        }
+        this.close(() => this.onSceneSwitch?.(action.scene));
     }
 
     private applyConfigStyle(config: ModalConfig): void {
         const panel = this.requirePanel();
-        this.appliedClass = config.style?.className ?? "";
-        if (this.appliedClass) panel.classList.add(this.appliedClass);
-        Object.entries(config.style?.vars ?? {}).forEach(([property, value]) => {
-            panel.style.setProperty(property, value);
-            this.appliedStyles.push(property);
-        });
-        if (config.style?.width) {
-            panel.style.width = config.style.width;
+        this.appliedClasses = (config.className ?? "").split(/\s+/).filter(Boolean);
+        this.appliedClasses.forEach((name) => panel.classList.add(name));
+        if (config.width) {
+            panel.style.width = config.width;
             this.appliedStyles.push("width");
         }
-        if (config.style?.maxHeight) {
-            panel.style.maxHeight = config.style.maxHeight;
+        if (config.maxHeight) {
+            panel.style.maxHeight = config.maxHeight;
             this.appliedStyles.push("max-height");
         }
     }
 
     private clearConfigStyle(): void {
         if (!this.panel) return;
-        if (this.appliedClass) this.panel.classList.remove(this.appliedClass);
+        this.appliedClasses.forEach((name) => this.panel?.classList.remove(name));
+        this.appliedClasses = [];
         this.appliedStyles.forEach((property) => this.panel?.style.removeProperty(property));
-        this.appliedClass = "";
         this.appliedStyles = [];
-    }
-
-    private applyStyles(element: HTMLElement, styles: Record<string, string> | undefined): void {
-        Object.entries(styles ?? {}).forEach(([property, value]) =>
-            element.style.setProperty(property, value),
-        );
     }
 
     private bindBackdrop(): void {
@@ -439,7 +382,6 @@ export class ModalManager {
         if (!this.panel) throw new Error("modalManager.init() must be called first");
         return this.panel;
     }
-
 }
 
 export const modalManager = new ModalManager();

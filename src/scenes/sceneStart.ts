@@ -5,31 +5,33 @@ import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
 import { sceneManager } from "../managers/scene";
 import { subtitleManager } from "../managers/subtitle";
-import type { GalleryItem, GameScene, SceneObject } from "../types";
-
-type PortalItem = Pick<GalleryItem, "id" | "source" | "subtitle" | "nextSceneId"> &
-    Partial<Pick<GalleryItem, "width" | "height" | "scale" | "y">>;
+import type { Scene, Object3D, SceneObject } from "../types";
 
 const PORTAL_COUNT = 2;
 const PORTAL_SPACING = 4;
 const PORTAL_CENTER_Z = 5;
 
-const PORTALS: PortalItem[] = [
+const OBJECTS: Object3D[] = [
     {
         id: "portal-ns",
         source: "assets/ns/face.glb",
-        subtitle: "Natálie Sedláčková",
-        nextSceneId: "ns",
-        scale: 6,
+        x: 0,
         y: -4,
+        z: PORTAL_CENTER_Z,
+        subtitle: "Natálie Sedláčková",
+        scale: 6,
+        highlight: "highlightLayer",
     },
     {
         id: "portal-kv",
         source: "assets/kv/zdimacka.jpg",
+        x: 0,
+        y: 1.8,
+        z: PORTAL_CENTER_Z,
         subtitle: "Kryštof Vitner",
-        nextSceneId: "kv",
         width: 2.4,
         height: 3.4,
+        highlight: "highlightLayer",
     },
 ];
 
@@ -41,38 +43,34 @@ function portalSlot(index: number): { x: number; z: number } {
     };
 }
 
-export class SceneStart implements GameScene {
-    readonly id = "sceneStart";
-    readonly highlightMode: GameScene["highlightMode"] = "selectionOutline";
+export class SceneStart implements Scene {
     private objects: SceneObject[] = [];
 
     async load(): Promise<void> {
         this.objects = await Promise.all(
-            PORTALS.map(async (item, index) => {
+            OBJECTS.map(async (object, index) => {
                 const { x, z } = portalSlot(index);
-                const object = await objectManager.create(
-                    { ...item, x, y: item.y ?? 1.8, z, r: 0 } satisfies GalleryItem,
-                    this.highlightMode,
-                );
-                cameraManager.faceMeshToCamera(object.mesh);
-                if (item.id === "portal-ns") {
-                    object.mesh.rotate(Axis.Y, Math.PI, Space.LOCAL);
+                const instance = await objectManager.create({ ...object, x, z });
+                cameraManager.faceMeshToCamera(instance.mesh);
+                if (object.id === "portal-ns") {
+                    instance.mesh.rotate(Axis.Y, Math.PI, Space.LOCAL);
                 }
-                objectManager.interactive(object, {
+                const targetScene = object.id === "portal-ns" ? "ns" : "kv";
+                objectManager.interactive(instance, {
                     onClick: () => {
                         subtitleManager.hide();
-                        sceneManager.switchTo(item.nextSceneId!);
+                        sceneManager.switchTo(targetScene);
                     },
-                    onHover: () => item.subtitle && subtitleManager.show(item.subtitle),
+                    onHover: () => object.subtitle && subtitleManager.show(object.subtitle),
                     onHoverEnd: () => subtitleManager.hide(),
                 });
-                animationManager.add(`sceneStart-${index}`, object.mesh, {
+                animationManager.add(`sceneStart-${index}`, instance.mesh, {
                     preset: "float",
                     amplitude: 0.15,
                     speed: 1.4,
                     phase: index,
                 });
-                return object;
+                return instance;
             }),
         );
 

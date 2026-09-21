@@ -267,8 +267,8 @@ body.is-exhibition #welcome {
 
 .modal-panel {
     position: fixed;
-    left: calc(50% + var(--modal-offset-x, 0px));
-    top: calc(50% + var(--modal-offset-y, 0px));
+    left: 50%;
+    top: 50%;
     transform: translate(-50%, -50%);
     width: 560px;
     max-width: calc(100vw - 32px);
@@ -278,7 +278,7 @@ body.is-exhibition #welcome {
     box-sizing: border-box;
     border: 2px solid #fff;
     border-radius: 8px;
-    background: var(--modal-color, #333);
+    background: #333;
     padding: 16px 20px;
     opacity: 0;
     transition: opacity var(--modal-fade-duration) var(--modal-fade-easing);
@@ -301,7 +301,7 @@ body.is-exhibition #welcome {
     opacity: 1;
 }
 
-.modal-title {
+.modal-content h2 {
     margin: 0;
     color: #fff;
     font-size: 28px;
@@ -310,7 +310,7 @@ body.is-exhibition #welcome {
     text-align: center;
 }
 
-.modal-image {
+.modal-content img {
     margin-bottom: 8px;
     height: 200px;
     width: auto;
@@ -318,7 +318,7 @@ body.is-exhibition #welcome {
     object-fit: contain;
 }
 
-.modal-embed {
+.modal-content iframe {
     margin-bottom: 8px;
     width: 100%;
     max-width: 100%;
@@ -328,7 +328,7 @@ body.is-exhibition #welcome {
     border-radius: 4px;
 }
 
-.modal-body {
+.modal-content p {
     margin: 0;
     color: #fff;
     font-size: 18px;
