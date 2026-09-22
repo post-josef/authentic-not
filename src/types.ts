@@ -12,21 +12,21 @@ export type ModalContent =
     | { type: "divider" };
 
 export interface Object3D {
-    source: string;
+    source: string; // mesh source file (GLB, image or video)
     x: number;
     y: number;
     z: number;
     rx?: number;
     ry?: number;
     rz?: number;
-    scale?: number;
-    width?: number;
-    height?: number;
+    scale?: number; // mesh scale on all axes
+    width?: number; // image/video width
+    height?: number; // image/video height
     subtitle?: string;
     highlight?: HighlightMode;
     modalClassName?: string;
     modal?: ModalContent[];
-    targetScene?: string;
+    targetScene?: string; // onClick scene switch
 }
 
 export interface Scene {

@@ -17,10 +17,10 @@ export interface LightOptions {
     z: number;
     target?: Vector3; // if target is provided, the light will be a spot light
     color?: Color3;
-    intensity?: number;
-    range?: number;
+    intensity?: number; // default is 50
+    range?: number; // default is 50
     meshes?: AbstractMesh[];
-    fixture?: { scale?: number };
+    fixture?: { scale?: number }; // default is 0.5
 }
 
 function createFixtureMaterial(name: string, scene: Scene, color: Color3): StandardMaterial {
@@ -91,7 +91,7 @@ export class LightManager {
         const scene = this.scene;
         const name = `light${scene.lights.length}`;
         const position = new Vector3(options.x, options.y, options.z);
-        const color = options.color ?? new Color3(1, 0.96, 0.88);
+        const color = options.color ?? new Color3(1, 0.99, 0.98);
 
         const light = options.target
             ? new SpotLight(name, position, options.target.subtract(position).normalize(), Math.PI / 2.4, 1.15, scene)
@@ -102,7 +102,7 @@ export class LightManager {
         light.diffuse = color.clone();
         light.specular = color.clone();
         light.intensity = options.intensity ?? 50;
-        light.range = options.range ?? 25;
+        light.range = options.range ?? 50;
         if (options.meshes) {
             const lit = new Set<AbstractMesh>();
             for (const root of options.meshes) {

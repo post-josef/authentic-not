@@ -1,4 +1,4 @@
-import { Vector3 } from "@babylonjs/core";
+import { Vector3, Color3 } from "@babylonjs/core";
 import { animationManager } from "../managers/animation";
 import { cameraManager } from "../managers/camera";
 import { lightManager } from "../managers/light";
@@ -42,12 +42,18 @@ export class SceneKv implements Scene {
         });
         animationManager.add(face, { preset: "float", speed: 0.6, amplitude: 0.2 });
 
-        lightManager.createLight({
-            x: 0,
-            y: 6,
-            z: 6,
-            target: MASK_TARGET,
-            meshes: [face],
+        const spotLights = [
+            { x: 0, y: 6, z: 0, intensity: 120 },
+            { x: -10, y: -4, z: 0, intensity: 160 },
+            { x: 4, y: 24, z: 16, intensity: 200 },
+        ];
+        spotLights.forEach((light) => {
+            lightManager.createLight({
+                ...light,
+                target: MASK_TARGET,
+                meshes: [face],
+                color: new Color3(0.92, 0.96, 1), // white light
+            });
         });
     }
 }
