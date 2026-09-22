@@ -21,14 +21,16 @@ Each file in `src/scenes/` takes care of that scene's objects, lights, modal con
 
 Available managers:
 
-- `cameraManager`
-- `highlightManager`
-- `lightManager`
-- `modalManager`
-- `animationManager`
-- `audioManager`
-- `subtitleManager`
-- `fogManager`
-- `sceneManager`
+- `animationManager` — add mesh motion animation from presets
+- `audioManager` — load and play sounds
+- `backgroundManager` — add HDR or `.env` environment map skybox
+- `cameraManager` — default camera setup and can switch walk/orbit type
+- `fogManager` — optional scene distance fog or particle mist
+- `highlightManager` — pointer hover handlers and mesh highlight styles
+- `lightManager` — default hemi ligth and optional spot lights
+- `modalManager` — handles full-screen overlay windows with custom content
+- `objectManager` — creates scene objects from GLB files, images or videos
+- `sceneManager` — register scenes, switch via URL hash, and clear resources
+- `subtitleManager` — displays short on-screen captions
 
 Run locally with `pnpm dev`, or create a production build with `pnpm build`.
