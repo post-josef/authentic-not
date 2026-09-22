@@ -150,7 +150,7 @@ export class ObjectManager {
             const root = container.meshes[0];
             root.position.set(object.x, object.y, object.z);
             root.rotation.set(object.rx ?? 0, object.ry ?? 0, object.rz ?? 0);
-            if (object.scale !== undefined) root.scaling.set(object.scale, object.scale, object.scale);
+            if (object.scale !== undefined) root.scaling.scaleInPlace(object.scale);
             root.isPickable = false;
             if (object.highlight !== undefined) {
                 container.meshes.forEach((mesh) => {

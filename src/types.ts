@@ -15,7 +15,6 @@ export type ModalContent =
 
 export interface Object3D {
     source: string;
-    targetScene?: string;
     x: number;
     y: number;
     z: number;
@@ -29,6 +28,7 @@ export interface Object3D {
     highlight?: HighlightMode;
     modalClassName?: string;
     modal?: ModalContent[];
+    targetScene?: string;
 }
 
 export interface SceneObject {

@@ -21,7 +21,8 @@ export class SceneKv implements Scene {
     async load(): Promise<void> {
         cameraManager.setOrbit({
             target: MASK_TARGET,
-            distance: 30,
+            distance: 40,
+            height: 10,
             maxDistance: 55,
         });
 
@@ -39,9 +40,15 @@ export class SceneKv implements Scene {
 
         const face = await objectManager.create({
             source: "assets/kv/mask.glb",
+            scale: 2,
             x: 0,
             y: 0,
             z: 12,
+        });
+        animationManager.add(face.mesh, {
+            preset: "float",
+            speed: 0.6,
+            amplitude: 0.2,
         });
         this.objects.push(face);
 
