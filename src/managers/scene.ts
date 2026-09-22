@@ -1,4 +1,4 @@
-import type { AbstractMesh, Scene as BabylonScene } from "@babylonjs/core";
+import type { Scene as BabylonScene } from "@babylonjs/core";
 import type { Scene } from "../types";
 import { modalManager } from "./modal";
 import { animationManager } from "./animation";
@@ -15,7 +15,6 @@ export class SceneManager {
     private registry = new Map<string, () => Scene>();
     private current: Scene | null = null;
     private routeId: string | null = null;
-    private switching = false;
 
     init(scene: BabylonScene) {
         this.babylonScene = scene;
@@ -27,39 +26,21 @@ export class SceneManager {
 
     switchTo(id: string, skipHash = false) {
         if (!this.registry.has(id)) throw new Error(`Unknown scene: ${id}`);
-        if (this.switching) return;
-        const finish = () => {
+        const go = () => {
             if (this.routeId === id) {
-                if (!skipHash) {
-                    const hash = `#/${id}`;
-                    if (location.hash !== hash) location.hash = hash;
-                }
+                if (!skipHash && location.hash !== `#/${id}`) location.hash = `#/${id}`;
                 return;
             }
             this.performSwitch(id);
-            if (!skipHash) {
-                const hash = `#/${id}`;
-                if (location.hash !== hash) location.hash = hash;
-            }
+            if (!skipHash && location.hash !== `#/${id}`) location.hash = `#/${id}`;
         };
-        if (modalManager.isOpen()) {
-            this.switching = true;
-            modalManager.close(() => {
-                this.switching = false;
-                finish();
-            });
-            return;
-        }
-        finish();
+        if (modalManager.isOpen()) modalManager.close(go);
+        else go();
     }
 
     sceneIdFromHash(): string | null {
         const match = location.hash.match(/^#\/([^/?#]+)/);
         return match?.[1] ?? null;
-    }
-
-    getCurrent(): Scene | null {
-        return this.current;
     }
 
     getRouteId(): string | null {
@@ -71,13 +52,8 @@ export class SceneManager {
         return this.babylonScene;
     }
 
-    getMeshes(): AbstractMesh[] {
-        return this.current?.getMeshes() ?? [];
-    }
-
     dispose() {
         this.clearSceneResources();
-        this.current?.unload();
         this.current = null;
         this.routeId = null;
         this.registry.clear();
@@ -88,44 +64,31 @@ export class SceneManager {
         const factory = this.registry.get(id);
         if (!factory) throw new Error(`Unknown scene: ${id}`);
         this.clearSceneResources();
-        this.current?.unload();
-        this.current = null;
-
-        const next = factory();
-        this.current = next;
+        this.current = factory();
         this.routeId = id;
-        void next
-            .load()
-            .then(() => {
-                if (this.current !== next) next.unload();
-            })
-            .catch((error) => {
-                if (this.current !== next) {
-                    next.unload();
-                    return;
-                }
-                console.error(`[sceneManager] Failed to load ${id}`, error);
-            });
+        void this.current.load().catch((error) => console.error(`[sceneManager] Failed to load ${id}`, error));
     }
 
     private clearSceneResources() {
-        const cleanups: Array<[string, () => void]> = [
-            ["highlight", () => highlightManager.clear()],
-            ["subtitles", () => subtitleManager.clear()],
-            ["audio", () => audioManager.clear()],
-            ["animations", () => animationManager.clear()],
-            ["background", () => backgroundManager.clear()],
-            ["fog", () => fogManager.clear()],
-            ["lights", () => lightManager.clear()],
-            ["camera", () => cameraManager.resetSceneConfig()],
-        ];
-        cleanups.forEach(([name, cleanup]) => {
-            try {
-                cleanup();
-            } catch (error) {
-                console.error(`[sceneManager] Failed to clear ${name}`, error);
+        highlightManager.clear();
+        subtitleManager.clear();
+        audioManager.clear();
+        animationManager.clear();
+        backgroundManager.clear();
+        fogManager.clear();
+        lightManager.clear();
+
+        const scene = this.babylonScene;
+        if (scene) {
+            for (const mesh of [...scene.meshes]) {
+                if (mesh.isDisposed()) continue;
+                const release = mesh.metadata?.exhibitDispose as (() => void) | undefined;
+                if (release) release();
+                else mesh.dispose(false, true);
             }
-        });
+        }
+
+        cameraManager.resetSceneConfig();
     }
 }
 

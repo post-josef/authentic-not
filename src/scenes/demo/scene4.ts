@@ -1,9 +1,9 @@
-import type { AbstractMesh } from "@babylonjs/core";
+import { Color3 } from "@babylonjs/core";
 import { animationManager } from "../../managers/animation";
 import { backgroundManager } from "../../managers/background";
 import { lightManager } from "../../managers/light";
 import { objectManager } from "../../managers/object";
-import type { Scene, Object3D, SceneObject } from "../../types";
+import type { Scene, Object3D } from "../../types";
 import "./scene4.css";
 
 const LOOP_WIDTH = 4.2;
@@ -128,8 +128,6 @@ const OBJECTS: Object3D[] = [
 ];
 
 export class Scene4 implements Scene {
-    private objects: SceneObject[] = [];
-
     async load(): Promise<void> {
         backgroundManager.setEnvironment(ENVIRONMENT_URL, {
             intensity: 0.7,
@@ -138,10 +136,10 @@ export class Scene4 implements Scene {
             blur: 0.15,
         });
 
-        this.objects = await Promise.all(
+        await Promise.all(
             OBJECTS.map(async (object, index) => {
                 const instance = await objectManager.create(object);
-                animationManager.add(instance.mesh, {
+                animationManager.add(instance, {
                     preset: "figureEight",
                     center: [0, 2.2, LOOP_CENTER_Z],
                     width: LOOP_WIDTH,
@@ -154,21 +152,14 @@ export class Scene4 implements Scene {
             }),
         );
 
-        lightManager.createPoint("scene4Ember", [0, 2.8, LOOP_CENTER_Z], {
-            diffuse: [1, 0.55, 0.25],
-            specular: [1, 0.45, 0.2],
+        lightManager.createLight({
+            x: 0,
+            y: 2.8,
+            z: LOOP_CENTER_Z,
+            color: new Color3(1, 0.55, 0.25),
             intensity: 1.3,
             range: 18,
-            fixture: { scale: 0.35, color: [1, 0.55, 0.25] },
+            fixture: { scale: 0.35 },
         });
-    }
-
-    unload() {
-        this.objects.forEach((object) => object.dispose());
-        this.objects = [];
-    }
-
-    getMeshes(): AbstractMesh[] {
-        return this.objects.map((object) => object.mesh);
     }
 }

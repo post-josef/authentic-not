@@ -1,4 +1,5 @@
-import { CubeTexture, HDRCubeTexture, type BaseTexture, type Mesh, type Scene } from "@babylonjs/core";
+import { CubeTexture, HDRCubeTexture } from "@babylonjs/core";
+import type { BaseTexture, Mesh, Scene } from "@babylonjs/core";
 
 export interface EnvironmentOptions {
     intensity?: number;

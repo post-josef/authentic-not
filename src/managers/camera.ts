@@ -1,12 +1,5 @@
-import {
-    ArcRotateCamera,
-    ArcRotateCameraKeyboardMoveInput,
-    UniversalCamera,
-    Vector3,
-    type Camera,
-    type Observer,
-    type Scene,
-} from "@babylonjs/core";
+import { ArcRotateCamera, ArcRotateCameraKeyboardMoveInput, UniversalCamera, Vector3 } from "@babylonjs/core";
+import type { Camera, Observer, Scene } from "@babylonjs/core";
 
 const WALK_POSITION = new Vector3(0, 1.7, -10);
 const RESET_MS = 900;

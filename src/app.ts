@@ -8,6 +8,7 @@ import { highlightManager } from "./managers/highlight";
 import { lightManager } from "./managers/light";
 import { modalManager } from "./managers/modal";
 import { sceneManager } from "./managers/scene";
+import { objectManager } from "./managers/object";
 import { subtitleManager } from "./managers/subtitle";
 import { registerScenes } from "./scenes";
 
@@ -33,7 +34,8 @@ export class App {
         fogManager.init(this.scene);
         subtitleManager.init();
         sceneManager.init(this.scene);
-        modalManager.init();
+        objectManager.init(this.scene);
+        modalManager.init(this.scene);
         audioManager.init(this.scene);
         cameraManager.init(this.scene, canvas);
 

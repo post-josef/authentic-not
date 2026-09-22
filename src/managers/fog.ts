@@ -1,12 +1,5 @@
-import {
-    Color3,
-    Color4,
-    DynamicTexture,
-    ParticleSystem,
-    Scene,
-    Vector3,
-    type Observer,
-} from "@babylonjs/core";
+import { Color3, Color4, DynamicTexture, ParticleSystem, Scene, Vector3 } from "@babylonjs/core";
+import type { Observer } from "@babylonjs/core";
 import { cameraManager } from "./camera";
 
 export interface FogConfig {
@@ -185,14 +178,7 @@ export class FogManager {
         const size = 128;
         const texture = new DynamicTexture("mistPuff", { width: size, height: size }, scene, false);
         const context = texture.getContext();
-        const gradient = context.createRadialGradient(
-            size / 2,
-            size / 2,
-            0,
-            size / 2,
-            size / 2,
-            size / 2,
-        );
+        const gradient = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
         gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
         gradient.addColorStop(0.45, "rgba(255, 255, 255, 0.35)");
         gradient.addColorStop(1, "rgba(255, 255, 255, 0)");

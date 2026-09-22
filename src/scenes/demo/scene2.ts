@@ -1,10 +1,9 @@
-import type { AbstractMesh } from "@babylonjs/core";
 import { animationManager } from "../../managers/animation";
 import { audioManager } from "../../managers/audio";
 import { fogManager } from "../../managers/fog";
 import { objectManager } from "../../managers/object";
 import { subtitleManager } from "../../managers/subtitle";
-import type { Scene, Object3D, SceneObject } from "../../types";
+import type { Scene, Object3D } from "../../types";
 import "./scene2.css";
 
 const KICK_SOUND = "scene2-kick";
@@ -127,8 +126,6 @@ const OBJECTS: Object3D[] = [
 ];
 
 export class Scene2 implements Scene {
-    private objects: SceneObject[] = [];
-
     async load(): Promise<void> {
         // audio assets are not provided, it will throw error
         audioManager.load(KICK_SOUND, "assets/audio/kick.wav", { volume: 0.55 });
@@ -154,7 +151,7 @@ export class Scene2 implements Scene {
             followCamera: true,
         });
 
-        this.objects = await Promise.all(
+        await Promise.all(
             OBJECTS.map(async (object, index) => {
                 const instance = await objectManager.create(object);
                 objectManager.interactive(instance, {
@@ -169,7 +166,7 @@ export class Scene2 implements Scene {
                     onHover: () => object.subtitle && subtitleManager.show(object.subtitle),
                     onHoverEnd: () => subtitleManager.hide(),
                 });
-                animationManager.add(instance.mesh, [
+                animationManager.add(instance, [
                     {
                         preset: "drift",
                         amplitude: [0.25, 0.35, 0.2],
@@ -189,14 +186,5 @@ export class Scene2 implements Scene {
                 return instance;
             }),
         );
-    }
-
-    unload() {
-        this.objects.forEach((object) => object.dispose());
-        this.objects = [];
-    }
-
-    getMeshes(): AbstractMesh[] {
-        return this.objects.map((object) => object.mesh);
     }
 }

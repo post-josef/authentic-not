@@ -1,23 +1,17 @@
 import { animationManager } from "../managers/animation";
-import { cameraManager } from "../managers/camera";
 import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
-import { sceneManager } from "../managers/scene";
-import { subtitleManager } from "../managers/subtitle";
-import type { AbstractMesh } from "@babylonjs/core";
-import type { Scene, Object3D, SceneObject } from "../types";
-
-const PORTAL_COUNT = 2;
-const PORTAL_SPACING = 4;
-const PORTAL_CENTER_Z = 5;
+import { Color3, Vector3 } from "@babylonjs/core";
+import type { Scene, Object3D } from "../types";
 
 const OBJECTS: Object3D[] = [
     {
         source: "assets/ns/face.glb",
         targetScene: "ns",
-        x: 0,
+        x: -2,
         y: -4,
-        z: PORTAL_CENTER_Z,
+        z: 5,
+        ry: Math.PI,
         subtitle: "Natálie Sedláčková",
         scale: 6,
         highlight: "highlightLayer",
@@ -25,9 +19,9 @@ const OBJECTS: Object3D[] = [
     {
         source: "assets/kv/zdimacka.jpg",
         targetScene: "kv",
-        x: 0,
+        x: 2,
         y: 1.8,
-        z: PORTAL_CENTER_Z,
+        z: 5,
         subtitle: "Kryštof Vitner",
         width: 2.4,
         height: 3.4,
@@ -35,58 +29,25 @@ const OBJECTS: Object3D[] = [
     },
 ];
 
-function portalSlot(index: number): { x: number; z: number } {
-    const center = (PORTAL_COUNT - 1) / 2;
-    return {
-        x: (index - center) * PORTAL_SPACING,
-        z: PORTAL_CENTER_Z,
-    };
-}
-
 export class SceneStart implements Scene {
-    private objects: SceneObject[] = [];
-
     async load(): Promise<void> {
-        this.objects = await Promise.all(
+        const portals = await Promise.all(
             OBJECTS.map(async (object, index) => {
-                const { x, z } = portalSlot(index);
-                const instance = await objectManager.create({ ...object, x, z });
-                instance.mesh.lookAt(cameraManager.getCamera().position);
-
-                objectManager.interactive(instance, {
-                    onClick: () => {
-                        subtitleManager.hide();
-                        if (object.targetScene) sceneManager.switchTo(object.targetScene);
-                    },
-                    onHover: () => object.subtitle && subtitleManager.show(object.subtitle),
-                    onHoverEnd: () => subtitleManager.hide(),
-                });
-                animationManager.add(instance.mesh, {
-                    preset: "float",
-                    speed: 1.4,
-                    phase: index,
-                });
-                return instance;
+                const mesh = await objectManager.create(object);
+                animationManager.add(mesh, { preset: "float", speed: 1.4, phase: index });
+                return mesh;
             }),
         );
 
-        lightManager.createSpot("sceneStartSpot", [0, 3.2, 1.5], {
-            target: [0, 1.8, PORTAL_CENTER_Z],
-            diffuse: [1, 0.32, 0.32],
-            specular: [1, 0.35, 0.35],
+        lightManager.createLight({
+            x: 0,
+            y: 3.2,
+            z: 1.5,
+            target: new Vector3(0, 1.8, 5),
+            color: new Color3(1, 0.32, 0.32),
             intensity: 1.2,
             range: 18,
-            includedOnlyMeshes: this.getMeshes(),
-            // fixture: { scale: 0.55, color: [1, 0.32, 0.32] },
+            meshes: portals,
         });
-    }
-
-    unload() {
-        this.objects.forEach((object) => object.dispose());
-        this.objects = [];
-    }
-
-    getMeshes(): AbstractMesh[] {
-        return this.objects.flatMap((object) => objectManager.meshes(object));
     }
 }

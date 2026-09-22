@@ -1,17 +1,8 @@
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
-import {
-    Color3,
-    Material,
-    MeshBuilder,
-    StandardMaterial,
-    Texture,
-    VideoTexture,
-    type AbstractMesh,
-    type BaseTexture,
-    type Scene,
-} from "@babylonjs/core";
+import { Axis, Color3, Material, MeshBuilder, Space, StandardMaterial, Texture, VideoTexture } from "@babylonjs/core";
+import type { AbstractMesh, BaseTexture, Scene } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
-import type { HighlightMode, Object3D, SceneObject } from "../types";
+import type { HighlightMode, Object3D } from "../types";
 import { highlightManager } from "./highlight";
 import { modalManager } from "./modal";
 import { sceneManager } from "./scene";
@@ -77,59 +68,48 @@ function applyPlaneMaterial(
 }
 
 export class ObjectManager {
-    meshes(object: SceneObject): AbstractMesh[] {
-        return [object.mesh, ...object.mesh.getChildMeshes()];
-    }
+    private scene: Scene | null = null;
 
-    setPickable(object: SceneObject, pickable: boolean) {
-        for (const mesh of this.meshes(object)) mesh.isPickable = pickable;
+    init(scene: Scene) {
+        this.scene = scene;
     }
 
     applyMappedVideoTextures(
-        object: SceneObject,
+        mesh: AbstractMesh,
         meshVideos: Record<string, string>,
         options: { invertY?: boolean } = {},
-    ): SceneObject {
-        const highlight = (object.mesh.metadata?.highlightMode as HighlightMode | undefined) ?? undefined;
+    ): AbstractMesh {
+        const highlight = mesh.metadata?.highlightMode as HighlightMode | undefined;
         const textures: VideoTexture[] = [];
-        for (const mesh of this.meshes(object)) {
-            const source = meshVideos[mesh.name];
-            if (source) textures.push(this.applyVideoTexture(mesh, source, highlight, options));
+        for (const part of [mesh, ...mesh.getChildMeshes()]) {
+            const source = meshVideos[part.name];
+            if (source) textures.push(this.applyVideoTexture(part, source, highlight, options));
         }
-        const disposeObject = object.dispose.bind(object);
-        return {
-            mesh: object.mesh,
-            dispose: () => {
-                textures.forEach((texture) => texture.dispose());
-                disposeObject();
-            },
+        const release = mesh.metadata.exhibitDispose as () => void;
+        mesh.metadata.exhibitDispose = () => {
+            textures.forEach((texture) => texture.dispose());
+            release();
         };
+        return mesh;
     }
 
     interactive(
-        object: SceneObject,
-        events: {
+        mesh: AbstractMesh,
+        handlers: {
             onClick: () => void;
             onHover?: () => void;
             onHoverEnd?: () => void;
         },
     ) {
-        const config = {
-            isInteractionBlocked: () => modalManager.isOpen(),
-            onPick: events.onClick,
-            onPointerOver: events.onHover,
-            onPointerOut: events.onHoverEnd,
-        };
-        for (const mesh of this.meshes(object)) {
-            if (mesh.name.endsWith("Border")) continue;
-            highlightManager.makeInteractive(mesh, config);
+        for (const part of [mesh, ...mesh.getChildMeshes()]) {
+            if (part.name.endsWith("Border")) continue;
+            highlightManager.makeInteractive(part, handlers);
         }
     }
 
     openModal(object: Object3D, hooks: { onSceneSwitch?: (sceneId: string) => void } = {}) {
         if (!object.modal?.length) return;
         modalManager.open({
-            pickableMeshes: sceneManager.getMeshes(),
             className: object.modalClassName,
             content: object.modal,
             onSceneSwitch: (sceneId) => {
@@ -139,38 +119,34 @@ export class ObjectManager {
         });
     }
 
-    async create(object: Object3D): Promise<SceneObject> {
-        const scene = sceneManager.getBabylonScene();
+    async create(object: Object3D): Promise<AbstractMesh> {
+        if (!this.scene) throw new Error("objectManager.init(scene) must be called first");
+        const scene = this.scene;
         const path = object.source.split(/[?#]/, 1)[0].toLowerCase();
-        let sceneObject: SceneObject;
+        let mesh: AbstractMesh;
+        let release: () => void;
 
         if (path.endsWith(".glb")) {
             const container = await LoadAssetContainerAsync(object.source, scene);
             container.addAllToScene();
-            const root = container.meshes[0];
-            root.position.set(object.x, object.y, object.z);
-            root.rotation.set(object.rx ?? 0, object.ry ?? 0, object.rz ?? 0);
-            if (object.scale !== undefined) root.scaling.scaleInPlace(object.scale);
-            root.isPickable = false;
+            mesh = container.meshes[0];
+            mesh.position.set(object.x, object.y, object.z);
+            if (object.scale !== undefined) mesh.scaling.scaleInPlace(object.scale);
             if (object.highlight !== undefined) {
-                container.meshes.forEach((mesh) => {
-                    mesh.metadata = { ...mesh.metadata, highlightMode: object.highlight };
+                container.meshes.forEach((part) => {
+                    part.metadata = { ...part.metadata, highlightMode: object.highlight };
                 });
             }
-            sceneObject = {
-                mesh: root,
-                dispose: () => {
-                    container.removeAllFromScene();
-                    container.dispose();
-                },
+            release = () => {
+                container.removeAllFromScene();
+                container.dispose();
             };
         } else {
             const width = object.width ?? PLANE_WIDTH;
             const height = object.height ?? PLANE_HEIGHT;
             const plane = MeshBuilder.CreatePlane(object.source, { width, height }, scene);
             plane.position.set(object.x, object.y, object.z);
-            plane.rotation.set(object.rx ?? 0, object.ry ?? 0, object.rz ?? 0);
-            plane.isPickable = false;
+            mesh = plane;
 
             if (path.endsWith(".mp4")) {
                 const videoTexture = new VideoTexture(
@@ -188,12 +164,9 @@ export class ObjectManager {
                 videoElement.setAttribute("playsinline", "");
                 videoElement.setAttribute("webkit-playsinline", "");
                 applyPlaneMaterial(plane, videoTexture, scene, { width, height, highlight: object.highlight });
-                sceneObject = {
-                    mesh: plane,
-                    dispose: () => {
-                        videoTexture.dispose();
-                        plane.dispose(false, true);
-                    },
+                release = () => {
+                    videoTexture.dispose();
+                    plane.dispose(false, true);
                 };
             } else {
                 const texture = new Texture(
@@ -207,25 +180,32 @@ export class ObjectManager {
                 );
                 texture.hasAlpha = true;
                 applyPlaneMaterial(plane, texture, scene, { width, height, highlight: object.highlight });
-                sceneObject = {
-                    mesh: plane,
-                    dispose: () => plane.dispose(false, true),
-                };
+                release = () => plane.dispose(false, true);
             }
         }
 
-        if (object.modal?.length || object.highlight !== undefined) {
-            this.interactive(sceneObject, {
+        if (object.rx) mesh.rotate(Axis.X, object.rx, Space.LOCAL);
+        if (object.ry) mesh.rotate(Axis.Y, object.ry, Space.LOCAL);
+        if (object.rz) mesh.rotate(Axis.Z, object.rz, Space.LOCAL);
+
+        for (const part of [mesh, ...mesh.getChildMeshes()]) {
+            part.isPickable = false;
+        }
+        mesh.metadata = { ...mesh.metadata, exhibitDispose: release };
+
+        if (object.modal?.length || object.subtitle || object.targetScene || object.highlight) {
+            this.interactive(mesh, {
                 onClick: () => {
                     subtitleManager.hide();
                     if (object.modal?.length) this.openModal(object);
+                    else if (object.targetScene) sceneManager.switchTo(object.targetScene);
                 },
                 onHover: () => object.subtitle && subtitleManager.show(object.subtitle),
                 onHoverEnd: () => subtitleManager.hide(),
             });
         }
 
-        return sceneObject;
+        return mesh;
     }
 
     applyVideoTexture(
@@ -234,11 +214,11 @@ export class ObjectManager {
         highlight: HighlightMode | undefined,
         options: { invertY?: boolean } = {},
     ): VideoTexture {
-        const scene = sceneManager.getBabylonScene();
+        if (!this.scene) throw new Error("objectManager.init(scene) must be called first");
         const videoTexture = new VideoTexture(
             `${mesh.name}VideoTex`,
             source,
-            scene,
+            this.scene,
             false,
             options.invertY ?? false,
             undefined,
@@ -249,8 +229,7 @@ export class ObjectManager {
         videoElement.playsInline = true;
         videoElement.setAttribute("playsinline", "");
         videoElement.setAttribute("webkit-playsinline", "");
-        applyPlaneMaterial(mesh, videoTexture, scene, { highlight });
-
+        applyPlaneMaterial(mesh, videoTexture, this.scene, { highlight });
         return videoTexture;
     }
 }

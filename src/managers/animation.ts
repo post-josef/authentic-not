@@ -1,11 +1,5 @@
-import {
-    Animation,
-    Quaternion,
-    Vector3,
-    type AbstractMesh,
-    type Observer,
-    type Scene,
-} from "@babylonjs/core";
+import { Animation, Quaternion, Vector3 } from "@babylonjs/core";
+import type { AbstractMesh, Observer, Scene } from "@babylonjs/core";
 
 export type Axis = "x" | "y" | "z";
 export type Vec3 = [number, number, number];
@@ -95,8 +89,7 @@ export class AnimationManager {
         const track: Track = {
             mesh,
             proceduralConfigs: configs.filter(
-                (config): config is Exclude<AnimationOptions, { preset: "keyframes" }> =>
-                    config.preset !== "keyframes",
+                (config): config is Exclude<AnimationOptions, { preset: "keyframes" }> => config.preset !== "keyframes",
             ),
             paused: false,
             basePosition: [mesh.position.x, mesh.position.y, mesh.position.z],
@@ -113,15 +106,11 @@ export class AnimationManager {
                 config.property,
                 config.fps,
                 Animation.ANIMATIONTYPE_FLOAT,
-                config.loop === false
-                    ? Animation.ANIMATIONLOOPMODE_CONSTANT
-                    : Animation.ANIMATIONLOOPMODE_CYCLE,
+                config.loop === false ? Animation.ANIMATIONLOOPMODE_CONSTANT : Animation.ANIMATIONLOOPMODE_CYCLE,
             );
             animation.setKeys(config.keys);
             const lastFrame = Math.max(...config.keys.map((key) => key.frame));
-            track.animatables.push(
-                scene.beginDirectAnimation(mesh, [animation], 0, lastFrame, config.loop !== false),
-            );
+            track.animatables.push(scene.beginDirectAnimation(mesh, [animation], 0, lastFrame, config.loop !== false));
         }
 
         this.tracks.set(mesh, track);
@@ -168,16 +157,8 @@ export class AnimationManager {
     }
 
     private updateTrack(track: Track, time: number) {
-        const position: Vec3 = [
-            track.basePosition[0],
-            track.basePosition[1],
-            track.basePosition[2],
-        ];
-        const rotation: Vec3 = [
-            track.baseRotation[0],
-            track.baseRotation[1],
-            track.baseRotation[2],
-        ];
+        const position: Vec3 = [track.basePosition[0], track.basePosition[1], track.basePosition[2]];
+        const rotation: Vec3 = [track.baseRotation[0], track.baseRotation[1], track.baseRotation[2]];
         const scaling: Vec3 = [track.baseScaling[0], track.baseScaling[1], track.baseScaling[2]];
 
         for (const config of track.proceduralConfigs) {
@@ -186,8 +167,7 @@ export class AnimationManager {
                 case "float": {
                     const index = config.axis === "x" ? 0 : config.axis === "z" ? 2 : 1;
                     position[index] =
-                        track.basePosition[index] +
-                        Math.sin(time * config.speed + phase) * (config.amplitude ?? 0.15);
+                        track.basePosition[index] + Math.sin(time * config.speed + phase) * (config.amplitude ?? 0.15);
                     break;
                 }
                 case "rotate": {
@@ -205,18 +185,14 @@ export class AnimationManager {
                 }
                 case "drift": {
                     position[0] =
-                        track.basePosition[0] +
-                        Math.cos(time * config.speed[0] + phase) * config.amplitude[0];
+                        track.basePosition[0] + Math.cos(time * config.speed[0] + phase) * config.amplitude[0];
                     position[1] =
-                        track.basePosition[1] +
-                        Math.sin(time * config.speed[1] + phase) * config.amplitude[1];
+                        track.basePosition[1] + Math.sin(time * config.speed[1] + phase) * config.amplitude[1];
                     position[2] =
-                        track.basePosition[2] +
-                        Math.sin(time * config.speed[2] + phase) * config.amplitude[2];
+                        track.basePosition[2] + Math.sin(time * config.speed[2] + phase) * config.amplitude[2];
                     rotation[1] =
                         track.baseRotation[1] +
-                        Math.sin(time * (config.yawSpeed ?? 0.9) + phase) *
-                            (config.yawAmplitude ?? 0);
+                        Math.sin(time * (config.yawSpeed ?? 0.9) + phase) * (config.yawAmplitude ?? 0);
                     break;
                 }
                 case "orbit": {
@@ -239,21 +215,13 @@ export class AnimationManager {
                         );
                         const proximity = smoothstep(
                             1 -
-                                Math.abs(
-                                    normalizeAngle(angle - (config.cameraSpotAngle ?? -Math.PI / 2)),
-                                ) /
+                                Math.abs(normalizeAngle(angle - (config.cameraSpotAngle ?? -Math.PI / 2))) /
                                     (config.cameraSpotWidth ?? 0.55),
                         );
                         rotation[1] = orbitY + normalizeAngle(cameraY - orbitY) * proximity;
                         const tiltScale = 1 - proximity * 0.85;
-                        rotation[0] =
-                            Math.sin(time * 1.6 + (config.tiltPhaseX ?? 0)) *
-                            0.06 *
-                            tiltScale;
-                        rotation[2] =
-                            Math.cos(time * 2.1 + (config.tiltPhaseZ ?? 0)) *
-                            0.04 *
-                            tiltScale;
+                        rotation[0] = Math.sin(time * 1.6 + (config.tiltPhaseX ?? 0)) * 0.06 * tiltScale;
+                        rotation[2] = Math.cos(time * 2.1 + (config.tiltPhaseZ ?? 0)) * 0.04 * tiltScale;
                     }
                     break;
                 }
@@ -261,9 +229,7 @@ export class AnimationManager {
                     const parameter = time * config.speed + phase;
                     position[0] = config.center[0] + config.width * Math.cos(parameter);
                     position[1] = config.center[1] + Math.sin(parameter * 2) * config.height;
-                    position[2] =
-                        config.center[2] +
-                        config.width * Math.sin(parameter) * Math.cos(parameter);
+                    position[2] = config.center[2] + config.width * Math.sin(parameter) * Math.cos(parameter);
                     rotation[1] = Math.atan2(
                         -config.width * Math.sin(parameter),
                         config.width * Math.cos(parameter * 2),

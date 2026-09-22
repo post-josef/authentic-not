@@ -1,4 +1,5 @@
-import { Sound, Vector3, type AbstractMesh, type Observer, type Scene } from "@babylonjs/core";
+import { Sound, Vector3 } from "@babylonjs/core";
+import type { AbstractMesh, Observer, Scene } from "@babylonjs/core";
 // Registers AbstractEngine.AudioEngineFactory. Without it the engine never creates an
 // audio engine and every Sound.play() is a silent no-op.
 import "@babylonjs/core/Audio/audioEngine";

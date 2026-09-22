@@ -1,8 +1,8 @@
-import type { AbstractMesh } from "@babylonjs/core";
+import { Color3 } from "@babylonjs/core";
 import { animationManager } from "../../managers/animation";
 import { lightManager } from "../../managers/light";
 import { objectManager } from "../../managers/object";
-import type { Scene, Object3D, SceneObject } from "../../types";
+import type { Scene, Object3D } from "../../types";
 import "./scene3.css";
 
 const RING_RADIUS = 5.5;
@@ -125,14 +125,12 @@ const OBJECTS: Object3D[] = [
 ];
 
 export class Scene3 implements Scene {
-    private objects: SceneObject[] = [];
-
     async load(): Promise<void> {
-        this.objects = await Promise.all(
+        await Promise.all(
             OBJECTS.map(async (object, index) => {
                 const baseAngle = (index / PANEL_COUNT) * Math.PI * 2 - Math.PI / 2;
                 const instance = await objectManager.create(object);
-                animationManager.add(instance.mesh, {
+                animationManager.add(instance, {
                     preset: "orbit",
                     center: RING_CENTER,
                     radius: RING_RADIUS,
@@ -152,21 +150,14 @@ export class Scene3 implements Scene {
             }),
         );
 
-        lightManager.createPoint("scene3Hub", RING_CENTER, {
-            diffuse: [0.45, 0.65, 1],
-            specular: [0.5, 0.7, 1],
+        lightManager.createLight({
+            x: RING_CENTER[0],
+            y: RING_CENTER[1],
+            z: RING_CENTER[2],
+            color: new Color3(0.45, 0.65, 1),
             intensity: 0.85,
             range: 20,
-            fixture: { scale: 0.35, color: [0.45, 0.65, 1] },
+            fixture: { scale: 0.35 },
         });
-    }
-
-    unload() {
-        this.objects.forEach((object) => object.dispose());
-        this.objects = [];
-    }
-
-    getMeshes(): AbstractMesh[] {
-        return this.objects.map((object) => object.mesh);
     }
 }

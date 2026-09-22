@@ -1,9 +1,9 @@
-import { Vector3, type AbstractMesh } from "@babylonjs/core";
+import { Vector3 } from "@babylonjs/core";
 import { animationManager } from "../managers/animation";
 import { cameraManager } from "../managers/camera";
 import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
-import type { Scene, SceneObject } from "../types";
+import type { Scene } from "../types";
 
 const MASK_TARGET = new Vector3(0, 0, 12);
 
@@ -16,8 +16,6 @@ const CYLINDER_VIDEOS: Record<string, string> = {
 };
 
 export class SceneKv implements Scene {
-    private objects: SceneObject[] = [];
-
     async load(): Promise<void> {
         cameraManager.setOrbit({
             target: MASK_TARGET,
@@ -32,11 +30,8 @@ export class SceneKv implements Scene {
             y: 0,
             z: 12,
         });
-        animationManager.add(cylinder.mesh, {
-            preset: "rotate",
-            speed: -0.1,
-        });
-        this.objects.push(objectManager.applyMappedVideoTextures(cylinder, CYLINDER_VIDEOS, { invertY: true }));
+        animationManager.add(cylinder, { preset: "rotate", speed: -0.1 });
+        objectManager.applyMappedVideoTextures(cylinder, CYLINDER_VIDEOS, { invertY: true });
 
         const face = await objectManager.create({
             source: "assets/kv/mask.glb",
@@ -45,29 +40,14 @@ export class SceneKv implements Scene {
             y: 0,
             z: 12,
         });
-        animationManager.add(face.mesh, {
-            preset: "float",
-            speed: 0.6,
-            amplitude: 0.2,
+        animationManager.add(face, { preset: "float", speed: 0.6, amplitude: 0.2 });
+
+        lightManager.createLight({
+            x: 0,
+            y: 6,
+            z: 6,
+            target: MASK_TARGET,
+            meshes: [face],
         });
-        this.objects.push(face);
-
-        lightManager.createSpot("sceneKvFace", [0, 6, 6], {
-            target: [MASK_TARGET.x, MASK_TARGET.y, MASK_TARGET.z],
-            diffuse: [1, 0.8, 0.6],
-            specular: [1, 0.6, 0.4],
-            intensity: 40,
-            range: 20,
-            includedOnlyMeshes: objectManager.meshes(face),
-        });
-    }
-
-    unload() {
-        this.objects.forEach((object) => object.dispose());
-        this.objects = [];
-    }
-
-    getMeshes(): AbstractMesh[] {
-        return this.objects.flatMap((object) => objectManager.meshes(object));
     }
 }

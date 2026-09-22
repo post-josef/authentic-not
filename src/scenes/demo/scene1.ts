@@ -1,8 +1,8 @@
-import type { AbstractMesh } from "@babylonjs/core";
+import { Color3, Vector3 } from "@babylonjs/core";
 import { animationManager } from "../../managers/animation";
 import { lightManager } from "../../managers/light";
 import { objectManager } from "../../managers/object";
-import type { Scene, Object3D, SceneObject } from "../../types";
+import type { Scene, Object3D } from "../../types";
 import "./scene1.css";
 
 const OBJECTS: Object3D[] = [
@@ -115,13 +115,11 @@ const OBJECTS: Object3D[] = [
 ];
 
 export class Scene1 implements Scene {
-    private objects: SceneObject[] = [];
-
     async load(): Promise<void> {
-        this.objects = await Promise.all(
+        const panels = await Promise.all(
             OBJECTS.map(async (object, index) => {
                 const instance = await objectManager.create(object);
-                animationManager.add(instance.mesh, {
+                animationManager.add(instance, {
                     preset: "float",
                     speed: 1.4,
                     phase: index,
@@ -130,23 +128,16 @@ export class Scene1 implements Scene {
             }),
         );
 
-        lightManager.createSpot("scene1Spot", [0, 3.2, 1.5], {
-            target: [0, 1.8, 5],
-            diffuse: [1, 0.32, 0.32],
-            specular: [1, 0.35, 0.35],
+        lightManager.createLight({
+            x: 0,
+            y: 3.2,
+            z: 1.5,
+            target: new Vector3(0, 1.8, 5),
+            color: new Color3(1, 0.32, 0.32),
             intensity: 1.2,
             range: 14,
-            includedOnlyMeshes: this.getMeshes(),
-            fixture: { scale: 0.55, color: [1, 0.32, 0.32] },
+            fixture: { scale: 0.55 },
+            meshes: panels,
         });
-    }
-
-    unload() {
-        this.objects.forEach((object) => object.dispose());
-        this.objects = [];
-    }
-
-    getMeshes(): AbstractMesh[] {
-        return this.objects.flatMap((object) => objectManager.meshes(object));
     }
 }

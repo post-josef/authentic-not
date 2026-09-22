@@ -1,4 +1,4 @@
-import type { AbstractMesh } from "@babylonjs/core";
+import type { AbstractMesh, Scene as BabylonScene } from "@babylonjs/core";
 import type { ModalButtonAction, ModalContent } from "../types";
 import { cameraManager } from "./camera";
 import { highlightManager } from "./highlight";
@@ -11,7 +11,6 @@ export interface ModalConfig {
     maxHeight?: string;
     content: ModalRuntimeItem[];
     onSceneSwitch?: (sceneId: string) => void;
-    pickableMeshes?: AbstractMesh[];
     dismissOnBackdrop?: boolean;
 }
 
@@ -52,6 +51,7 @@ export class ModalManager {
     private backdrop: HTMLElement | null = null;
     private panel: HTMLElement | null = null;
     private content: HTMLElement | null = null;
+    private babylonScene: BabylonScene | null = null;
     private openState = false;
     private closing = false;
     private activeMeshes: Array<{ mesh: AbstractMesh; wasPickable: boolean }> = [];
@@ -66,8 +66,9 @@ export class ModalManager {
     private previouslyFocused: HTMLElement | null = null;
     private readonly panelClickHandler = (event: Event) => event.stopPropagation();
 
-    init() {
+    init(scene: BabylonScene) {
         this.dispose();
+        this.babylonScene = scene;
         const root = document.getElementById("modal-root");
         const backdrop = root?.querySelector<HTMLElement>(".modal-backdrop");
         const panel = root?.querySelector<HTMLElement>(".modal-panel");
@@ -93,7 +94,7 @@ export class ModalManager {
 
         this.openState = true;
         this.onSceneSwitch = config.onSceneSwitch;
-        const pickableMeshes = config.pickableMeshes ?? [];
+        const pickableMeshes = this.babylonScene?.meshes.filter((mesh) => mesh.isPickable) ?? [];
         this.activeMeshes = pickableMeshes.map((mesh) => ({
             mesh,
             wasPickable: mesh.isPickable,
@@ -180,6 +181,7 @@ export class ModalManager {
         this.backdrop = null;
         this.panel = null;
         this.content = null;
+        this.babylonScene = null;
     }
 
     private renderContent(items: ModalRuntimeItem[]) {

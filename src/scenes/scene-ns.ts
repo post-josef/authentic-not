@@ -1,15 +1,13 @@
-import { Axis, type AbstractMesh, Space } from "@babylonjs/core";
+import { Axis, Color3, Space, Vector3 } from "@babylonjs/core";
 import { cameraManager } from "../managers/camera";
 import { fogManager } from "../managers/fog";
 import { lightManager } from "../managers/light";
 import { modalManager } from "../managers/modal";
 import { objectManager } from "../managers/object";
-import type { Scene, SceneObject } from "../types";
+import type { Scene } from "../types";
 import "./scene-ns.css";
 
 export class SceneNs implements Scene {
-    private objects: SceneObject[] = [];
-
     async load(): Promise<void> {
         fogManager.set({
             mode: "exp2",
@@ -39,7 +37,6 @@ export class SceneNs implements Scene {
                 z: 6,
                 width: 3.25,
                 height: 2.7,
-                highlight: "border",
             });
             const panel = await objectManager.create({
                 source: `assets/ns/${index + 1}.mp4`,
@@ -48,15 +45,13 @@ export class SceneNs implements Scene {
                 z: 5.999,
                 width: 3.04,
                 height: 2.2,
-                highlight: "border",
+                highlight: "highlightLayer",
             });
-            frame.mesh.lookAt(cameraManager.getCamera().position);
-            frame.mesh.rotate(Axis.Y, Math.PI, Space.LOCAL);
-            panel.mesh.lookAt(cameraManager.getCamera().position);
-            panel.mesh.rotate(Axis.Y, Math.PI, Space.LOCAL);
-            objectManager.setPickable(frame, false);
+            frame.lookAt(cameraManager.getCamera().position);
+            frame.rotate(Axis.Y, Math.PI, Space.LOCAL);
+            panel.lookAt(cameraManager.getCamera().position);
+            panel.rotate(Axis.Y, Math.PI, Space.LOCAL);
             objectManager.interactive(panel, { onClick: () => this.openModal(index) });
-            this.objects.push(frame, panel);
         }
 
         const face = await objectManager.create({
@@ -65,29 +60,19 @@ export class SceneNs implements Scene {
             y: -2.3,
             z: 16,
             scale: 5,
+            ry: Math.PI,
         });
-        face.mesh.lookAt(cameraManager.getCamera().position);
-        objectManager.setPickable(face, false);
-        this.objects.push(face);
 
-        lightManager.createSpot("sceneNsFace", [0, 6, 12], {
-            target: [0, 0, 16],
-            diffuse: [1, 0.8, 0.6],
-            specular: [1, 0.6, 0.4],
+        lightManager.createLight({
+            x: 0,
+            y: 6,
+            z: 12,
+            target: new Vector3(0, 0, 16),
+            color: new Color3(1, 0.8, 0.6),
             intensity: 12,
             range: 20,
-            includedOnlyMeshes: objectManager.meshes(face),
-            // fixture: { scale: 0.5, color: [1, 0.96, 0.9] },
+            meshes: [face],
         });
-    }
-
-    unload() {
-        this.objects.forEach((object) => object.dispose());
-        this.objects = [];
-    }
-
-    getMeshes(): AbstractMesh[] {
-        return this.objects.flatMap((object) => objectManager.meshes(object));
     }
 
     private openModal(index: number) {

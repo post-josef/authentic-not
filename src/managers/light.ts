@@ -1,6 +1,5 @@
 import {
     Color3,
-    DirectionalLight,
     HemisphericLight,
     Light,
     MeshBuilder,
@@ -9,54 +8,56 @@ import {
     SpotLight,
     StandardMaterial,
     Vector3,
-    type AbstractMesh,
-    type Mesh,
-    type Scene,
 } from "@babylonjs/core";
+import type { AbstractMesh, Mesh, Scene } from "@babylonjs/core";
 
-export type Vec3 = [number, number, number];
-export type Color3Value = [number, number, number];
-
-interface LightFixtureOptions {
-    scale?: number;
-    color?: [number, number, number];
+export interface LightOptions {
+    x: number;
+    y: number;
+    z: number;
+    target?: Vector3; // if target is provided, the light will be a spot light
+    color?: Color3;
+    intensity?: number;
+    range?: number;
+    meshes?: AbstractMesh[];
+    fixture?: { scale?: number };
 }
 
-function createFixtureMaterial(name: string, scene: Scene, color: [number, number, number]): StandardMaterial {
+function createFixtureMaterial(name: string, scene: Scene, color: Color3): StandardMaterial {
     const material = new StandardMaterial(`${name}Material`, scene);
-    material.emissiveColor = new Color3(...color);
+    material.emissiveColor = color.clone();
     material.disableLighting = true;
     return material;
 }
 
-function createPointFixture(name: string, position: Vector3, scene: Scene, options: LightFixtureOptions = {}): Mesh {
-    const fixture = MeshBuilder.CreateSphere(`${name}Fixture`, { diameter: options.scale ?? 0.3, segments: 8 }, scene);
+function createPointFixture(name: string, position: Vector3, scene: Scene, color: Color3, scale = 0.3): Mesh {
+    const fixture = MeshBuilder.CreateSphere(`${name}Fixture`, { diameter: scale, segments: 8 }, scene);
     fixture.position.copyFrom(position);
-    fixture.material = createFixtureMaterial(name, scene, options.color ?? [1, 0.9, 0.6]);
+    fixture.material = createFixtureMaterial(name, scene, color);
     fixture.isPickable = false;
     return fixture;
 }
 
-function createDirectionalFixture(
+function createSpotFixture(
     name: string,
     position: Vector3,
     direction: Vector3,
     scene: Scene,
-    options: LightFixtureOptions = {},
+    color: Color3,
+    scale = 0.5,
 ): Mesh {
-    const size = options.scale ?? 0.5;
     const fixture = MeshBuilder.CreateCylinder(
         `${name}Fixture`,
         {
             diameterTop: 0,
-            diameterBottom: size * 0.7,
-            height: size,
+            diameterBottom: scale * 0.7,
+            height: scale,
             tessellation: 8,
         },
         scene,
     );
     fixture.position.copyFrom(position);
-    fixture.material = createFixtureMaterial(name, scene, options.color ?? [1, 0.9, 0.6]);
+    fixture.material = createFixtureMaterial(name, scene, color);
     fixture.isPickable = false;
 
     const from = Vector3.Down();
@@ -72,42 +73,9 @@ function createDirectionalFixture(
     return fixture;
 }
 
-interface CommonLightOptions {
-    intensity?: number;
-    diffuse?: Color3Value;
-    specular?: Color3Value;
-    includedOnlyMeshes?: AbstractMesh[];
-}
-
-export interface PointLightOptions extends CommonLightOptions {
-    range?: number;
-    fixture?: LightFixtureOptions;
-}
-
-export interface SpotLightOptions extends CommonLightOptions {
-    target?: Vec3;
-    direction?: Vec3;
-    angle?: number;
-    innerAngle?: number;
-    exponent?: number;
-    range?: number;
-    fixture?: LightFixtureOptions;
-}
-
-export interface DirectionalLightOptions extends CommonLightOptions {
-    position?: Vec3;
-    fixture?: LightFixtureOptions;
-}
-
-interface TrackedLight {
-    light: Light;
-    fixture: AbstractMesh | null;
-}
-
 export class LightManager {
     private scene: Scene | null = null;
     private globalLight: HemisphericLight | null = null;
-    private tracked: TrackedLight[] = [];
 
     init(scene: Scene) {
         this.dispose();
@@ -118,93 +86,49 @@ export class LightManager {
         this.globalLight.groundColor = new Color3(0.06, 0.06, 0.08);
     }
 
-    createHemispheric(
-        name: string,
-        direction: Vec3 = [0, 1, 0],
-        options: CommonLightOptions & { groundColor?: Color3Value } = {},
-    ): HemisphericLight {
-        const light = new HemisphericLight(name, new Vector3(...direction), this.requireScene());
-        this.applyCommon(light, options);
-        if (options.groundColor) light.groundColor = new Color3(...options.groundColor);
-        return this.track(light);
-    }
+    createLight(options: LightOptions): PointLight | SpotLight {
+        if (!this.scene) throw new Error("lightManager.init(scene) must be called first");
+        const scene = this.scene;
+        const name = `light${scene.lights.length}`;
+        const position = new Vector3(options.x, options.y, options.z);
+        const color = options.color ?? new Color3(1, 0.96, 0.88);
 
-    createPoint(name: string, position: Vec3, options: PointLightOptions = {}): PointLight {
-        const scene = this.requireScene();
-        const vector = new Vector3(...position);
-        const light = new PointLight(name, vector, scene);
-        this.applyCommon(light, options);
-        if (options.range !== undefined) light.range = options.range;
-        const fixture = options.fixture
-            ? createPointFixture(name, vector, scene, {
-                  ...options.fixture,
-                  color: options.fixture.color ?? options.diffuse,
-              })
-            : null;
-        this.tracked.push({ light, fixture });
-        return light;
-    }
+        const light = options.target
+            ? new SpotLight(name, position, options.target.subtract(position).normalize(), Math.PI / 2.4, 1.15, scene)
+            : new PointLight(name, position, scene);
+        if (light instanceof SpotLight) light.innerAngle = Math.PI / 11;
 
-    createSpot(name: string, position: Vec3, options: SpotLightOptions = {}): SpotLight {
-        const scene = this.requireScene();
-        const source = new Vector3(...position);
-        const direction = options.target
-            ? new Vector3(...options.target).subtract(source).normalize()
-            : new Vector3(...(options.direction ?? [0, -1, 0])).normalize();
-        const light = new SpotLight(
-            name,
-            source,
-            direction,
-            options.angle ?? Math.PI / 2.4,
-            options.exponent ?? 1.15,
-            scene,
-        );
-        this.applyCommon(light, options);
         light.falloffType = Light.FALLOFF_GLTF;
-        light.innerAngle = options.innerAngle ?? Math.PI / 11;
-        if (options.range !== undefined) light.range = options.range;
-        const fixture = options.fixture
-            ? createDirectionalFixture(name, source, direction, scene, {
-                  ...options.fixture,
-                  color: options.fixture.color ?? options.diffuse,
-              })
-            : null;
-        this.tracked.push({ light, fixture });
-        return light;
-    }
+        light.diffuse = color.clone();
+        light.specular = color.clone();
+        light.intensity = options.intensity ?? 50;
+        light.range = options.range ?? 25;
+        if (options.meshes) {
+            const lit = new Set<AbstractMesh>();
+            for (const root of options.meshes) {
+                lit.add(root);
+                root.getChildMeshes().forEach((child) => lit.add(child));
+            }
+            light.includedOnlyMeshes = [...lit];
+        }
 
-    createDirectional(name: string, direction: Vec3, options: DirectionalLightOptions = {}): DirectionalLight {
-        const scene = this.requireScene();
-        const vector = new Vector3(...direction).normalize();
-        const light = new DirectionalLight(name, vector, scene);
-        this.applyCommon(light, options);
-        if (options.position) light.position = new Vector3(...options.position);
-        const fixture =
-            options.fixture && options.position
-                ? createDirectionalFixture(name, new Vector3(...options.position), vector, scene, {
-                      ...options.fixture,
-                      color: options.fixture.color ?? options.diffuse,
-                  })
-                : null;
-        this.tracked.push({ light, fixture });
-        return light;
-    }
+        if (options.fixture) {
+            const scale = options.fixture.scale;
+            if (light instanceof SpotLight) {
+                createSpotFixture(name, position, light.direction, scene, color, scale ?? 0.5);
+            } else {
+                createPointFixture(name, position, scene, color, scale ?? 0.3);
+            }
+        }
 
-    track<T extends Light>(light: T, fixture: AbstractMesh | null = null): T {
-        this.tracked.push({ light, fixture });
         return light;
-    }
-
-    get(name: string): Light | undefined {
-        return this.tracked.find(({ light }) => light.name === name)?.light;
     }
 
     clear() {
-        this.tracked.forEach(({ light, fixture }) => {
-            fixture?.dispose(false, true);
-            light.dispose();
-        });
-        this.tracked = [];
+        if (!this.scene || !this.globalLight) return;
+        for (const light of [...this.scene.lights]) {
+            if (light !== this.globalLight) light.dispose();
+        }
     }
 
     dispose() {
@@ -212,18 +136,6 @@ export class LightManager {
         this.globalLight?.dispose();
         this.globalLight = null;
         this.scene = null;
-    }
-
-    private requireScene(): Scene {
-        if (!this.scene) throw new Error("lightManager.init(scene) must be called first");
-        return this.scene;
-    }
-
-    private applyCommon(light: Light, options: CommonLightOptions) {
-        light.intensity = options.intensity ?? 1;
-        if (options.diffuse) light.diffuse = new Color3(...options.diffuse);
-        if (options.specular) light.specular = new Color3(...options.specular);
-        if (options.includedOnlyMeshes) light.includedOnlyMeshes = options.includedOnlyMeshes;
     }
 }
 

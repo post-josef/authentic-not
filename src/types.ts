@@ -1,5 +1,3 @@
-import type { AbstractMesh } from "@babylonjs/core";
-
 export type HighlightMode = "border" | "highlightLayer" | "glow" | "outline";
 
 export type ModalButtonAction = "close" | { scene: string };
@@ -31,13 +29,6 @@ export interface Object3D {
     targetScene?: string;
 }
 
-export interface SceneObject {
-    readonly mesh: AbstractMesh;
-    dispose(): void;
-}
-
 export interface Scene {
     load(): Promise<void>;
-    unload(): void;
-    getMeshes(): AbstractMesh[];
 }
