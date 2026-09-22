@@ -1,10 +1,17 @@
-import { Animation, type AbstractMesh, type Observer, type Scene } from "@babylonjs/core";
+import {
+    Animation,
+    Quaternion,
+    Vector3,
+    type AbstractMesh,
+    type Observer,
+    type Scene,
+} from "@babylonjs/core";
 
 export type Axis = "x" | "y" | "z";
 export type Vec3 = [number, number, number];
 
-export type AnimationConfig =
-    | { preset: "float"; axis?: Axis; amplitude: number; speed: number; phase?: number }
+export type AnimationOptions =
+    | { preset: "float"; axis?: Axis; amplitude?: number; speed: number; phase?: number }
     | { preset: "rotate"; axis?: Axis; speed: number }
     | { preset: "pulse"; min: number; max: number; speed: number; phase?: number }
     | {
@@ -50,10 +57,11 @@ export type AnimationConfig =
 
 interface Track {
     mesh: AbstractMesh;
-    proceduralConfigs: Exclude<AnimationConfig, { preset: "keyframes" }>[];
+    proceduralConfigs: Exclude<AnimationOptions, { preset: "keyframes" }>[];
     paused: boolean;
     basePosition: Vec3;
     baseRotation: Vec3;
+    baseRotationQuaternion: Quaternion | null;
     baseScaling: Vec3;
     animatables: Array<{ stop: () => void; pause: () => void; restart: () => void }>;
 }
@@ -70,13 +78,9 @@ function smoothstep(value: number): number {
     return clamped * clamped * (3 - 2 * clamped);
 }
 
-function copyVec3(value: Vec3): Vec3 {
-    return [value[0], value[1], value[2]];
-}
-
 export class AnimationManager {
     private scene: Scene | null = null;
-    private tracks = new Map<string, Track>();
+    private tracks = new Map<AbstractMesh, Track>();
     private observer: Observer<Scene> | null = null;
 
     init(scene: Scene) {
@@ -84,22 +88,20 @@ export class AnimationManager {
         this.scene = scene;
     }
 
-    add(id: string, mesh: AbstractMesh, config: AnimationConfig) {
-        this.addMany(id, mesh, [config]);
-    }
-
-    addMany(id: string, mesh: AbstractMesh, configs: AnimationConfig[]) {
-        this.remove(id);
+    add(mesh: AbstractMesh, options: AnimationOptions | AnimationOptions[]) {
+        const configs = Array.isArray(options) ? options : [options];
+        this.remove(mesh);
         const scene = this.requireScene();
         const track: Track = {
             mesh,
             proceduralConfigs: configs.filter(
-                (config): config is Exclude<AnimationConfig, { preset: "keyframes" }> =>
+                (config): config is Exclude<AnimationOptions, { preset: "keyframes" }> =>
                     config.preset !== "keyframes",
             ),
             paused: false,
             basePosition: [mesh.position.x, mesh.position.y, mesh.position.z],
             baseRotation: [mesh.rotation.x, mesh.rotation.y, mesh.rotation.z],
+            baseRotationQuaternion: mesh.rotationQuaternion?.clone() ?? null,
             baseScaling: [mesh.scaling.x, mesh.scaling.y, mesh.scaling.z],
             animatables: [],
         };
@@ -107,7 +109,7 @@ export class AnimationManager {
         for (const config of configs) {
             if (config.preset !== "keyframes" || config.keys.length === 0) continue;
             const animation = new Animation(
-                `${id}-${config.property}`,
+                `${mesh.uniqueId}-${config.property}`,
                 config.property,
                 config.fps,
                 Animation.ANIMATIONTYPE_FLOAT,
@@ -122,42 +124,20 @@ export class AnimationManager {
             );
         }
 
-        this.tracks.set(id, track);
+        this.tracks.set(mesh, track);
         if (track.proceduralConfigs.length > 0) this.ensureObserver();
     }
 
-    play(id: string) {
-        const track = this.tracks.get(id);
-        if (!track) return;
-        track.paused = false;
-        track.animatables.forEach((item) => item.restart());
-    }
-
-    pause(id: string) {
-        const track = this.tracks.get(id);
-        if (!track) return;
-        track.paused = true;
-        track.animatables.forEach((item) => item.pause());
-    }
-
-    stop(id: string) {
-        const track = this.tracks.get(id);
-        if (!track) return;
-        track.paused = true;
-        track.animatables.forEach((item) => item.stop());
-        this.restoreBase(track);
-    }
-
-    remove(id: string) {
-        const track = this.tracks.get(id);
+    remove(mesh: AbstractMesh) {
+        const track = this.tracks.get(mesh);
         if (!track) return;
         track.animatables.forEach((item) => item.stop());
-        this.tracks.delete(id);
+        this.tracks.delete(mesh);
         if (this.tracks.size === 0) this.removeObserver();
     }
 
     clear() {
-        [...this.tracks.keys()].forEach((id) => this.remove(id));
+        [...this.tracks.keys()].forEach((mesh) => this.remove(mesh));
         this.removeObserver();
     }
 
@@ -187,16 +167,18 @@ export class AnimationManager {
         this.observer = null;
     }
 
-    private restoreBase(track: Track) {
-        track.mesh.position.set(...track.basePosition);
-        track.mesh.rotation.set(...track.baseRotation);
-        track.mesh.scaling.set(...track.baseScaling);
-    }
-
     private updateTrack(track: Track, time: number) {
-        const position = copyVec3(track.basePosition);
-        const rotation = copyVec3(track.baseRotation);
-        const scaling = copyVec3(track.baseScaling);
+        const position: Vec3 = [
+            track.basePosition[0],
+            track.basePosition[1],
+            track.basePosition[2],
+        ];
+        const rotation: Vec3 = [
+            track.baseRotation[0],
+            track.baseRotation[1],
+            track.baseRotation[2],
+        ];
+        const scaling: Vec3 = [track.baseScaling[0], track.baseScaling[1], track.baseScaling[2]];
 
         for (const config of track.proceduralConfigs) {
             const phase = "phase" in config ? (config.phase ?? 0) : 0;
@@ -205,7 +187,7 @@ export class AnimationManager {
                     const index = config.axis === "x" ? 0 : config.axis === "z" ? 2 : 1;
                     position[index] =
                         track.basePosition[index] +
-                        Math.sin(time * config.speed + phase) * config.amplitude;
+                        Math.sin(time * config.speed + phase) * (config.amplitude ?? 0.15);
                     break;
                 }
                 case "rotate": {
@@ -295,7 +277,18 @@ export class AnimationManager {
         }
 
         track.mesh.position.set(...position);
-        track.mesh.rotation.set(...rotation);
+        if (track.baseRotationQuaternion) {
+            const deltaX = rotation[0] - track.baseRotation[0];
+            const deltaY = rotation[1] - track.baseRotation[1];
+            const deltaZ = rotation[2] - track.baseRotation[2];
+            const delta = Quaternion.RotationYawPitchRoll(deltaY, deltaX, deltaZ);
+            if (!track.mesh.rotationQuaternion) {
+                track.mesh.rotationQuaternion = track.baseRotationQuaternion.clone();
+            }
+            track.baseRotationQuaternion.multiplyToRef(delta, track.mesh.rotationQuaternion);
+        } else {
+            track.mesh.rotation = new Vector3(rotation[0], rotation[1], rotation[2]);
+        }
         track.mesh.scaling.set(...scaling);
     }
 }

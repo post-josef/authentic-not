@@ -14,8 +14,8 @@ export type ModalContent =
     | { type: "divider" };
 
 export interface Object3D {
-    id: string;
     source: string;
+    targetScene?: string;
     x: number;
     y: number;
     z: number;

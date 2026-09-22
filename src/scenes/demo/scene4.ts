@@ -13,7 +13,6 @@ const PANEL_COUNT = 5;
 const ENVIRONMENT_URL = "https://assets.babylonjs.com/environments/environmentSpecular.env";
 const OBJECTS: Object3D[] = [
     {
-        id: "1",
         highlight: "glow",
         subtitle: "Loop One",
         source: "assets/images/i3.png",
@@ -36,7 +35,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "2",
         highlight: "glow",
         subtitle: "Loop Two",
         source: "assets/images/i2.png",
@@ -59,7 +57,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "3",
         highlight: "glow",
         subtitle: "Loop Three",
         source: "assets/images/i5.png",
@@ -82,7 +79,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "4",
         highlight: "glow",
         subtitle: "Loop Four",
         source: "assets/images/i1.png",
@@ -105,7 +101,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "5",
         highlight: "glow",
         subtitle: "Loop Five",
         source: "assets/images/i4.png",
@@ -146,7 +141,7 @@ export class Scene4 implements Scene {
         this.objects = await Promise.all(
             OBJECTS.map(async (object, index) => {
                 const instance = await objectManager.create(object);
-                animationManager.add(`scene4-${index}`, instance.mesh, {
+                animationManager.add(instance.mesh, {
                     preset: "figureEight",
                     center: [0, 2.2, LOOP_CENTER_Z],
                     width: LOOP_WIDTH,

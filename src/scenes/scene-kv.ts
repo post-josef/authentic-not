@@ -1,4 +1,5 @@
 import { Vector3, type AbstractMesh } from "@babylonjs/core";
+import { animationManager } from "../managers/animation";
 import { cameraManager } from "../managers/camera";
 import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
@@ -21,19 +22,22 @@ export class SceneKv implements Scene {
         cameraManager.setOrbit({
             target: MASK_TARGET,
             distance: 30,
+            maxDistance: 55,
         });
 
         const cylinder = await objectManager.create({
-            id: "kv-cylinder",
             source: "assets/kv/valec.glb",
             x: 0,
             y: 0,
             z: 12,
         });
+        animationManager.add(cylinder.mesh, {
+            preset: "rotate",
+            speed: -0.1,
+        });
         this.objects.push(objectManager.applyMappedVideoTextures(cylinder, CYLINDER_VIDEOS, { invertY: true }));
 
         const face = await objectManager.create({
-            id: "kv-mask",
             source: "assets/kv/mask.glb",
             x: 0,
             y: 0,

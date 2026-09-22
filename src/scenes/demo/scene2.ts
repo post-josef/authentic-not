@@ -12,7 +12,6 @@ const COWBELL_SOUND = "scene2-cowbell";
 const MICROWAVE_SOUND = "scene2-microwave";
 const OBJECTS: Object3D[] = [
     {
-        id: "1",
         highlight: "highlightLayer",
         subtitle: "Drift One",
         source: "assets/images/i2.png",
@@ -35,7 +34,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "2",
         highlight: "highlightLayer",
         subtitle: "Drift Two",
         source: "assets/images/i4.png",
@@ -58,7 +56,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "3",
         highlight: "highlightLayer",
         subtitle: "Drift Three",
         source: "assets/images/i1.png",
@@ -81,7 +78,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "4",
         highlight: "highlightLayer",
         subtitle: "Drift Four",
         source: "assets/images/i5.png",
@@ -104,7 +100,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "5",
         highlight: "highlightLayer",
         subtitle: "Drift Five",
         source: "assets/images/i3.png",
@@ -174,7 +169,7 @@ export class Scene2 implements Scene {
                     onHover: () => object.subtitle && subtitleManager.show(object.subtitle),
                     onHoverEnd: () => subtitleManager.hide(),
                 });
-                animationManager.addMany(`scene2-${index}`, instance.mesh, [
+                animationManager.add(instance.mesh, [
                     {
                         preset: "drift",
                         amplitude: [0.25, 0.35, 0.2],

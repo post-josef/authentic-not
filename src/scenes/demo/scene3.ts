@@ -10,7 +10,6 @@ const RING_CENTER: [number, number, number] = [0, 2.2, 8];
 const PANEL_COUNT = 5;
 const OBJECTS: Object3D[] = [
     {
-        id: "1",
         highlight: "outline",
         subtitle: "Orbit One",
         source: "assets/images/i3.png",
@@ -33,7 +32,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "2",
         highlight: "outline",
         subtitle: "Orbit Two",
         source: "assets/images/i5.png",
@@ -56,7 +54,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "3",
         highlight: "outline",
         subtitle: "Orbit Three",
         source: "assets/images/i1.png",
@@ -79,7 +76,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "4",
         highlight: "outline",
         subtitle: "Orbit Four",
         source: "assets/images/i4.png",
@@ -102,7 +98,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "5",
         highlight: "outline",
         subtitle: "Orbit Five",
         source: "assets/images/i2.png",
@@ -137,7 +132,7 @@ export class Scene3 implements Scene {
             OBJECTS.map(async (object, index) => {
                 const baseAngle = (index / PANEL_COUNT) * Math.PI * 2 - Math.PI / 2;
                 const instance = await objectManager.create(object);
-                animationManager.add(`scene3-${index}`, instance.mesh, {
+                animationManager.add(instance.mesh, {
                     preset: "orbit",
                     center: RING_CENTER,
                     radius: RING_RADIUS,

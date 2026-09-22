@@ -53,7 +53,7 @@ export class CameraManager {
     }
 
     setOrbit(
-        params: {
+        config: {
             target?: Vector3;
             distance?: number;
             maxDistance?: number;
@@ -66,14 +66,14 @@ export class CameraManager {
         this.walkCam?.detachControl();
         this.orbitCam?.dispose();
 
-        const target = params.target ?? Vector3.Zero();
-        const distance = params.distance ?? 20;
+        const target = config.target ?? Vector3.Zero();
+        const distance = config.distance ?? 20;
 
         const camera = new ArcRotateCamera("orbitCam", 0, Math.PI / 3, distance, target, this.scene);
         camera.setPosition(WALK_POSITION.clone());
         camera.radius = distance;
-        camera.lowerRadiusLimit = params.minDistance ?? 2;
-        camera.upperRadiusLimit = params.maxDistance ?? 40;
+        camera.lowerRadiusLimit = config.minDistance ?? 2;
+        camera.upperRadiusLimit = config.maxDistance ?? 60;
         camera.useInputToRestoreState = false;
 
         const keyboard = camera.inputs.attached.keyboard as ArcRotateCameraKeyboardMoveInput | undefined;

@@ -1,10 +1,10 @@
-import { Axis, type AbstractMesh, Space } from "@babylonjs/core";
 import { animationManager } from "../managers/animation";
 import { cameraManager } from "../managers/camera";
 import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
 import { sceneManager } from "../managers/scene";
 import { subtitleManager } from "../managers/subtitle";
+import type { AbstractMesh } from "@babylonjs/core";
 import type { Scene, Object3D, SceneObject } from "../types";
 
 const PORTAL_COUNT = 2;
@@ -13,8 +13,8 @@ const PORTAL_CENTER_Z = 5;
 
 const OBJECTS: Object3D[] = [
     {
-        id: "portal-ns",
         source: "assets/ns/face.glb",
+        targetScene: "ns",
         x: 0,
         y: -4,
         z: PORTAL_CENTER_Z,
@@ -23,8 +23,8 @@ const OBJECTS: Object3D[] = [
         highlight: "highlightLayer",
     },
     {
-        id: "portal-kv",
         source: "assets/kv/zdimacka.jpg",
+        targetScene: "kv",
         x: 0,
         y: 1.8,
         z: PORTAL_CENTER_Z,
@@ -52,21 +52,17 @@ export class SceneStart implements Scene {
                 const { x, z } = portalSlot(index);
                 const instance = await objectManager.create({ ...object, x, z });
                 instance.mesh.lookAt(cameraManager.getCamera().position);
-                if (object.id !== "portal-ns") {
-                    instance.mesh.rotate(Axis.Y, Math.PI, Space.LOCAL);
-                }
-                const targetScene = object.id === "portal-ns" ? "ns" : "kv";
+
                 objectManager.interactive(instance, {
                     onClick: () => {
                         subtitleManager.hide();
-                        sceneManager.switchTo(targetScene);
+                        if (object.targetScene) sceneManager.switchTo(object.targetScene);
                     },
                     onHover: () => object.subtitle && subtitleManager.show(object.subtitle),
                     onHoverEnd: () => subtitleManager.hide(),
                 });
-                animationManager.add(`sceneStart-${index}`, instance.mesh, {
+                animationManager.add(instance.mesh, {
                     preset: "float",
-                    amplitude: 0.15,
                     speed: 1.4,
                     phase: index,
                 });

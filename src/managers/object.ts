@@ -167,14 +167,14 @@ export class ObjectManager {
         } else {
             const width = object.width ?? PLANE_WIDTH;
             const height = object.height ?? PLANE_HEIGHT;
-            const plane = MeshBuilder.CreatePlane(object.id, { width, height }, scene);
+            const plane = MeshBuilder.CreatePlane(object.source, { width, height }, scene);
             plane.position.set(object.x, object.y, object.z);
             plane.rotation.set(object.rx ?? 0, object.ry ?? 0, object.rz ?? 0);
             plane.isPickable = false;
 
             if (path.endsWith(".mp4")) {
                 const videoTexture = new VideoTexture(
-                    `${object.id}VideoTex`,
+                    `${object.source}VideoTex`,
                     object.source,
                     scene,
                     false,

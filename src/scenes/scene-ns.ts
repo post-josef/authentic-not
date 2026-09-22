@@ -33,7 +33,6 @@ export class SceneNs implements Scene {
             [2, 4.2],
         ] as const) {
             const frame = await objectManager.create({
-                id: `nsPanel${index + 1}Frame`,
                 source: "assets/ns/frame.png",
                 x,
                 y: 1.7,
@@ -43,7 +42,6 @@ export class SceneNs implements Scene {
                 highlight: "border",
             });
             const panel = await objectManager.create({
-                id: `nsPanel${index + 1}`,
                 source: `assets/ns/${index + 1}.mp4`,
                 x,
                 y: 1.7,
@@ -62,7 +60,6 @@ export class SceneNs implements Scene {
         }
 
         const face = await objectManager.create({
-            id: "nsFace",
             source: "assets/ns/face.glb",
             x: 0,
             y: -2.3,

@@ -24,13 +24,9 @@ export class SubtitleManager {
         const reveal = () => {
             if (!this.root || !this.line) return;
             this.line.textContent = text;
-            this.line.className = options.className
-                ? `subtitle-line ${options.className}`
-                : "subtitle-line";
+            this.line.className = `subtitle-line ${options.className || ""}`;
             if (options.style) {
-                Object.entries(options.style).forEach(([key, value]) =>
-                    this.line?.style.setProperty(key, value),
-                );
+                Object.entries(options.style).forEach(([key, value]) => this.line?.style.setProperty(key, value));
             }
             this.root.classList.add("is-visible");
             if (durationMs !== undefined && durationMs > 0) {

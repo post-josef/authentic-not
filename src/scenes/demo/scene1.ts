@@ -7,7 +7,6 @@ import "./scene1.css";
 
 const OBJECTS: Object3D[] = [
     {
-        id: "1",
         highlight: "outline",
         source: "assets/images/i1.png",
         x: -6,
@@ -28,7 +27,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "2",
         highlight: "outline",
         source: "assets/images/i2.png",
         x: -3,
@@ -49,7 +47,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "3",
         highlight: "outline",
         source: "assets/images/i3.png",
         x: 0,
@@ -70,7 +67,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "4",
         highlight: "outline",
         source: "assets/images/i4.png",
         x: 3,
@@ -91,7 +87,6 @@ const OBJECTS: Object3D[] = [
         ],
     },
     {
-        id: "5",
         highlight: "outline",
         source: "assets/images/i5.png",
         x: 6,
@@ -126,9 +121,8 @@ export class Scene1 implements Scene {
         this.objects = await Promise.all(
             OBJECTS.map(async (object, index) => {
                 const instance = await objectManager.create(object);
-                animationManager.add(`scene1-${index}`, instance.mesh, {
+                animationManager.add(instance.mesh, {
                     preset: "float",
-                    amplitude: 0.15,
                     speed: 1.4,
                     phase: index,
                 });
