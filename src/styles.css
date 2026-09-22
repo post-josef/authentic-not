@@ -12,15 +12,13 @@ body {
 .terms {
     position: fixed;
     bottom: 0;
-    left: 50%;
+    left: 0;
     z-index: 10;
-    transform: translateX(-50%);
     text-align: center;
-    font-size: 12px;
+    font-size: 11px;
     color: #9b958a;
     background: #0a080b;
     box-shadow: 0 0 8px #0a080b;
-    border-top-left-radius: 4px;
     border-top-right-radius: 4px;
     padding: 4px 8px;
 }
