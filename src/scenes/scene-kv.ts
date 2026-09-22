@@ -31,7 +31,7 @@ export class SceneKv implements Scene {
             z: 12,
         });
         animationManager.add(cylinder, { preset: "rotate", speed: -0.1 });
-        objectManager.applyMappedVideoTextures(cylinder, CYLINDER_VIDEOS, { invertY: true });
+        objectManager.applyMappedVideoTextures(cylinder, CYLINDER_VIDEOS);
 
         const face = await objectManager.create({
             source: "assets/kv/mask.glb",

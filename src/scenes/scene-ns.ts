@@ -1,5 +1,4 @@
-import { Axis, Color3, Space, Vector3 } from "@babylonjs/core";
-import { cameraManager } from "../managers/camera";
+import { Color3, Vector3 } from "@babylonjs/core";
 import { fogManager } from "../managers/fog";
 import { lightManager } from "../managers/light";
 import { modalManager } from "../managers/modal";
@@ -30,7 +29,7 @@ export class SceneNs implements Scene {
             [1, 0],
             [2, 4.2],
         ] as const) {
-            const frame = await objectManager.create({
+            await objectManager.create({
                 source: "assets/ns/frame.png",
                 x,
                 y: 1.7,
@@ -47,10 +46,6 @@ export class SceneNs implements Scene {
                 height: 2.2,
                 highlight: "highlightLayer",
             });
-            frame.lookAt(cameraManager.getCamera().position);
-            frame.rotate(Axis.Y, Math.PI, Space.LOCAL);
-            panel.lookAt(cameraManager.getCamera().position);
-            panel.rotate(Axis.Y, Math.PI, Space.LOCAL);
             objectManager.interactive(panel, { onClick: () => this.openModal(index) });
         }
 

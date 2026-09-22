@@ -74,25 +74,6 @@ export class ObjectManager {
         this.scene = scene;
     }
 
-    applyMappedVideoTextures(
-        mesh: AbstractMesh,
-        meshVideos: Record<string, string>,
-        options: { invertY?: boolean } = {},
-    ): AbstractMesh {
-        const highlight = mesh.metadata?.highlightMode as HighlightMode | undefined;
-        const textures: VideoTexture[] = [];
-        for (const part of [mesh, ...mesh.getChildMeshes()]) {
-            const source = meshVideos[part.name];
-            if (source) textures.push(this.applyVideoTexture(part, source, highlight, options));
-        }
-        const release = mesh.metadata.exhibitDispose as () => void;
-        mesh.metadata.exhibitDispose = () => {
-            textures.forEach((texture) => texture.dispose());
-            release();
-        };
-        return mesh;
-    }
-
     interactive(
         mesh: AbstractMesh,
         handlers: {
@@ -220,7 +201,7 @@ export class ObjectManager {
             source,
             this.scene,
             false,
-            options.invertY ?? false,
+            options.invertY ?? true,
             undefined,
             { autoPlay: true, loop: true, muted: true },
             videoTextureOnError,
@@ -231,6 +212,25 @@ export class ObjectManager {
         videoElement.setAttribute("webkit-playsinline", "");
         applyPlaneMaterial(mesh, videoTexture, this.scene, { highlight });
         return videoTexture;
+    }
+
+    applyMappedVideoTextures(
+        mesh: AbstractMesh,
+        meshVideos: Record<string, string>,
+        options: { invertY?: boolean } = {},
+    ): AbstractMesh {
+        const highlight = mesh.metadata?.highlightMode as HighlightMode | undefined;
+        const textures: VideoTexture[] = [];
+        for (const part of [mesh, ...mesh.getChildMeshes()]) {
+            const source = meshVideos[part.name];
+            if (source) textures.push(this.applyVideoTexture(part, source, highlight, options));
+        }
+        const release = mesh.metadata.exhibitDispose as () => void;
+        mesh.metadata.exhibitDispose = () => {
+            textures.forEach((texture) => texture.dispose());
+            release();
+        };
+        return mesh;
     }
 }
 
