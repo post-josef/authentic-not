@@ -60,13 +60,21 @@ export class SceneManager {
         this.babylonScene = null;
     }
 
+    clearLoading() {
+        document.getElementById("scene-loader")?.remove();
+        document.getElementById("scene-boot")?.remove();
+    }
+
     private performSwitch(id: string) {
         const factory = this.registry.get(id);
         if (!factory) throw new Error(`Unknown scene: ${id}`);
         this.clearSceneResources();
         this.current = factory();
         this.routeId = id;
-        void this.current.load().catch((error) => console.error(`[sceneManager] Failed to load ${id}`, error));
+        void this.current
+            .load()
+            .catch((error) => console.error(`[sceneManager] Failed to load ${id}`, error))
+            .finally(() => this.clearLoading());
     }
 
     private clearSceneResources() {

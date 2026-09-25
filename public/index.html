@@ -4,13 +4,44 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="description" content="Online curatorial and research art exhibition" />
-
         <title>Authentic-Not</title>
+        <script>
+            if (location.hash.match(/#\/.+/)) {
+                var s = document.createElement("style");
+                s.id = "scene-boot";
+                s.textContent = "#scene-loader{display:grid!important}";
+                document.head.appendChild(s);
+            }
+        </script>
+        <style>
+            #scene-loader {
+                display: none;
+                position: fixed;
+                inset: 0;
+                z-index: 50;
+                place-content: center;
+                background: #0d0d14;
+            }
+            #scene-loader svg {
+                animation: spin 0.8s linear infinite;
+            }
+            #scene-loader circle {
+                fill: none;
+                stroke: #e8e4dc;
+                stroke-width: 3;
+                stroke-dasharray: 63 21;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
         <link rel="shortcut icon" href="./favicon.ico" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,300,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;1,600&family=IBM+Plex+Mono:wght@400&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,300;400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;1,600&family=IBM+Plex+Mono:wght@400&display=swap"
             rel="stylesheet"
         />
     </head>
@@ -58,6 +89,12 @@
 
         <div id="subtitle-root" aria-live="polite" aria-atomic="true">
             <div class="subtitle-line"></div>
+        </div>
+
+        <div id="scene-loader">
+            <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">
+                <circle cx="20" cy="20" r="16" />
+            </svg>
         </div>
     </body>
 </html>

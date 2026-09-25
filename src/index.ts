@@ -15,6 +15,7 @@ function route() {
     if (!id) {
         app?.dispose();
         app = null;
+        sceneManager.clearLoading();
         setView("welcome");
         return;
     }
@@ -32,13 +33,9 @@ function route() {
 const resize = () => app?.resize();
 window.addEventListener("resize", resize);
 window.addEventListener("hashchange", route);
-window.addEventListener(
-    "beforeunload",
-    () => {
-        window.removeEventListener("resize", resize);
-        app?.dispose();
-    },
-    { once: true },
-);
+window.addEventListener("beforeunload", () => {
+    window.removeEventListener("resize", resize);
+    app?.dispose();
+});
 
 route();
