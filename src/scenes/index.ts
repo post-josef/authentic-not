@@ -10,10 +10,10 @@ import { SceneNs } from "./scene-ns";
 
 export function registerScenes(scenes: SceneManager) {
     // demo & testing:
-    scenes.register("demo1", () => new Scene1());
-    scenes.register("demo2", () => new Scene2());
-    scenes.register("demo3", () => new Scene3());
-    scenes.register("demo4", () => new Scene4());
+    scenes.register("scene1", () => new Scene1());
+    scenes.register("scene2", () => new Scene2());
+    scenes.register("scene3", () => new Scene3());
+    scenes.register("scene4", () => new Scene4());
 
     // exhibition:
     scenes.register("start", () => new SceneStart());

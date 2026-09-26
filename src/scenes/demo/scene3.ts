@@ -1,5 +1,6 @@
-import { Color3 } from "@babylonjs/core";
+import { Color3, Vector3 } from "@babylonjs/core";
 import { animationManager } from "../../managers/animation";
+import { cameraManager } from "../../managers/camera";
 import { lightManager } from "../../managers/light";
 import { objectManager } from "../../managers/object";
 import type { Scene, Object3D } from "../../types";
@@ -126,6 +127,9 @@ const OBJECTS: Object3D[] = [
 
 export class Scene3 implements Scene {
     async load(): Promise<void> {
+        // orbital camera demo
+        cameraManager.setOrbit({ target: new Vector3(...RING_CENTER) });
+
         await Promise.all(
             OBJECTS.map(async (object, index) => {
                 const baseAngle = (index / PANEL_COUNT) * Math.PI * 2 - Math.PI / 2;

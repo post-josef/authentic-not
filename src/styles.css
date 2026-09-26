@@ -449,3 +449,9 @@ body.is-exhibition #welcome {
 .modal-btn-next {
     background-image: linear-gradient(to right, #3a714f 0%, #345a72 51%, #3a714f 100%);
 }
+
+/* Babylon default unmute control (we unlock audio on user gesture instead) */
+#babylonUnmuteButton,
+.babylonUnmute {
+    display: none !important;
+}

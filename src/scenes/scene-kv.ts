@@ -4,6 +4,7 @@ import { cameraManager } from "../managers/camera";
 import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
 import type { Scene } from "../types";
+import { audioManager } from "../managers/audio";
 
 const MASK_TARGET = new Vector3(0, 0, 12);
 
@@ -23,6 +24,8 @@ export class SceneKv implements Scene {
             height: 10,
             maxDistance: 55,
         });
+
+        audioManager.play("assets/kv/zvuksbeatem.mp3", { loop: true });
 
         const cylinder = await objectManager.create({
             source: "assets/kv/valec.glb",

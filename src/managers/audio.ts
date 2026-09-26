@@ -1,9 +1,9 @@
 import { Sound } from "@babylonjs/core";
 import type { Scene } from "@babylonjs/core";
+import { LastCreatedAudioEngine } from "@babylonjs/core/AudioV2/abstractAudio/audioEngineV2";
 // Registers AbstractEngine.AudioEngineFactory. Without it audio engine is never created and every Sound.play() is silent
 import "@babylonjs/core/Audio/audioEngine";
 import "@babylonjs/core/Audio/audioSceneComponent";
-import { LastCreatedAudioEngine } from "@babylonjs/core/AudioV2/abstractAudio/audioEngineV2";
 
 export interface SoundOptions {
     volume?: number;
@@ -16,19 +16,18 @@ export class AudioManager {
     private scene: Scene | null = null;
     private sounds = new Map<string, Sound>();
     private persistent = new Set<string>();
+    private pendingPlay = new Set<string>();
 
     init(scene: Scene) {
         this.dispose();
         this.scene = scene;
-        if (process.env.NODE_ENV !== "development") {
-            const style = document.createElement("style");
-            style.textContent = "#babylonUnmuteButton,.babylonUnmute{display:none!important}";
-            document.head.appendChild(style);
-        }
     }
 
+    /** Call from a user-gesture handler (pointer/keyboard). Resumes Web Audio and starts queued sounds. */
     unlock() {
-        void LastCreatedAudioEngine()?.unlockAsync();
+        const engine = LastCreatedAudioEngine();
+        if (!engine) return;
+        void engine.unlockAsync().then(() => this.flushPending());
     }
 
     load(url: string, options: SoundOptions = {}) {
@@ -48,21 +47,25 @@ export class AudioManager {
     }
 
     play(url: string, options: SoundOptions = {}) {
-        const sound = this.sounds.get(url);
+        let sound = this.sounds.get(url);
         if (!sound) {
-            console.warn(`[audioManager] Unknown sound "${url}"`);
+            this.load(url, options);
+            sound = this.sounds.get(url);
+            if (!sound) return;
+        }
+        this.applyOptions(url, sound, options);
+
+        if (!this.isRunning()) {
+            this.pendingPlay.add(url);
             return;
         }
-        if (options.volume !== undefined) sound.setVolume(options.volume);
-        if (options.loop !== undefined) sound.loop = options.loop;
-        if (options.spatial !== undefined) sound.spatialSound = options.spatial;
-        if (options.persist !== undefined) {
-            if (options.persist) this.persistent.add(url);
-            else this.persistent.delete(url);
+
+        if (!sound.isReady()) {
+            sound.autoplay = true;
+            return;
         }
-        this.unlock();
-        if (sound.isPlaying) sound.stop();
-        sound.play();
+
+        this.startSound(sound);
     }
 
     /** Scene-switch cleanup. Sounds loaded with `persist` keep playing. */
@@ -71,9 +74,47 @@ export class AudioManager {
     }
 
     dispose() {
+        this.pendingPlay.clear();
         [...this.sounds.keys()].forEach((id) => this.removeSound(id));
         this.persistent.clear();
         this.scene = null;
+    }
+
+    private isRunning(): boolean {
+        return LastCreatedAudioEngine()?.state === "running";
+    }
+
+    private flushPending() {
+        if (!this.isRunning()) return;
+        for (const url of [...this.pendingPlay]) {
+            const sound = this.sounds.get(url);
+            if (!sound) {
+                this.pendingPlay.delete(url);
+                continue;
+            }
+            if (!sound.isReady()) {
+                sound.autoplay = true;
+                this.pendingPlay.delete(url);
+                continue;
+            }
+            this.pendingPlay.delete(url);
+            this.startSound(sound);
+        }
+    }
+
+    private startSound(sound: Sound) {
+        if (sound.isPlaying) sound.stop();
+        sound.play();
+    }
+
+    private applyOptions(url: string, sound: Sound, options: SoundOptions) {
+        if (options.volume !== undefined) sound.setVolume(options.volume);
+        if (options.loop !== undefined) sound.loop = options.loop;
+        if (options.spatial !== undefined) sound.spatialSound = options.spatial;
+        if (options.persist !== undefined) {
+            if (options.persist) this.persistent.add(url);
+            else this.persistent.delete(url);
+        }
     }
 
     private requireScene(): Scene {
@@ -82,6 +123,7 @@ export class AudioManager {
     }
 
     private removeSound(url: string) {
+        this.pendingPlay.delete(url);
         const previous = this.sounds.get(url);
         if (previous) {
             try {
