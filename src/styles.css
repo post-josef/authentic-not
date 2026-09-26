@@ -16,7 +16,7 @@ body {
     z-index: 10;
     text-align: center;
     font-size: 11px;
-    color: #9b958a;
+    color: #929086;
     background: #0a080b;
     box-shadow: 0 0 8px #0a080b;
     border-top-right-radius: 4px;
@@ -27,7 +27,7 @@ body {
     white-space: nowrap;
 }
 .terms-link {
-    color: #c3baab;
+    color: #c0baab;
     cursor: pointer;
     text-decoration: none;
 }
@@ -212,9 +212,9 @@ body {
     width: 36px;
     height: 36px;
     padding: 0;
-    border: 1px solid rgba(232, 228, 220, 0.22);
+    border: 1px solid rgba(232, 228, 220, 0.2);
     border-radius: 8px;
-    background: rgba(8, 11, 16, 0.72);
+    background: rgba(8, 11, 16, 0.6);
     color: #e8e4dc;
     cursor: pointer;
     backdrop-filter: blur(8px);
