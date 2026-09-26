@@ -33,6 +33,9 @@ function route() {
 const resize = () => app?.resize();
 window.addEventListener("resize", resize);
 window.addEventListener("hashchange", route);
+
+const backButton = document.getElementById("exhibition-back");
+backButton?.addEventListener("click", () => sceneManager.goBack());
 window.addEventListener("beforeunload", () => {
     window.removeEventListener("resize", resize);
     app?.dispose();

@@ -15,6 +15,8 @@ export class SceneManager {
     private registry = new Map<string, () => Scene>();
     private current: Scene | null = null;
     private routeId: string | null = null;
+    private history: string[] = [];
+    private navigatingBack = false;
 
     init(scene: BabylonScene) {
         this.babylonScene = scene;
@@ -38,6 +40,24 @@ export class SceneManager {
         else go();
     }
 
+    goBack() {
+        const go = () => {
+            const previous = this.history.pop();
+            if (previous) {
+                this.navigatingBack = true;
+                try {
+                    this.switchTo(previous);
+                } finally {
+                    this.navigatingBack = false;
+                }
+                return;
+            }
+            if (location.hash) location.hash = "";
+        };
+        if (modalManager.isOpen()) modalManager.close(go);
+        else go();
+    }
+
     sceneIdFromHash(): string | null {
         const match = location.hash.match(/^#\/([^/?#]+)/);
         return match?.[1] ?? null;
@@ -56,6 +76,8 @@ export class SceneManager {
         this.clearSceneResources();
         this.current = null;
         this.routeId = null;
+        this.history = [];
+        this.navigatingBack = false;
         this.registry.clear();
         this.babylonScene = null;
     }
@@ -68,6 +90,9 @@ export class SceneManager {
     private performSwitch(id: string) {
         const factory = this.registry.get(id);
         if (!factory) throw new Error(`Unknown scene: ${id}`);
+        if (!this.navigatingBack && this.routeId && this.routeId !== id) {
+            this.history.push(this.routeId);
+        }
         this.clearSceneResources();
         this.current = factory();
         this.routeId = id;
