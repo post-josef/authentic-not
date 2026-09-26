@@ -25,7 +25,7 @@ export class SceneKV implements Scene {
             maxDistance: 55,
         });
 
-        audioManager.play("assets/kv/zvuksbeatem.mp3", { loop: true, volume: 8 });
+        audioManager.play("assets/kv/zvuksbeatem.mp3", { loop: true, volume: 4 });
 
         const cylinder = await objectManager.create({
             source: "assets/kv/valec.glb",
