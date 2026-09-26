@@ -15,7 +15,7 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "glow",
         subtitle: "Loop One",
-        source: "assets/images/i3.png",
+        source: "assets/demo/i3.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
@@ -23,7 +23,7 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene4",
         modal: [
             { type: "text", content: "Loop One", tag: "h2" },
-            { type: "image", src: "assets/images/i3.png", alt: "Loop One" },
+            { type: "image", src: "assets/demo/i3.png", alt: "Loop One" },
             {
                 type: "text",
                 content: "The path bends into a figure-eight — panels trace an endless crossing.",
@@ -37,7 +37,7 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "glow",
         subtitle: "Loop Two",
-        source: "assets/images/i2.png",
+        source: "assets/demo/i2.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
@@ -45,7 +45,7 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene4",
         modal: [
             { type: "text", content: "Loop Two", tag: "h2" },
-            { type: "image", src: "assets/images/i2.png", alt: "Loop Two" },
+            { type: "image", src: "assets/demo/i2.png", alt: "Loop Two" },
             {
                 type: "text",
                 content: "At the crossover, heights diverge — one rises as another dips below.",
@@ -59,7 +59,7 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "glow",
         subtitle: "Loop Three",
-        source: "assets/images/i5.png",
+        source: "assets/demo/i5.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
@@ -67,7 +67,7 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene4",
         modal: [
             { type: "text", content: "Loop Three", tag: "h2" },
-            { type: "image", src: "assets/images/i5.png", alt: "Loop Three" },
+            { type: "image", src: "assets/demo/i5.png", alt: "Loop Three" },
             {
                 type: "text",
                 content: "A warm ember light hangs at the knot, catching every passing frame.",
@@ -81,7 +81,7 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "glow",
         subtitle: "Loop Four",
-        source: "assets/images/i1.png",
+        source: "assets/demo/i1.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
@@ -89,7 +89,7 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene4",
         modal: [
             { type: "text", content: "Loop Four", tag: "h2" },
-            { type: "image", src: "assets/images/i1.png", alt: "Loop Four" },
+            { type: "image", src: "assets/demo/i1.png", alt: "Loop Four" },
             {
                 type: "text",
                 content: "Hover brings a soft bloom — the glow layer answers like a held breath.",
@@ -103,7 +103,7 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "glow",
         subtitle: "Loop Five",
-        source: "assets/images/i4.png",
+        source: "assets/demo/i4.png",
         x: 0,
         y: 2.2,
         z: LOOP_CENTER_Z,
@@ -111,7 +111,7 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene4",
         modal: [
             { type: "text", content: "Loop Five", tag: "h2" },
-            { type: "image", src: "assets/images/i4.png", alt: "Loop Five" },
+            { type: "image", src: "assets/demo/i4.png", alt: "Loop Five" },
             {
                 type: "text",
                 content: "The journey closes where it began. Return to the quiet row gallery.",

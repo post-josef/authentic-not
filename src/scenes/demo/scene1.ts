@@ -8,7 +8,7 @@ import "./scene1.css";
 const OBJECTS: Object3D[] = [
     {
         highlight: "outline",
-        source: "assets/images/i1.png",
+        source: "assets/demo/c1.svg",
         x: -6,
         y: 1.8,
         z: 5,
@@ -17,8 +17,7 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene1",
         modal: [
             { type: "text", content: "Row One", tag: "h2" },
-            { type: "image", src: "assets/images/i1.png", alt: "Row One" },
-            { type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" },
+            { type: "image", src: "assets/demo/c1.svg", alt: "Row One" },
             {
                 type: "text",
                 content: "The line begins here — a soft red light spills across the first frame.",
@@ -28,7 +27,7 @@ const OBJECTS: Object3D[] = [
     },
     {
         highlight: "outline",
-        source: "assets/images/i2.png",
+        source: "assets/demo/c2.svg",
         x: -3,
         y: 1.8,
         z: 5,
@@ -37,8 +36,7 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene1",
         modal: [
             { type: "text", content: "Row Two", tag: "h2" },
-            { type: "image", src: "assets/images/i2.png", alt: "Row Two" },
-            { type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" },
+            { type: "image", src: "assets/demo/c2.svg", alt: "Row Two" },
             {
                 type: "text",
                 content: "Each panel leans in slightly, drawing you further along the corridor.",
@@ -48,7 +46,7 @@ const OBJECTS: Object3D[] = [
     },
     {
         highlight: "outline",
-        source: "assets/images/i3.png",
+        source: "assets/demo/c3.svg",
         x: 0,
         y: 1.8,
         z: 5,
@@ -57,8 +55,8 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene1",
         modal: [
             { type: "text", content: "Row Three", tag: "h2" },
-            { type: "image", src: "assets/images/i3.png", alt: "Row Three" },
-            { type: "embed", source: "https://vimeo.com/384166760" },
+            { type: "image", src: "assets/demo/c3.svg", alt: "Row Three" },
+            // { type: "embed", source: "https://vimeo.com/<video-id-here>" },
             {
                 type: "text",
                 content: "At the center, the spot finds its mark and the image gently breathes.",
@@ -68,7 +66,7 @@ const OBJECTS: Object3D[] = [
     },
     {
         highlight: "outline",
-        source: "assets/images/i4.png",
+        source: "assets/demo/c4.svg",
         x: 3,
         y: 1.8,
         z: 5,
@@ -77,8 +75,8 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene1",
         modal: [
             { type: "text", content: "Row Four", tag: "h2" },
-            { type: "image", src: "assets/images/i4.png", alt: "Row Four" },
-            { type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" },
+            { type: "image", src: "assets/demo/c4.svg", alt: "Row Four" },
+            // { type: "embed", source: "https://www.youtube.com/watch?v=<video-id-here>" },
             {
                 type: "text",
                 content: "The rhythm holds — quiet float, warm glow, one piece after another.",
@@ -88,7 +86,7 @@ const OBJECTS: Object3D[] = [
     },
     {
         highlight: "outline",
-        source: "assets/images/i5.png",
+        source: "assets/demo/c5.svg",
         x: 6,
         y: 1.8,
         z: 5,
@@ -97,8 +95,7 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene1",
         modal: [
             { type: "text", content: "Row Five", tag: "h2" },
-            { type: "image", src: "assets/images/i5.png", alt: "Row Five" },
-            { type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" },
+            { type: "image", src: "assets/demo/c5.svg", alt: "Row Five" },
             {
                 type: "text",
                 content: "The row ends, but the gallery does not. Step into the drifting collection ahead.",
@@ -130,14 +127,33 @@ export class Scene1 implements Scene {
 
         lightManager.createLight({
             x: 0,
-            y: 3.2,
+            y: 6,
             z: 1.5,
-            target: new Vector3(0, 1.8, 5),
-            color: new Color3(1, 0.32, 0.32),
-            intensity: 1.2,
-            range: 14,
-            fixture: { scale: 0.55 },
+            target: new Vector3(0, 1.8, 5), // center
+            color: new Color3(1, 0.28, 0.32), // red
+            intensity: 20,
             meshes: panels,
+            fixture: { scale: 0.5 },
+        });
+        lightManager.createLight({
+            x: 6,
+            y: 6,
+            z: 1.5,
+            target: new Vector3(6, 1.6, 5), // right
+            color: new Color3(0.32, 1, 0.4), // green
+            intensity: 40,
+            meshes: panels,
+            fixture: { scale: 0.5 },
+        });
+        lightManager.createLight({
+            x: -6,
+            y: 6,
+            z: 1.5,
+            target: new Vector3(-5.8, 1.6, 5), // left
+            color: new Color3(0.32, 0.2, 1), // blue
+            intensity: 48,
+            meshes: panels,
+            fixture: { scale: 0.5 },
         });
     }
 }

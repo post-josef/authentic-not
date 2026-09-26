@@ -12,15 +12,15 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "outline",
         subtitle: "Orbit One",
-        source: "assets/images/i3.png",
+        source: "assets/demo/i3.png",
         x: 0,
         y: 2.2,
         z: 8 + RING_RADIUS,
         ry: 0,
-        modalClassName: "modal-scene3",
+        modalClassName: "modal-scene3-one",
         modal: [
             { type: "text", content: "Orbit One", tag: "h2" },
-            { type: "image", src: "assets/images/i3.png", alt: "Orbit One" },
+            { type: "image", src: "assets/demo/i3.png", alt: "Orbit One" },
             {
                 type: "text",
                 content: "Panels ride a slow ring — the whole constellation turns together.",
@@ -34,15 +34,15 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "outline",
         subtitle: "Orbit Two",
-        source: "assets/images/i5.png",
+        source: "assets/demo/i5.png",
         x: 0,
         y: 2.5,
         z: 8,
         ry: 0,
-        modalClassName: "modal-scene3",
+        modalClassName: "modal-scene3-two",
         modal: [
             { type: "text", content: "Orbit Two", tag: "h2" },
-            { type: "image", src: "assets/images/i5.png", alt: "Orbit Two" },
+            { type: "image", src: "assets/demo/i5.png", alt: "Orbit Two" },
             {
                 type: "text",
                 content: "Each frame faces the hub while the carousel drifts through space.",
@@ -56,15 +56,15 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "outline",
         subtitle: "Orbit Three",
-        source: "assets/images/i1.png",
+        source: "assets/demo/i1.png",
         x: 0,
         y: 1.9,
         z: 8,
         ry: 0,
-        modalClassName: "modal-scene3",
+        modalClassName: "modal-scene3-three",
         modal: [
             { type: "text", content: "Orbit Three", tag: "h2" },
-            { type: "image", src: "assets/images/i1.png", alt: "Orbit Three" },
+            { type: "image", src: "assets/demo/i1.png", alt: "Orbit Three" },
             {
                 type: "text",
                 content: "A cool hub light catches the edges as panels pass in front of one another.",
@@ -78,15 +78,15 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "outline",
         subtitle: "Orbit Four",
-        source: "assets/images/i4.png",
+        source: "assets/demo/i4.png",
         x: 0,
         y: 2.4,
         z: 8,
         ry: 0,
-        modalClassName: "modal-scene3",
+        modalClassName: "modal-scene3-four",
         modal: [
             { type: "text", content: "Orbit Four", tag: "h2" },
-            { type: "image", src: "assets/images/i4.png", alt: "Orbit Four" },
+            { type: "image", src: "assets/demo/i4.png", alt: "Orbit Four" },
             {
                 type: "text",
                 content: "Gentle tilt wobble keeps the ring from feeling mechanical.",
@@ -100,15 +100,15 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "outline",
         subtitle: "Orbit Five",
-        source: "assets/images/i2.png",
+        source: "assets/demo/i2.png",
         x: 0,
         y: 2.1,
         z: 8,
         ry: 0,
-        modalClassName: "modal-scene3",
+        modalClassName: "modal-scene3-five",
         modal: [
             { type: "text", content: "Orbit Five", tag: "h2" },
-            { type: "image", src: "assets/images/i2.png", alt: "Orbit Five" },
+            { type: "image", src: "assets/demo/i2.png", alt: "Orbit Five" },
             {
                 type: "text",
                 content: "Follow the figure-eight — a warmer loop lies ahead.",

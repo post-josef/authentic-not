@@ -27,6 +27,7 @@ function createFixtureMaterial(name: string, scene: Scene, color: Color3): Stand
     const material = new StandardMaterial(`${name}Material`, scene);
     material.emissiveColor = color.clone();
     material.disableLighting = true;
+    material.alpha = 0.8;
     return material;
 }
 
