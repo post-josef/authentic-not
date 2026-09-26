@@ -5,8 +5,9 @@ import { Scene3 } from "./demo/scene3";
 import { Scene4 } from "./demo/scene4";
 
 import { SceneStart } from "./sceneStart";
-import { SceneKv } from "./scene-kv";
-import { SceneNs } from "./scene-ns";
+import { SceneKV } from "./scene-kv";
+import { SceneNS } from "./scene-ns";
+import { SceneMM } from "./scene-mm";
 
 export function registerScenes(scenes: SceneManager) {
     // demo & testing:
@@ -17,6 +18,7 @@ export function registerScenes(scenes: SceneManager) {
 
     // exhibition:
     scenes.register("start", () => new SceneStart());
-    scenes.register("kv", () => new SceneKv());
-    scenes.register("ns", () => new SceneNs());
+    scenes.register("kv", () => new SceneKV());
+    scenes.register("ns", () => new SceneNS());
+    scenes.register("mm", () => new SceneMM());
 }

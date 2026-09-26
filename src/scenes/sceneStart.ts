@@ -27,6 +27,16 @@ const OBJECTS: Object3D[] = [
         height: 3.4,
         highlight: "highlightLayer",
     },
+    {
+        source: "assets/mm/object.glb",
+        targetScene: "mm",
+        x: 6,
+        y: 1.8,
+        z: 5,
+        scale: 0.3,
+        subtitle: "Miroslav Mužík",
+        highlight: "highlightLayer",
+    },
 ];
 
 export class SceneStart implements Scene {

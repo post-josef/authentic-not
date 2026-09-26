@@ -20,7 +20,7 @@ export interface LightOptions {
     intensity?: number; // default is 50
     range?: number; // default is 50
     meshes?: AbstractMesh[];
-    fixture?: { scale?: number }; // default is 0.5
+    fixture?: { scale?: number; color?: Color3 }; // default is 0.5
 }
 
 function createFixtureMaterial(name: string, scene: Scene, color: Color3): StandardMaterial {
@@ -115,14 +115,19 @@ export class LightManager {
 
         if (options.fixture) {
             const scale = options.fixture.scale;
+            const fixtureColor = options.fixture.color ?? color;
             if (light instanceof SpotLight) {
-                createSpotFixture(name, position, light.direction, scene, color, scale ?? 0.5);
+                createSpotFixture(name, position, light.direction, scene, fixtureColor, scale ?? 0.5);
             } else {
-                createPointFixture(name, position, scene, color, scale ?? 0.3);
+                createPointFixture(name, position, scene, fixtureColor, scale ?? 0.3);
             }
         }
 
         return light;
+    }
+
+    disableGlobalLight() {
+        this.globalLight?.setEnabled(false);
     }
 
     clear() {
@@ -130,6 +135,7 @@ export class LightManager {
         for (const light of [...this.scene.lights]) {
             if (light !== this.globalLight) light.dispose();
         }
+        this.globalLight.setEnabled(true);
     }
 
     dispose() {

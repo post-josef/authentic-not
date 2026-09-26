@@ -6,7 +6,7 @@ import { objectManager } from "../managers/object";
 import type { Scene } from "../types";
 import "./scene-ns.css";
 
-export class SceneNs implements Scene {
+export class SceneNS implements Scene {
     async load(): Promise<void> {
         fogManager.set({
             mode: "exp2",

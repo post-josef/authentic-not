@@ -16,7 +16,7 @@ const CYLINDER_VIDEOS: Record<string, string> = {
     "valec-bok3": "assets/kv/valec-bok3.mp4",
 };
 
-export class SceneKv implements Scene {
+export class SceneKV implements Scene {
     async load(): Promise<void> {
         cameraManager.setOrbit({
             target: MASK_TARGET,
@@ -25,7 +25,7 @@ export class SceneKv implements Scene {
             maxDistance: 55,
         });
 
-        audioManager.play("assets/kv/zvuksbeatem.mp3", { loop: true });
+        audioManager.play("assets/kv/zvuksbeatem.mp3", { loop: true, volume: 8 });
 
         const cylinder = await objectManager.create({
             source: "assets/kv/valec.glb",

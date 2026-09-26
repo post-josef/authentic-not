@@ -42,6 +42,9 @@ function buildEmbedSrc(source: string): string {
         const id = url.pathname.split("/").filter(Boolean).pop();
         if (id) return withParams(`https://player.vimeo.com/video/${id}`, { autoplay: "1", autopause: "0" });
     }
+    if (host === "drive.google.com") {
+        return withParams(source, { autoplay: "1" });
+    }
     if (url.pathname.includes("/embed")) return withParams(source, { autoplay: "1" });
     return source;
 }
