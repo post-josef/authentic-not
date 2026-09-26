@@ -6,14 +6,17 @@ import { subtitleManager } from "../../managers/subtitle";
 import type { Scene, Object3D } from "../../types";
 import "./scene2.css";
 
-const KICK_SOUND = "scene2-kick";
-const COWBELL_SOUND = "scene2-cowbell";
-const MICROWAVE_SOUND = "scene2-microwave";
+const SOUND_1 = "assets/demo/a1-stick-click.wav";
+const SOUND_2 = "assets/demo/a2-foam-hit.wav";
+const SOUND_3 = "assets/demo/a3-glass-click.wav";
+const SOUND_4 = "assets/demo/a4-stick-on-paper.wav";
+const SOUND_5 = "assets/demo/a5-stoneware-click.wav";
+
 const OBJECTS: Object3D[] = [
     {
         highlight: "highlightLayer",
         subtitle: "Drift One",
-        source: "assets/images/i2.png",
+        source: "assets/demo/i2.png",
         x: -4.5,
         y: 2.4,
         z: 3,
@@ -21,7 +24,7 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene2",
         modal: [
             { type: "text", content: "Drift One", tag: "h2" },
-            { type: "image", src: "assets/images/i2.png", alt: "Drift One" },
+            { type: "image", src: "assets/demo/i2.png", alt: "Drift One" },
             {
                 type: "text",
                 content: "Orbiting gallery — each panel drifts on its own path.",
@@ -35,7 +38,7 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "highlightLayer",
         subtitle: "Drift Two",
-        source: "assets/images/i4.png",
+        source: "assets/demo/i4.png",
         x: -1.8,
         y: 1.2,
         z: 6,
@@ -43,7 +46,7 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene2",
         modal: [
             { type: "text", content: "Drift Two", tag: "h2" },
-            { type: "image", src: "assets/images/i4.png", alt: "Drift Two" },
+            { type: "image", src: "assets/demo/i4.png", alt: "Drift Two" },
             {
                 type: "text",
                 content: "Depth layers create a staggered, cinematic feel.",
@@ -57,7 +60,7 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "highlightLayer",
         subtitle: "Drift Three",
-        source: "assets/images/i1.png",
+        source: "assets/demo/i1.png",
         x: 0,
         y: 2.8,
         z: 4.5,
@@ -65,7 +68,7 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene2",
         modal: [
             { type: "text", content: "Drift Three", tag: "h2" },
-            { type: "image", src: "assets/images/i1.png", alt: "Drift Three" },
+            { type: "image", src: "assets/demo/i1.png", alt: "Drift Three" },
             {
                 type: "text",
                 content: "Center piece rises and falls with a slow pulse.",
@@ -79,7 +82,7 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "highlightLayer",
         subtitle: "Drift Four",
-        source: "assets/images/i5.png",
+        source: "assets/demo/i5.png",
         x: 2.2,
         y: 1.5,
         z: 5.5,
@@ -87,7 +90,7 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene2",
         modal: [
             { type: "text", content: "Drift Four", tag: "h2" },
-            { type: "image", src: "assets/images/i5.png", alt: "Drift Four" },
+            { type: "image", src: "assets/demo/i5.png", alt: "Drift Four" },
             {
                 type: "text",
                 content: "Gentle yaw oscillation adds life without distraction.",
@@ -101,7 +104,7 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "highlightLayer",
         subtitle: "Drift Five",
-        source: "assets/images/i3.png",
+        source: "assets/demo/i3.png",
         x: 4.8,
         y: 2.1,
         z: 3.5,
@@ -109,7 +112,7 @@ const OBJECTS: Object3D[] = [
         modalClassName: "modal-scene2",
         modal: [
             { type: "text", content: "Drift Five", tag: "h2" },
-            { type: "image", src: "assets/images/i3.png", alt: "Drift Five" },
+            { type: "image", src: "assets/demo/i3.png", alt: "Drift Five" },
             {
                 type: "text",
                 content: "Continue to the orbital ring gallery.",
@@ -127,13 +130,8 @@ const OBJECTS: Object3D[] = [
 
 export class Scene2 implements Scene {
     async load(): Promise<void> {
-        // audio assets are not provided, it will throw error
-        audioManager.load(KICK_SOUND, "assets/audio/kick.wav", { volume: 0.55 });
-        audioManager.load(COWBELL_SOUND, "assets/audio/cowbell.wav", { volume: 0.45 });
-        audioManager.load(MICROWAVE_SOUND, "assets/audio/microwave.wav", {
-            volume: 0.55,
-            persist: true,
-        });
+        const SOUNDS = [SOUND_1, SOUND_2, SOUND_3, SOUND_4, SOUND_5];
+        SOUNDS.forEach((sound) => audioManager.load(sound, { volume: 0.6 }));
 
         fogManager.set({
             mode: "exp2",
@@ -156,10 +154,10 @@ export class Scene2 implements Scene {
                 const instance = await objectManager.create(object);
                 objectManager.interactive(instance, {
                     onClick: () => {
-                        audioManager.play(index % 2 === 0 ? KICK_SOUND : COWBELL_SOUND);
+                        audioManager.play(SOUNDS[index]);
                         objectManager.openModal(object, {
-                            onSceneSwitch: (sceneId) => {
-                                if (sceneId === "scene3") audioManager.play(MICROWAVE_SOUND);
+                            onSceneSwitch: () => {
+                                audioManager.play(SOUND_5, { persist: true });
                             },
                         });
                     },
