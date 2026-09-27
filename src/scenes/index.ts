@@ -8,6 +8,7 @@ import { SceneStart } from "./sceneStart";
 import { SceneKV } from "./scene-kv";
 import { SceneNS } from "./scene-ns";
 import { SceneMM } from "./scene-mm";
+import { SceneJV } from "./scene-jv";
 
 export function registerScenes(scenes: SceneManager) {
     // demo & testing:
@@ -21,4 +22,5 @@ export function registerScenes(scenes: SceneManager) {
     scenes.register("kv", () => new SceneKV());
     scenes.register("ns", () => new SceneNS());
     scenes.register("mm", () => new SceneMM());
+    scenes.register("jv", () => new SceneJV());
 }
