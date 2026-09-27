@@ -1,10 +1,10 @@
 import { Vector3, Color3 } from "@babylonjs/core";
 import { animationManager } from "../managers/animation";
+import { audioManager } from "../managers/audio";
 import { cameraManager } from "../managers/camera";
 import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
 import type { Scene } from "../types";
-import { audioManager } from "../managers/audio";
 
 const MASK_TARGET = new Vector3(0, 0, 12);
 
