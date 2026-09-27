@@ -1,8 +1,26 @@
 import { animationManager } from "../managers/animation";
 import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
-import { Color3, Vector3 } from "@babylonjs/core";
+import { Color3, CubeTexture, PBRMaterial, Vector3 } from "@babylonjs/core";
+import type { AbstractMesh } from "@babylonjs/core";
 import type { Scene, Object3D } from "../types";
+
+const MM_OBJECT_SOURCE = "assets/mm/object.glb";
+const METAL_ENVIRONMENT_URL = "https://assets.babylonjs.com/environments/environmentSpecular.env";
+
+function applyMetallicMaterial(root: AbstractMesh, reflection: CubeTexture): void {
+    const scene = root.getScene();
+    for (const part of [root, ...root.getChildMeshes()]) {
+        if (!part.getTotalVertices()) continue;
+
+        const material = new PBRMaterial(`${part.name}MetalMat`, scene);
+        material.albedoColor = new Color3(0.92, 0.93, 0.95);
+        material.metallic = 1;
+        material.roughness = 0.22;
+        material.reflectionTexture = reflection;
+        part.material = material;
+    }
+}
 
 const OBJECTS: Object3D[] = [
     {
@@ -28,7 +46,7 @@ const OBJECTS: Object3D[] = [
         highlight: "highlightLayer",
     },
     {
-        source: "assets/mm/object.glb",
+        source: MM_OBJECT_SOURCE,
         targetScene: "mm",
         x: 6,
         y: 1.8,
@@ -48,6 +66,18 @@ export class SceneStart implements Scene {
                 return mesh;
             }),
         );
+
+        const mmMesh = portals[OBJECTS.findIndex((object) => object.source === MM_OBJECT_SOURCE)];
+        const metalEnvironment = CubeTexture.CreateFromPrefilteredData(
+            METAL_ENVIRONMENT_URL,
+            mmMesh.getScene(),
+        );
+        applyMetallicMaterial(mmMesh, metalEnvironment);
+        const releaseMm = mmMesh.metadata.exhibitDispose as () => void;
+        mmMesh.metadata.exhibitDispose = () => {
+            metalEnvironment.dispose();
+            releaseMm();
+        };
 
         lightManager.createLight({
             x: 0,
