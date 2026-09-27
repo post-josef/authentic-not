@@ -3,6 +3,7 @@ import type { Camera, Observer, Scene } from "@babylonjs/core";
 
 const WALK_POSITION = new Vector3(0, 1.7, -10);
 const RESET_MS = 900;
+const DOUBLE_TAP_MS = 300;
 
 export class CameraManager {
     private scene: Scene | null = null;
@@ -14,6 +15,7 @@ export class CameraManager {
     private walkSpawn = WALK_POSITION.clone();
     private walkRotation = Vector3.Zero();
     private orbitSpawn: { alpha: number; beta: number; radius: number; target: Vector3 } | null = null;
+    private lastTap = 0;
 
     init(scene: Scene, canvas: HTMLCanvasElement) {
         this.dispose();
@@ -37,6 +39,7 @@ export class CameraManager {
         this.walkCam = camera;
         scene.activeCamera = camera;
         canvas.addEventListener("dblclick", this.onDoubleClick);
+        canvas.addEventListener("touchend", this.onTouchEnd, { passive: false });
     }
 
     getCamera(): Camera {
@@ -119,6 +122,7 @@ export class CameraManager {
         }
         this.heightObserver = null;
         this.canvas?.removeEventListener("dblclick", this.onDoubleClick);
+        this.canvas?.removeEventListener("touchend", this.onTouchEnd);
         this.walkCam?.dispose();
         this.orbitCam?.dispose();
         this.walkCam = null;
@@ -127,7 +131,18 @@ export class CameraManager {
         this.scene = null;
     }
 
-    private readonly onDoubleClick = () => {
+    private readonly onDoubleClick = () => this.resetCamera();
+
+    private readonly onTouchEnd = (e: TouchEvent) => {
+        const now = Date.now();
+        if (now - this.lastTap < DOUBLE_TAP_MS) {
+            e.preventDefault();
+            this.resetCamera();
+        }
+        this.lastTap = now;
+    };
+
+    private resetCamera() {
         const scene = this.scene;
         if (!scene) return;
         const camera = this.getCamera();
@@ -167,7 +182,7 @@ export class CameraManager {
             Vector3.LerpToRef(fromRotation, this.walkRotation, t, camera.rotation);
             if (t >= 1) this.stopReset();
         });
-    };
+    }
 
     private stopReset() {
         if (this.scene && this.resetObserver) {
