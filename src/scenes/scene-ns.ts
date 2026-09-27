@@ -34,7 +34,7 @@ export class SceneNS implements Scene {
                 height: 2.2,
                 highlight: "highlightLayer",
                 modalClassName: "modal-scene-ns",
-                modal: [{ type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" }],
+                modal: [{ type: "embed", source: "https://www.youtube.com/watch?v=---" }],
             },
             {
                 source: "assets/ns/2.mp4",
@@ -45,7 +45,7 @@ export class SceneNS implements Scene {
                 height: 2.2,
                 highlight: "highlightLayer",
                 modalClassName: "modal-scene-ns",
-                modal: [{ type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" }],
+                modal: [{ type: "embed", source: "https://www.youtube.com/watch?v=---" }],
             },
             {
                 source: "assets/ns/3.mp4",
@@ -56,7 +56,7 @@ export class SceneNS implements Scene {
                 height: 2.2,
                 highlight: "highlightLayer",
                 modalClassName: "modal-scene-ns",
-                modal: [{ type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" }],
+                modal: [{ type: "embed", source: "https://www.youtube.com/watch?v=---" }],
             },
         ];
 
