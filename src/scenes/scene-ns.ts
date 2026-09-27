@@ -3,7 +3,7 @@ import { fogManager } from "../managers/fog";
 import { lightManager } from "../managers/light";
 import { modalManager } from "../managers/modal";
 import { objectManager } from "../managers/object";
-import type { Scene } from "../types";
+import type { Object3D, Scene } from "../types";
 import "./scene-ns.css";
 
 export class SceneNS implements Scene {
@@ -24,29 +24,56 @@ export class SceneNS implements Scene {
             followCamera: true,
         });
 
-        for (const [index, x] of [
-            [0, -4.2],
-            [1, 0],
-            [2, 4.2],
-        ] as const) {
-            await objectManager.create({
-                source: "assets/ns/frame.png",
-                x,
-                y: 1.7,
-                z: 6,
-                width: 3.25,
-                height: 2.7,
-            });
-            const panel = await objectManager.create({
-                source: `assets/ns/${index + 1}.mp4`,
-                x,
+        const panels: Object3D[] = [
+            {
+                source: "assets/ns/1.mp4",
+                x: -4.2,
                 y: 1.7,
                 z: 5.999,
                 width: 3.04,
                 height: 2.2,
                 highlight: "highlightLayer",
+                modalClassName: "modal-scene-ns",
+                modal: [{ type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" }],
+            },
+            {
+                source: "assets/ns/2.mp4",
+                x: 0,
+                y: 1.7,
+                z: 5.999,
+                width: 3.04,
+                height: 2.2,
+                highlight: "highlightLayer",
+                modalClassName: "modal-scene-ns",
+                modal: [{ type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" }],
+            },
+            {
+                source: "assets/ns/3.mp4",
+                x: 4.2,
+                y: 1.7,
+                z: 5.999,
+                width: 3.04,
+                height: 2.2,
+                highlight: "highlightLayer",
+                modalClassName: "modal-scene-ns",
+                modal: [{ type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" }],
+            },
+        ];
+
+        for (let index = 0; index < panels.length; index++) {
+            const panel = panels[index];
+            await objectManager.create({
+                source: "assets/ns/frame.png",
+                x: panel.x,
+                y: 1.7,
+                z: 6,
+                width: 3.25,
+                height: 2.7,
             });
-            objectManager.interactive(panel, { onClick: () => this.openModal(index) });
+            const video = await objectManager.create({ ...panel, modal: undefined, modalClassName: undefined });
+            objectManager.interactive(video, {
+                onClick: () => this.openModal(index, panels),
+            });
         }
 
         const face = await objectManager.create({
@@ -70,18 +97,17 @@ export class SceneNS implements Scene {
         });
     }
 
-    private openModal(index: number) {
+    private openModal(index: number, panels: Object3D[]) {
+        const panel = panels[index];
         modalManager.open({
-            className: "modal-scene-ns",
-            width: "min(92vw, 800px)",
+            className: panel.modalClassName,
             content: [
-                { type: "button", label: "X", className: "modal-btn", onClick: () => modalManager.close() },
-                { type: "embed", source: "https://www.youtube.com/watch?v=mMD63t-W0Os" },
+                ...(panel.modal || []),
                 {
                     type: "button",
                     label: "NEXT",
-                    className: "modal-btn modal-btn-next",
-                    onClick: () => modalManager.close(() => this.openModal((index + 1) % 3)),
+                    className: "modal-btn",
+                    onClick: () => modalManager.close(() => this.openModal((index + 1) % panels.length, panels)),
                 },
             ],
         });

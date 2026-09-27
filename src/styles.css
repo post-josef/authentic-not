@@ -201,12 +201,9 @@ body {
     transform: translateY(-1px);
 }
 
-#exhibition-back {
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    z-index: 20;
-    display: none;
+#exhibition-back,
+.modal-close {
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 36px;
@@ -224,15 +221,25 @@ body {
         color 0.2s ease;
 }
 
-#exhibition-back:hover {
+#exhibition-back:hover,
+.modal-close:hover {
     border-color: rgba(232, 228, 220, 0.45);
     background: rgba(18, 22, 30, 0.88);
     color: #fff;
 }
 
-#exhibition-back:focus-visible {
+#exhibition-back:focus-visible,
+.modal-close:focus-visible {
     outline: 2px solid rgba(232, 228, 220, 0.55);
     outline-offset: 2px;
+}
+
+#exhibition-back {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 20;
+    display: none;
 }
 
 body.is-exhibition #exhibition-back {
@@ -306,88 +313,71 @@ body.is-exhibition #welcome {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    width: 560px;
-    max-width: calc(100vw - 32px);
-    min-height: 420px;
-    max-height: 90vh;
-    height: auto;
     box-sizing: border-box;
-    border: 2px solid #fff;
-    border-radius: 8px;
-    background: #333;
-    padding: 16px 20px;
-    opacity: 0;
-    transition: opacity var(--modal-fade-duration) var(--modal-fade-easing);
-    backdrop-filter: blur(11px);
-    outline: none;
-}
-
-.modal-content {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    max-height: calc(90vh - 36px);
-    overflow-x: hidden;
-    overflow-y: auto;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 24px);
+    padding: 48px 16px 16px;
+    border: 1px solid #666;
+    border-radius: 8px;
+    background: #0a0a0a;
+    color: #eee;
+    opacity: 0;
+    outline: none;
+    transition: opacity var(--modal-fade-duration) var(--modal-fade-easing);
 }
 
 #modal-root.is-visible .modal-panel {
     opacity: 1;
 }
 
-.modal-content h2 {
-    margin: 0;
-    color: #fff;
-    font-size: 28px;
-    font-weight: 600;
-    line-height: 1.2;
-    text-align: center;
+.modal-panel > .modal-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
 }
 
-.modal-content img {
-    margin-bottom: 8px;
-    height: 200px;
-    width: auto;
-    max-width: 100%;
-    object-fit: contain;
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    overflow: auto;
 }
 
-.modal-content iframe {
-    margin-bottom: 8px;
-    width: 100%;
+.modal-content :is(img, video, iframe) {
     max-width: 100%;
-    aspect-ratio: 16 / 9;
-    height: auto;
     border: none;
-    border-radius: 4px;
 }
 
-.modal-content p {
-    margin: 0;
-    color: #fff;
-    font-size: 18px;
-    line-height: 1.4;
-    text-align: center;
-    white-space: pre-wrap;
+.modal-content video {
+    width: 100%;
 }
 
 .modal-actions {
     display: flex;
-    gap: 16px;
-    margin-top: auto;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
-.modal-spacer {
-    flex: 0 0 auto;
-    width: 100%;
+.modal-panel.modal-scene-mm {
+    width: min(92vw, 92vh * 16 / 9);
+    height: min(92vh, 92vw * 9 / 16);
 }
 
-.modal-divider {
+.modal-scene-mm .modal-content {
+    flex: 1;
+    align-items: stretch;
+    justify-content: center;
+}
+
+.modal-scene-mm .modal-content iframe {
+    flex: 1;
     width: 100%;
-    border: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.35);
+    height: 100%;
+    min-height: 0;
 }
 
 #subtitle-root {
@@ -424,30 +414,13 @@ body.is-exhibition #welcome {
 }
 
 .modal-btn {
-    margin: 16px;
-    padding: 16px 32px;
-    text-align: center;
-    text-transform: uppercase;
-    transition: 0.5s;
-    border: 2px solid #fff;
-    border-radius: 2px;
-    background-size: 200% auto;
-    color: white;
+    padding: 8px 14px;
+    border: 1px solid rgba(232, 228, 220, 0.35);
+    border-radius: 4px;
+    background: transparent;
+    color: #fff;
     cursor: pointer;
-    font-size: 18px;
-    letter-spacing: 0.06em;
-}
-
-.modal-btn:hover {
-    background-position: right center;
-}
-
-.modal-btn-close {
-    background-image: linear-gradient(to right, #766632 0%, #584436 51%, #766632 100%);
-}
-
-.modal-btn-next {
-    background-image: linear-gradient(to right, #3a714f 0%, #345a72 51%, #3a714f 100%);
+    font: inherit;
 }
 
 /* Babylon default unmute control (we unlock audio on user gesture instead) */

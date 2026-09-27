@@ -47,7 +47,6 @@ export class SceneMM implements Scene {
             y: 0,
             z: 0,
         });
-        console.log(room.getChildMeshes());
 
         await Promise.all(
             videoPanels.map((object) =>
@@ -56,6 +55,7 @@ export class SceneMM implements Scene {
                     width: PANEL_SIZE,
                     height: PANEL_SIZE,
                     highlight: "glow",
+                    modalClassName: "modal-scene-mm",
                     modal: [{ type: "embed", source: object.external }],
                 }),
             ),
@@ -67,7 +67,7 @@ export class SceneMM implements Scene {
             { x: 35.6, y: 0, z: -45.8 },
             { x: -55.6, y: 0, z: -12.5 },
             { x: 20.4, y: 0, z: 55.8 },
-            { x: 0, y: 1, z: 0, intensity: 10, color: new Color3(0.02, 0.019, 0.019) },
+            { x: 0, y: 1, z: 0, intensity: 16, color: new Color3(0.02, 0.019, 0.019) },
         ];
         spotLights.forEach((light) => {
             lightManager.createLight({

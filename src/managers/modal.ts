@@ -7,8 +7,6 @@ type ModalRuntimeItem = ModalContent | { type: "button"; label: string; onClick:
 
 export interface ModalConfig {
     className?: string;
-    width?: string;
-    maxHeight?: string;
     content: ModalRuntimeItem[];
     onSceneSwitch?: (sceneId: string) => void;
     dismissOnBackdrop?: boolean;
@@ -59,7 +57,6 @@ export class ModalManager {
     private closing = false;
     private activeMeshes: Array<{ mesh: AbstractMesh; wasPickable: boolean }> = [];
     private appliedClasses: string[] = [];
-    private appliedStyles: string[] = [];
     private onSceneSwitch: ((sceneId: string) => void) | undefined;
     private backdropHandler: (() => void) | null = null;
     private keydownHandler: ((event: KeyboardEvent) => void) | null = null;
@@ -68,6 +65,7 @@ export class ModalManager {
     private closeCallbacks: Array<() => void> = [];
     private previouslyFocused: HTMLElement | null = null;
     private readonly panelClickHandler = (event: Event) => event.stopPropagation();
+    private readonly closeClickHandler = () => this.close();
 
     init(scene: BabylonScene) {
         this.dispose();
@@ -76,11 +74,13 @@ export class ModalManager {
         const backdrop = root?.querySelector<HTMLElement>(".modal-backdrop");
         const panel = root?.querySelector<HTMLElement>(".modal-panel");
         const content = root?.querySelector<HTMLElement>(".modal-content");
-        if (!root || !backdrop || !panel || !content) throw new Error("Modal markup is incomplete");
+        const closeButton = panel?.querySelector<HTMLButtonElement>(".modal-close");
+        if (!root || !backdrop || !panel || !content || !closeButton) throw new Error("Modal markup is incomplete");
         this.root = root;
         this.backdrop = backdrop;
         this.panel = panel;
         this.content = content;
+        closeButton.addEventListener("click", this.closeClickHandler);
         panel.setAttribute("role", "dialog");
         panel.setAttribute("aria-modal", "true");
         panel.setAttribute("tabindex", "-1");
@@ -168,6 +168,7 @@ export class ModalManager {
         const hadInteractionLock = this.openState || this.closing;
         this.unbindEvents();
         this.clearCloseWait();
+        this.panel?.querySelector(".modal-close")?.removeEventListener("click", this.closeClickHandler);
         this.panel?.removeEventListener("click", this.panelClickHandler);
         this.openState = false;
         this.closing = false;
@@ -276,22 +277,12 @@ export class ModalManager {
         const panel = this.requirePanel();
         this.appliedClasses = (config.className ?? "").split(/\s+/).filter(Boolean);
         this.appliedClasses.forEach((name) => panel.classList.add(name));
-        if (config.width) {
-            panel.style.width = config.width;
-            this.appliedStyles.push("width");
-        }
-        if (config.maxHeight) {
-            panel.style.maxHeight = config.maxHeight;
-            this.appliedStyles.push("max-height");
-        }
     }
 
     private clearConfigStyle() {
         if (!this.panel) return;
         this.appliedClasses.forEach((name) => this.panel?.classList.remove(name));
         this.appliedClasses = [];
-        this.appliedStyles.forEach((property) => this.panel?.style.removeProperty(property));
-        this.appliedStyles = [];
     }
 
     private bindBackdrop() {
