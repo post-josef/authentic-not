@@ -2,6 +2,7 @@ import { ArcRotateCamera, ArcRotateCameraKeyboardMoveInput, UniversalCamera, Vec
 import type { Camera, Observer, Scene } from "@babylonjs/core";
 
 const WALK_POSITION = new Vector3(0, 1.7, -10);
+const WALK_BASE_SPEED = 0.2;
 const RESET_MS = 900;
 const DOUBLE_TAP_MS = 300;
 
@@ -16,6 +17,9 @@ export class CameraManager {
     private walkRotation = Vector3.Zero();
     private orbitSpawn: { alpha: number; beta: number; radius: number; target: Vector3 } | null = null;
     private lastTap = 0;
+    private walkAccelMaxSpeed = 1;
+    private walkAccelTimeSec = 5;
+    private walkAccelLevel = 0;
 
     init(scene: Scene, canvas: HTMLCanvasElement) {
         this.dispose();
@@ -23,7 +27,7 @@ export class CameraManager {
         this.canvas = canvas;
 
         const camera = new UniversalCamera("cam", WALK_POSITION.clone(), scene);
-        camera.speed = 0.2;
+        camera.speed = WALK_BASE_SPEED;
         setCameraArrows(camera);
         camera.keysUpward = [];
         camera.keysDownward = [];
@@ -35,6 +39,7 @@ export class CameraManager {
         this.heightObserver = scene.onBeforeRenderObservable.add(() => {
             if (scene.activeCamera !== camera || this.resetObserver) return;
             camera.position.y = WALK_POSITION.y;
+            this.tickWalkAcceleration();
         });
         this.walkCam = camera;
         scene.activeCamera = camera;
@@ -96,6 +101,7 @@ export class CameraManager {
 
     resetSceneConfig() {
         this.stopReset();
+        this.clearWalkAcceleration();
         this.orbitCam?.dispose();
         this.orbitCam = null;
         this.orbitSpawn = null;
@@ -105,6 +111,16 @@ export class CameraManager {
         this.walkCam.restoreState();
         this.walkSpawn.copyFrom(this.walkCam.position);
         this.walkRotation.copyFrom(this.walkCam.rotation);
+    }
+
+    walkAcceleration(maxSpeed: number, timeToMaxSpeed = 5) {
+        if (!this.walkCam) throw new Error("cameraManager.init(scene, canvas) must be called first");
+        if (maxSpeed <= 1) {
+            this.clearWalkAcceleration();
+            return;
+        }
+        this.walkAccelMaxSpeed = maxSpeed;
+        this.walkAccelTimeSec = Math.max(0.001, timeToMaxSpeed);
     }
 
     detachControl() {
@@ -117,6 +133,7 @@ export class CameraManager {
 
     dispose() {
         this.stopReset();
+        this.clearWalkAcceleration();
         if (this.scene && this.heightObserver) {
             this.scene.onBeforeRenderObservable.remove(this.heightObserver);
         }
@@ -190,6 +207,64 @@ export class CameraManager {
         }
         this.resetObserver = null;
     }
+
+    private clearWalkAcceleration() {
+        this.walkAccelMaxSpeed = 1;
+        this.walkAccelLevel = 0;
+        if (this.walkCam) this.walkCam.speed = WALK_BASE_SPEED;
+    }
+
+    private tickWalkAcceleration() {
+        const camera = this.walkCam;
+        const scene = this.scene;
+        if (!camera || !scene || scene.activeCamera !== camera || this.walkAccelMaxSpeed <= 1) return;
+
+        if (!isWalkTranslating(camera)) {
+            this.walkAccelLevel = 0;
+            camera.speed = WALK_BASE_SPEED;
+            return;
+        }
+        const step = scene.getEngine().getDeltaTime() / 1000 / this.walkAccelTimeSec;
+        this.walkAccelLevel = Math.min(1, this.walkAccelLevel + step);
+        camera.speed = WALK_BASE_SPEED * (1 + this.walkAccelLevel * (this.walkAccelMaxSpeed - 1));
+    }
+}
+
+type WalkKeyboardInput = { _keys: number[] };
+type WalkTouchInput = {
+    _pointerPressed: number[];
+    singleFingerRotate: boolean;
+    _offsetX: number | null;
+    _offsetY: number | null;
+};
+
+function isWalkTranslating(camera: UniversalCamera): boolean {
+    const keyboard = camera.inputs.attached.keyboard as unknown as WalkKeyboardInput | undefined;
+    if (keyboard?._keys.length) {
+        const movementKeys = [
+            ...camera.keysUp,
+            ...camera.keysDown,
+            ...camera.keysLeft,
+            ...camera.keysRight,
+            ...camera.keysUpward,
+            ...camera.keysDownward,
+        ];
+        for (const code of keyboard._keys) {
+            if (movementKeys.includes(code)) return true;
+        }
+    }
+
+    const touch = camera.inputs.attached.touch as unknown as WalkTouchInput | undefined;
+    if (!touch?._pointerPressed.length) return false;
+    const rotateCamera =
+        (touch.singleFingerRotate && touch._pointerPressed.length === 1) ||
+        (!touch.singleFingerRotate && touch._pointerPressed.length > 1);
+    return (
+        !rotateCamera &&
+        touch._offsetX !== null &&
+        touch._offsetY !== null &&
+        (touch._offsetX !== 0 || touch._offsetY !== 0)
+    );
 }
 
 function setCameraArrows(target: UniversalCamera | ArcRotateCameraKeyboardMoveInput) {
