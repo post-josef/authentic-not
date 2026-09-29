@@ -67,6 +67,10 @@ export class SceneManager {
         return this.routeId;
     }
 
+    resetHistory() {
+        this.history = [];
+    }
+
     getBabylonScene(): BabylonScene {
         if (!this.babylonScene) throw new Error("sceneManager.init(scene) must be called first");
         return this.babylonScene;

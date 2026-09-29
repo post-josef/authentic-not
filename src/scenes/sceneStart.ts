@@ -1,6 +1,7 @@
 import { animationManager } from "../managers/animation";
 import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
+import { sceneManager } from "../managers/scene";
 import { Color3, Vector3 } from "@babylonjs/core";
 import type { Scene, Object3D } from "../types";
 
@@ -33,7 +34,7 @@ const OBJECTS: Object3D[] = [
         x: 2,
         y: 2.5,
         z: 5,
-        scale: 1.25,
+        scale: 1.3,
         highlight: "highlightLayer",
     },
     {
@@ -57,6 +58,8 @@ export class SceneStart implements Scene {
                 return mesh;
             }),
         );
+
+        sceneManager.resetHistory();
 
         lightManager.createLight({
             x: 0,
