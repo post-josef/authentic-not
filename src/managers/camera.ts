@@ -60,6 +60,7 @@ export class CameraManager {
             distance?: number;
             maxDistance?: number;
             minDistance?: number;
+            invertKeys?: boolean;
         } = {},
     ) {
         if (!this.scene || !this.canvas) throw new Error("cameraManager.init(scene, canvas) must be called first");
@@ -84,7 +85,7 @@ export class CameraManager {
 
         const keyboard = camera.inputs.attached.keyboard as ArcRotateCameraKeyboardMoveInput | undefined;
         if (keyboard) {
-            setCameraArrows(keyboard);
+            setCameraArrows(keyboard, config.invertKeys ?? false);
             keyboard.angularSpeed = 0.005;
         }
         camera.attachControl(this.canvas, true);
@@ -267,7 +268,14 @@ function isWalkTranslating(camera: UniversalCamera): boolean {
     );
 }
 
-function setCameraArrows(target: UniversalCamera | ArcRotateCameraKeyboardMoveInput) {
+function setCameraArrows(target: UniversalCamera | ArcRotateCameraKeyboardMoveInput, invert = false) {
+    if (invert) {
+        target.keysUp = [40, 83];
+        target.keysDown = [38, 87];
+        target.keysLeft = [39, 68];
+        target.keysRight = [37, 65];
+        return;
+    }
     target.keysUp = [38, 87];
     target.keysDown = [40, 83];
     target.keysLeft = [37, 65];

@@ -36,6 +36,7 @@ export class SceneMM implements Scene {
             target: CENTER,
             distance: 2,
             maxDistance: 2.8,
+            invertKeys: true,
         });
 
         // audioManager.play("assets/mm/zvuk.mp3", { loop: true });
