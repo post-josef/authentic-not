@@ -1,58 +1,50 @@
 import { animationManager } from "../managers/animation";
 import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
-import { Color3, CubeTexture, PBRMaterial, Vector3 } from "@babylonjs/core";
-import type { AbstractMesh } from "@babylonjs/core";
+import { Color3, Vector3 } from "@babylonjs/core";
 import type { Scene, Object3D } from "../types";
-
-const MM_OBJECT_SOURCE = "assets/mm/object.glb";
-const METAL_ENVIRONMENT_URL = "https://assets.babylonjs.com/environments/environmentSpecular.env";
-
-function applyMetallicMaterial(root: AbstractMesh, reflection: CubeTexture): void {
-    const scene = root.getScene();
-    for (const part of [root, ...root.getChildMeshes()]) {
-        if (!part.getTotalVertices()) continue;
-
-        const material = new PBRMaterial(`${part.name}MetalMat`, scene);
-        material.albedoColor = new Color3(0.92, 0.93, 0.95);
-        material.metallic = 1;
-        material.roughness = 0.22;
-        material.reflectionTexture = reflection;
-        part.material = material;
-    }
-}
 
 const OBJECTS: Object3D[] = [
     {
+        source: "assets/mm/object.glb",
+        subtitle: "Miroslav Mužík",
+        targetScene: "mm",
+        x: -6,
+        y: 1.8,
+        z: 5,
+        scale: 0.3,
+        highlight: "highlightLayer",
+    },
+    {
         source: "assets/ns/face.glb",
+        subtitle: "Natálie Sedláčková",
         targetScene: "ns",
         x: -2,
         y: -4,
-        z: 5,
+        z: 6,
         ry: Math.PI,
-        subtitle: "Natálie Sedláčková",
         scale: 6,
         highlight: "highlightLayer",
     },
     {
-        source: "assets/kv/zdimacka.jpg",
+        source: "assets/kv/nahled.glb",
+        subtitle: "Kryštof Vitner",
         targetScene: "kv",
         x: 2,
-        y: 1.8,
+        y: 2,
         z: 5,
-        subtitle: "Kryštof Vitner",
-        width: 2.4,
-        height: 3.4,
+        scale: 1.2,
         highlight: "highlightLayer",
     },
     {
-        source: MM_OBJECT_SOURCE,
-        targetScene: "mm",
-        x: 6,
-        y: 1.8,
-        z: 5,
-        scale: 0.3,
-        subtitle: "Miroslav Mužík",
+        source: "assets/kz/vstup.glb",
+        subtitle: "Kristýna Zákostelecká",
+        targetScene: "kz",
+        x: 11,
+        y: 1,
+        z: 2,
+        ry: Math.PI * 1.6,
+        // scale: 2,
         highlight: "highlightLayer",
     },
 ];
@@ -66,18 +58,6 @@ export class SceneStart implements Scene {
                 return mesh;
             }),
         );
-
-        const mmMesh = portals[OBJECTS.findIndex((object) => object.source === MM_OBJECT_SOURCE)];
-        const metalEnvironment = CubeTexture.CreateFromPrefilteredData(
-            METAL_ENVIRONMENT_URL,
-            mmMesh.getScene(),
-        );
-        applyMetallicMaterial(mmMesh, metalEnvironment);
-        const releaseMm = mmMesh.metadata.exhibitDispose as () => void;
-        mmMesh.metadata.exhibitDispose = () => {
-            metalEnvironment.dispose();
-            releaseMm();
-        };
 
         lightManager.createLight({
             x: 0,

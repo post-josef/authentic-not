@@ -1,6 +1,9 @@
 import { CubeTexture, HDRCubeTexture } from "@babylonjs/core";
 import type { BaseTexture, Mesh, Scene } from "@babylonjs/core";
 
+export const DEFAULT_ENVIRONMENT_URL =
+    "https://assets.babylonjs.com/environments/environmentSpecular.env";
+
 export interface EnvironmentOptions {
     intensity?: number;
     rotation?: number;
@@ -18,6 +21,7 @@ const DEFAULTS: Required<EnvironmentOptions> = {
 export class BackgroundManager {
     private scene: Scene | null = null;
     private environment: BaseTexture | null = null;
+    private environmentUrl: string | null = null;
     private background: Mesh | null = null;
 
     init(scene: Scene) {
@@ -25,22 +29,22 @@ export class BackgroundManager {
         this.scene = scene;
     }
 
-    setEnvironment(file: string, options: EnvironmentOptions = {}): BaseTexture {
-        this.clear();
+    /** Shared IBL for PBR materials (no skybox); kept across scene switches. */
+    setReflections(file: string, options: EnvironmentOptions = {}): BaseTexture {
         const scene = this.requireScene();
-        const extension = file.split(/[?#]/, 1)[0].toLowerCase();
-        if (!extension.endsWith(".env") && !extension.endsWith(".hdr")) {
-            throw new Error(`Unsupported environment file: ${file}`);
+        if (!this.environment || this.environmentUrl !== file) {
+            this.environment?.dispose();
+            this.environment = this.createEnvironmentTexture(file, scene);
+            this.environmentUrl = file;
         }
+        this.applyEnvironmentSettings(scene, options);
+        return this.environment;
+    }
 
-        const texture = extension.endsWith(".hdr")
-            ? new HDRCubeTexture(file, scene, 512, false, true, false, true)
-            : CubeTexture.CreateFromPrefilteredData(file, scene);
-
-        texture.rotationY = options.rotation ?? DEFAULTS.rotation;
-        scene.environmentTexture = texture;
-        scene.environmentIntensity = options.intensity ?? DEFAULTS.intensity;
-        this.environment = texture;
+    setSkybox(file: string, options: EnvironmentOptions = {}): BaseTexture {
+        this.clearSkybox();
+        const scene = this.requireScene();
+        const texture = this.setReflections(file, options);
         this.background = scene.createDefaultSkybox(
             texture,
             true,
@@ -48,25 +52,47 @@ export class BackgroundManager {
             options.blur ?? DEFAULTS.blur,
             false,
         );
-
         return texture;
     }
 
     clear() {
-        this.background?.dispose(false, true);
-        this.background = null;
-
-        if (this.scene?.environmentTexture === this.environment) {
-            this.scene.environmentTexture = null;
-            this.scene.environmentIntensity = 1;
-        }
-        this.environment?.dispose();
-        this.environment = null;
+        this.clearSkybox();
     }
 
     dispose() {
-        this.clear();
+        this.clearSkybox();
+        const scene = this.scene;
+        const environment = this.environment;
+        this.environment = null;
+        this.environmentUrl = null;
         this.scene = null;
+        if (scene?.environmentTexture === environment) {
+            scene.environmentTexture = null;
+            scene.environmentIntensity = 1;
+        }
+        environment?.dispose();
+    }
+
+    private clearSkybox() {
+        this.background?.dispose(false, true);
+        this.background = null;
+    }
+
+    private createEnvironmentTexture(file: string, scene: Scene): BaseTexture {
+        const extension = file.split(/[?#]/, 1)[0].toLowerCase();
+        if (!extension.endsWith(".env") && !extension.endsWith(".hdr")) {
+            throw new Error(`Unsupported environment file: ${file}`);
+        }
+        return extension.endsWith(".hdr")
+            ? new HDRCubeTexture(file, scene, 512, false, true, false, true)
+            : CubeTexture.CreateFromPrefilteredData(file, scene);
+    }
+
+    private applyEnvironmentSettings(scene: Scene, options: EnvironmentOptions) {
+        if (!this.environment) return;
+        (this.environment as CubeTexture).rotationY = options.rotation ?? DEFAULTS.rotation;
+        scene.environmentTexture = this.environment;
+        scene.environmentIntensity = options.intensity ?? DEFAULTS.intensity;
     }
 
     private requireScene(): Scene {

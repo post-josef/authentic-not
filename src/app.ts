@@ -1,7 +1,7 @@
 import { Color4, Engine, Scene } from "@babylonjs/core";
 import { animationManager } from "./managers/animation";
 import { audioManager } from "./managers/audio";
-import { backgroundManager } from "./managers/background";
+import { backgroundManager, DEFAULT_ENVIRONMENT_URL } from "./managers/background";
 import { cameraManager } from "./managers/camera";
 import { fogManager } from "./managers/fog";
 import { highlightManager } from "./managers/highlight";
@@ -30,6 +30,7 @@ export class App {
         highlightManager.init(this.scene);
         lightManager.init(this.scene);
         backgroundManager.init(this.scene);
+        backgroundManager.setReflections(DEFAULT_ENVIRONMENT_URL);
         animationManager.init(this.scene);
         fogManager.init(this.scene);
         subtitleManager.init();

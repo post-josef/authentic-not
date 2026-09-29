@@ -129,7 +129,7 @@ const OBJECTS: Object3D[] = [
 
 export class Scene4 implements Scene {
     async load(): Promise<void> {
-        backgroundManager.setEnvironment(ENVIRONMENT_URL, {
+        backgroundManager.setSkybox(ENVIRONMENT_URL, {
             intensity: 0.7,
             rotation: Math.PI * 0.15,
             size: 500,

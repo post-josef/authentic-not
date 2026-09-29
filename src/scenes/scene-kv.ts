@@ -25,7 +25,7 @@ export class SceneKV implements Scene {
             maxDistance: 55,
         });
 
-        audioManager.play("assets/kv/zvuksbeatem.mp3", { loop: true, volume: 4 });
+        audioManager.play("assets/kv/zvuksbeatem.mp3", { loop: true, volume: 5 });
 
         const cylinder = await objectManager.create({
             source: "assets/kv/valec.glb",
@@ -36,14 +36,15 @@ export class SceneKV implements Scene {
         animationManager.add(cylinder, { preset: "rotate", speed: -0.1 });
         objectManager.applyMappedVideoTextures(cylinder, CYLINDER_VIDEOS);
 
-        const face = await objectManager.create({
+        const mask = await objectManager.create({
             source: "assets/kv/mask.glb",
             scale: 2,
             x: 0,
             y: 0,
             z: 12,
+            envIntensity: 0.1,
         });
-        animationManager.add(face, { preset: "float", speed: 0.6, amplitude: 0.2 });
+        animationManager.add(mask, { preset: "float", speed: 0.6, amplitude: 0.2 });
 
         const spotLights = [
             { x: 0, y: 6, z: 0, intensity: 120 },
@@ -54,7 +55,7 @@ export class SceneKV implements Scene {
             lightManager.createLight({
                 ...light,
                 target: MASK_TARGET,
-                meshes: [face],
+                meshes: [mask],
                 color: new Color3(0.92, 0.96, 1), // white light
             });
         });

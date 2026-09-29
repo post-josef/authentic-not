@@ -23,6 +23,7 @@ export interface Object3D {
     width?: number; // image/video width
     height?: number; // image/video height
     subtitle?: string;
+    envIntensity?: number; // environment reflection intensity for PBR materials (0-1)
     highlight?: HighlightMode;
     modalClassName?: string;
     modal?: ModalContent[];

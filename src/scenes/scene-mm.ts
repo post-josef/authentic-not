@@ -46,6 +46,7 @@ export class SceneMM implements Scene {
             x: 0,
             y: 0,
             z: 0,
+            envIntensity: 0,
         });
 
         await Promise.all(

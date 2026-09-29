@@ -1,5 +1,15 @@
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
-import { Axis, Color3, Material, MeshBuilder, Space, StandardMaterial, Texture, VideoTexture } from "@babylonjs/core";
+import {
+    Axis,
+    Color3,
+    Material,
+    MeshBuilder,
+    PBRMaterial,
+    Space,
+    StandardMaterial,
+    Texture,
+    VideoTexture,
+} from "@babylonjs/core";
 import type { AbstractMesh, BaseTexture, Scene } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 import type { HighlightMode, Object3D } from "../types";
@@ -174,6 +184,10 @@ export class ObjectManager {
         }
         mesh.metadata = { ...mesh.metadata, exhibitDispose: release };
 
+        if (object.envIntensity !== undefined) {
+            this.setEnvIntensity(mesh, object.envIntensity);
+        }
+
         if (object.modal?.length || object.subtitle || object.targetScene || object.highlight) {
             this.interactive(mesh, {
                 onClick: () => {
@@ -231,6 +245,14 @@ export class ObjectManager {
             release();
         };
         return mesh;
+    }
+
+    setEnvIntensity(rootMesh: AbstractMesh, intensity: number) {
+        for (const part of [rootMesh, ...rootMesh.getChildMeshes()]) {
+            if (part.material instanceof PBRMaterial) {
+                part.material.environmentIntensity = intensity;
+            }
+        }
     }
 }
 
