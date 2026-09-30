@@ -118,6 +118,13 @@ export class CameraManager {
         this.walkRotation.copyFrom(this.walkCam.rotation);
     }
 
+    setWalkPosition(position: Vector3) {
+        if (!this.walkCam) throw new Error("cameraManager.init(scene, canvas) must be called first");
+        this.walkCam.position.copyFrom(position);
+        this.walkCam.storeState();
+        this.walkSpawn.copyFrom(position);
+    }
+
     walkAcceleration(maxSpeed = DEFAULT_WALK_ACCEL_MAX_SPEED, timeToMaxSpeed = DEFAULT_WALK_ACCEL_TIME_SEC) {
         if (!this.walkCam) throw new Error("cameraManager.init(scene, canvas) must be called first");
         if (maxSpeed <= 1) {
