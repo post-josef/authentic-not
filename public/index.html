@@ -116,11 +116,71 @@
             <div class="subtitle-line"></div>
         </div>
 
-        <button type="button" id="exhibition-back" aria-label="Back">
+        <button type="button" id="exhibition-back" class="exhibition-icon-btn" aria-label="Back">
             <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
                 <path d="M11.5 4.5 6 10l5.5 5.5" stroke="currentColor" stroke-width="1.5" />
             </svg>
         </button>
+
+        <div id="exhibition-help">
+            <button type="button" id="exhibition-help-btn" class="exhibition-icon-btn" aria-label="Help (how to use)">
+                <svg height="12" width="12" viewBox="0 0 12 20" aria-hidden="true">
+                    <path
+                        d="M4.223 14.498h3.074V12.97q-.028-.993.515-1.685l2.737-3.344q.942-1.124.971-2.808-.03-2.377-1.78-3.775Q8.048.026 5.694 0q-2.31.026-3.973 1.463Q.03 2.887 0 5.107v.535h3.075q0-1.606.853-2.272.751-.64 1.928-.64.956 0 1.765.614.795.64.824 1.763 0 .823-.75 1.763l-2.693 3.318q-.47.587-.632 1.175-.147.615-.147 1.385zm0 4.702h3.074v-2.73H4.223z"
+                        fill="currentColor"
+                    />
+                </svg>
+            </button>
+            <div id="exhibition-help-panel" role="dialog" aria-label="Controls help" hidden>
+                <button type="button" class="exhibition-icon-btn" aria-label="Close">
+                    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="M4.5 4.5 15.5 15.5 M15.5 4.5 4.5 15.5" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                </button>
+                <div class="help-body">
+                    <div class="help-item">
+                        <div class="help-keys" aria-hidden="true">
+                            <div class="help-pad">
+                                <span class="help-k">↑</span>
+                                <div class="help-k-row">
+                                    <span class="help-k">←</span><span class="help-k">↓</span
+                                    ><span class="help-k">→</span>
+                                </div>
+                            </div>
+                            <div class="help-pad">
+                                <span class="help-k">W</span>
+                                <div class="help-k-row">
+                                    <span class="help-k">A</span><span class="help-k">S</span
+                                    ><span class="help-k">D</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p>Move with <strong>arrows</strong> or <strong>WASD</strong> keys</p>
+                    </div>
+                    <!-- <div class="help-item">
+                        <div class="help-k-row" aria-hidden="true">
+                            <span class="help-k help-k--wide">_</span>
+                            <span class="help-k">&crarr;</span>
+                        </div>
+                        <p>
+                            Select object by click or by <strong>space</strong>/<strong>enter</strong> key when you are close to it
+                        </p>
+                    </div> -->
+                    <div class="help-item">
+                        <svg class="help-mouse" viewBox="0 0 56 40" aria-hidden="true" stroke="#ddd">
+                            <rect x="18" y="6" width="20" height="28" rx="10" stroke-width="1.5" />
+                            <line x1="28" y1="12" x2="28" y2="18" stroke-width="1.5" />
+                            <path d="M6 20h8M42 20h8" fill="none" stroke-width="1.5" />
+                            <path d="M10 16l-4 4 4 4M46 16l4 4-4 4" fill="none" stroke-width="1.5" />
+                        </svg>
+                        <p>
+                            Click and drag the <strong>mouse</strong> to look around, click on the objects to interact,
+                            <span class="help-small-note">double-click to reset camera</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div id="scene-loader">
             <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">

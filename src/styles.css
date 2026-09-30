@@ -201,7 +201,7 @@ body {
     transform: translateY(-1px);
 }
 
-#exhibition-back,
+.exhibition-icon-btn,
 .modal-close {
     display: flex;
     align-items: center;
@@ -221,14 +221,14 @@ body {
         color 0.2s ease;
 }
 
-#exhibition-back:hover,
+.exhibition-icon-btn:hover,
 .modal-close:hover {
     border-color: rgba(232, 228, 220, 0.45);
     background: rgba(18, 22, 30, 0.88);
     color: #fff;
 }
 
-#exhibition-back:focus-visible,
+.exhibition-icon-btn:focus-visible,
 .modal-close:focus-visible {
     outline: 2px solid rgba(232, 228, 220, 0.55);
     outline-offset: 2px;
@@ -244,6 +244,117 @@ body {
 
 body.is-exhibition #exhibition-back {
     display: flex;
+}
+
+#exhibition-help {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 20;
+    display: none;
+}
+
+body.is-exhibition #exhibition-help {
+    display: block;
+}
+
+#exhibition-help-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    box-sizing: border-box;
+    width: min(280px, calc(100vw - 24px));
+    padding: 32px 16px 20px;
+    border: 1px solid rgba(232, 228, 220, 0.2);
+    border-radius: 8px;
+    background: rgba(8, 11, 16, 0.92);
+    color: #e8e4dc;
+    backdrop-filter: blur(8px);
+}
+
+#exhibition-help-panel > .exhibition-icon-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border: 0;
+}
+
+#exhibition-help-panel .help-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#exhibition-help-panel .help-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+#exhibition-help-panel .help-item p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: rgba(232, 228, 220, 0.85);
+}
+
+#exhibition-help-panel .help-small-note {
+    display: block;
+    font-size: 11.5px;
+    margin-top: 2px;
+    color: rgba(232, 228, 220, 0.5);
+}
+
+#exhibition-help-panel .help-item strong {
+    font-weight: 700;
+    color: #f4f0e8;
+}
+
+#exhibition-help-panel .help-keys {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    color: rgba(232, 228, 220, 0.7);
+}
+
+#exhibition-help-panel .help-pad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+#exhibition-help-panel .help-k-row {
+    display: flex;
+    gap: 4px;
+}
+
+#exhibition-help-panel .help-k {
+    display: grid;
+    place-content: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 2px;
+    border: 1px solid rgba(232, 228, 220, 0.25);
+    border-radius: 6px;
+    background: rgba(18, 22, 30, 0.65);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    line-height: 1;
+}
+
+#exhibition-help-panel .help-k--wide {
+    min-width: 86px;
+    letter-spacing: 0.08em;
+    font-size: 10px;
+}
+
+#exhibition-help-panel .help-mouse {
+    width: 56px;
+    height: 40px;
+    color: rgba(232, 228, 220, 0.7);
 }
 
 #canvas {
