@@ -18,10 +18,12 @@ const CYLINDER_VIDEOS: Record<string, string> = {
 
 export class SceneKV implements Scene {
     async load(): Promise<void> {
+        const small = matchMedia("(max-width: 780px)").matches;
+
         cameraManager.setOrbit({
             target: MASK_TARGET,
             height: 10,
-            distance: 40,
+            distance: small ? 50 : 40,
             maxDistance: 55,
         });
 

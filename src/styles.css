@@ -371,6 +371,28 @@ body.is-exhibition #canvas {
     display: block;
 }
 
+.walk-touch-joystick {
+    position: fixed;
+    z-index: 6;
+    width: 60px;
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.12);
+}
+
+.walk-touch-joystick::after {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.75);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    translate: var(--x, 0) var(--y, 0);
+}
+
 body.is-exhibition #welcome {
     pointer-events: none;
 }

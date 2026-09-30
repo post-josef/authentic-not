@@ -22,6 +22,10 @@ export class CameraManager {
     private walkAccelMaxSpeed = DEFAULT_WALK_ACCEL_MAX_SPEED;
     private walkAccelTimeSec = DEFAULT_WALK_ACCEL_TIME_SEC;
     private walkAccelLevel = 0;
+    private walkJoystick: HTMLDivElement | null = null;
+    private walkJoystickPointerId: number | null = null;
+    private walkJoystickOriginX = 0;
+    private walkJoystickOriginY = 0;
 
     init(scene: Scene, canvas: HTMLCanvasElement) {
         this.dispose();
@@ -48,6 +52,17 @@ export class CameraManager {
         this.attachControl();
         canvas.addEventListener("dblclick", this.onDoubleClick);
         canvas.addEventListener("touchend", this.onTouchEnd, { passive: false });
+        if (navigator.maxTouchPoints) {
+            const root = document.createElement("div");
+            root.className = "walk-touch-joystick";
+            root.hidden = true;
+            document.body.append(root);
+            this.walkJoystick = root;
+            canvas.addEventListener("pointerdown", this.onWalkJoystickPointerDown);
+            canvas.addEventListener("pointermove", this.onWalkJoystickPointerMove);
+            canvas.addEventListener("pointerup", this.onWalkJoystickPointerUp);
+            canvas.addEventListener("pointercancel", this.onWalkJoystickPointerUp);
+        }
     }
 
     getCamera(): Camera {
@@ -156,6 +171,16 @@ export class CameraManager {
             this.scene.onBeforeRenderObservable.remove(this.heightObserver);
         }
         this.heightObserver = null;
+        const canvas = this.canvas;
+        if (canvas) {
+            canvas.removeEventListener("pointerdown", this.onWalkJoystickPointerDown);
+            canvas.removeEventListener("pointermove", this.onWalkJoystickPointerMove);
+            canvas.removeEventListener("pointerup", this.onWalkJoystickPointerUp);
+            canvas.removeEventListener("pointercancel", this.onWalkJoystickPointerUp);
+        }
+        this.walkJoystick?.remove();
+        this.walkJoystick = null;
+        this.walkJoystickPointerId = null;
         this.canvas?.removeEventListener("dblclick", this.onDoubleClick);
         this.canvas?.removeEventListener("touchend", this.onTouchEnd);
         this.walkCam?.dispose();
@@ -175,6 +200,59 @@ export class CameraManager {
             this.resetCamera();
         }
         this.lastTap = now;
+    };
+
+    private hideWalkJoystick() {
+        const root = this.walkJoystick;
+        if (!root) return;
+        root.hidden = true;
+        this.walkJoystickPointerId = null;
+        root.style.removeProperty("--x");
+        root.style.removeProperty("--y");
+    }
+
+    private readonly onWalkJoystickPointerDown = (e: PointerEvent) => {
+        if (e.pointerType !== "touch" || this.scene?.activeCamera !== this.walkCam) return;
+        if (this.walkJoystickPointerId !== null && e.pointerId !== this.walkJoystickPointerId) {
+            this.hideWalkJoystick();
+            return;
+        }
+        const touch = this.walkCam?.inputs.attached.touch as unknown as WalkTouchInput | undefined;
+        if (!touch || isTouchRotateGesture(touch)) {
+            if (touch && touch._pointerPressed.length > 1) this.hideWalkJoystick();
+            return;
+        }
+        this.walkJoystickPointerId = e.pointerId;
+        this.walkJoystickOriginX = e.clientX;
+        this.walkJoystickOriginY = e.clientY;
+    };
+
+    private readonly onWalkJoystickPointerMove = (e: PointerEvent) => {
+        const root = this.walkJoystick;
+        if (!root || e.pointerId !== this.walkJoystickPointerId || this.scene?.activeCamera !== this.walkCam) return;
+        const dx = e.clientX - this.walkJoystickOriginX;
+        const dy = e.clientY - this.walkJoystickOriginY;
+        if (root.hidden) {
+            if (dx * dx + dy * dy < 64) return;
+            root.style.left = `${this.walkJoystickOriginX}px`;
+            root.style.top = `${this.walkJoystickOriginY}px`;
+            root.hidden = false;
+        }
+        let sx = dx;
+        let sy = dy;
+        const len = Math.hypot(sx, sy);
+        if (len > 28) {
+            const s = 28 / len;
+            sx *= s;
+            sy *= s;
+        }
+        root.style.setProperty("--x", `${sx}px`);
+        root.style.setProperty("--y", `${sy}px`);
+    };
+
+    private readonly onWalkJoystickPointerUp = (e: PointerEvent) => {
+        if (e.pointerId !== this.walkJoystickPointerId) return;
+        this.hideWalkJoystick();
     };
 
     private resetCamera() {
@@ -266,16 +344,17 @@ function isWalkTranslating(camera: UniversalCamera): boolean {
     }
 
     const touch = camera.inputs.attached.touch as unknown as WalkTouchInput | undefined;
-    if (!touch?._pointerPressed.length) return false;
-    const rotateCamera =
-        (touch.singleFingerRotate && touch._pointerPressed.length === 1) ||
-        (!touch.singleFingerRotate && touch._pointerPressed.length > 1);
+    if (!touch?._pointerPressed.length || isTouchRotateGesture(touch)) return false;
     return (
-        !rotateCamera &&
         touch._offsetX !== null &&
         touch._offsetY !== null &&
         (touch._offsetX !== 0 || touch._offsetY !== 0)
     );
+}
+
+function isTouchRotateGesture(touch: WalkTouchInput): boolean {
+    const n = touch._pointerPressed.length;
+    return (touch.singleFingerRotate && n === 1) || (!touch.singleFingerRotate && n > 1);
 }
 
 function setCameraArrows(target: UniversalCamera | ArcRotateCameraKeyboardMoveInput, invert = false) {
