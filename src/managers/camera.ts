@@ -52,7 +52,7 @@ export class CameraManager {
         this.attachControl();
         canvas.addEventListener("dblclick", this.onDoubleClick);
         canvas.addEventListener("touchend", this.onTouchEnd, { passive: false });
-        if (navigator.maxTouchPoints) {
+        if (matchMedia("(hover: none) and (pointer: coarse)").matches) {
             const root = document.createElement("div");
             root.className = "walk-touch-joystick";
             root.hidden = true;

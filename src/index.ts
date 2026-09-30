@@ -42,6 +42,13 @@ const helpWrap = document.getElementById("exhibition-help");
 const helpButton = document.getElementById("exhibition-help-btn");
 const helpPanel = document.getElementById("exhibition-help-panel");
 const helpClose = helpPanel?.querySelector<HTMLButtonElement>('[aria-label="Close"]');
+const helpDesktop = helpPanel?.querySelector<HTMLElement>(".help-body--desktop");
+const helpTouch = helpPanel?.querySelector<HTMLElement>(".help-body--touch");
+
+if (matchMedia("(hover: none) and (pointer: coarse)").matches) {
+    helpDesktop?.toggleAttribute("hidden", true);
+    helpTouch?.toggleAttribute("hidden", false);
+}
 
 const setHelpOpen = (open: boolean) => {
     helpPanel?.toggleAttribute("hidden", !open);
