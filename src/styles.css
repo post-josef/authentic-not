@@ -6,7 +6,7 @@ body {
     padding: 0;
     overflow: hidden;
     background: #080b10;
-    font-family: "Carlito", sans-serif;
+    font-family: "Lato", sans-serif;
 }
 
 .terms {
@@ -154,7 +154,7 @@ body {
 
 .welcome-copy {
     margin: 0 auto 32px;
-    max-width: 53ch;
+    max-width: 46ch;
     text-align: left;
     font-weight: 300;
 }
