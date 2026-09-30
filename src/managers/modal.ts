@@ -63,7 +63,6 @@ export class ModalManager {
     private transitionHandler: ((event: TransitionEvent) => void) | null = null;
     private closeTimer: number | null = null;
     private closeCallbacks: Array<() => void> = [];
-    private previouslyFocused: HTMLElement | null = null;
     private readonly panelClickHandler = (event: Event) => event.stopPropagation();
     private readonly closeClickHandler = () => this.close();
 
@@ -102,7 +101,6 @@ export class ModalManager {
             mesh,
             wasPickable: mesh.isPickable,
         }));
-        this.previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         highlightManager.clear();
         this.activeMeshes.forEach(({ mesh }) => (mesh.isPickable = false));
         cameraManager.detachControl();
@@ -148,8 +146,6 @@ export class ModalManager {
             this.clearConfigStyle();
             this.restoreMeshPickability();
             cameraManager.attachControl();
-            this.previouslyFocused?.focus();
-            this.previouslyFocused = null;
             this.closing = false;
             this.runCloseCallbacks();
             this.onSceneSwitch = undefined;
@@ -179,7 +175,6 @@ export class ModalManager {
         this.clearConfigStyle();
         this.restoreMeshPickability();
         if (hadInteractionLock) cameraManager.attachControl();
-        this.previouslyFocused = null;
         this.onSceneSwitch = undefined;
         this.root = null;
         this.backdrop = null;

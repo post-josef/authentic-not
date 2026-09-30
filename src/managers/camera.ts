@@ -3,6 +3,8 @@ import type { Camera, Observer, Scene } from "@babylonjs/core";
 
 const WALK_POSITION = new Vector3(0, 1.7, -10);
 const WALK_BASE_SPEED = 0.2;
+const DEFAULT_WALK_ACCEL_MAX_SPEED = 2;
+const DEFAULT_WALK_ACCEL_TIME_SEC = 5;
 const RESET_MS = 900;
 const DOUBLE_TAP_MS = 300;
 
@@ -17,21 +19,21 @@ export class CameraManager {
     private walkRotation = Vector3.Zero();
     private orbitSpawn: { alpha: number; beta: number; radius: number; target: Vector3 } | null = null;
     private lastTap = 0;
-    private walkAccelMaxSpeed = 1;
-    private walkAccelTimeSec = 5;
+    private walkAccelMaxSpeed = DEFAULT_WALK_ACCEL_MAX_SPEED;
+    private walkAccelTimeSec = DEFAULT_WALK_ACCEL_TIME_SEC;
     private walkAccelLevel = 0;
 
     init(scene: Scene, canvas: HTMLCanvasElement) {
         this.dispose();
         this.scene = scene;
         this.canvas = canvas;
+        canvas.tabIndex = -1;
 
         const camera = new UniversalCamera("cam", WALK_POSITION.clone(), scene);
         camera.speed = WALK_BASE_SPEED;
         setCameraArrows(camera);
         camera.keysUpward = [];
         camera.keysDownward = [];
-        camera.attachControl(canvas, true);
         camera.storeState();
         this.walkSpawn.copyFrom(camera.position);
         this.walkRotation.copyFrom(camera.rotation);
@@ -39,10 +41,11 @@ export class CameraManager {
         this.heightObserver = scene.onBeforeRenderObservable.add(() => {
             if (scene.activeCamera !== camera || this.resetObserver) return;
             camera.position.y = WALK_POSITION.y;
-            this.tickWalkAcceleration();
+            this.tickWalkAcceleration(scene);
         });
         this.walkCam = camera;
         scene.activeCamera = camera;
+        this.attachControl();
         canvas.addEventListener("dblclick", this.onDoubleClick);
         canvas.addEventListener("touchend", this.onTouchEnd, { passive: false });
     }
@@ -61,6 +64,7 @@ export class CameraManager {
             maxDistance?: number;
             minDistance?: number;
             invertKeys?: boolean;
+            arrowsSpeed?: number;
         } = {},
     ) {
         if (!this.scene || !this.canvas) throw new Error("cameraManager.init(scene, canvas) must be called first");
@@ -86,9 +90,8 @@ export class CameraManager {
         const keyboard = camera.inputs.attached.keyboard as ArcRotateCameraKeyboardMoveInput | undefined;
         if (keyboard) {
             setCameraArrows(keyboard, config.invertKeys ?? false);
-            keyboard.angularSpeed = 0.005;
+            keyboard.angularSpeed = config.arrowsSpeed ?? 0.003;
         }
-        camera.attachControl(this.canvas, true);
         camera.storeState();
         this.orbitSpawn = {
             alpha: camera.alpha,
@@ -98,6 +101,7 @@ export class CameraManager {
         };
         this.orbitCam = camera;
         this.scene.activeCamera = camera;
+        this.attachControl();
     }
 
     resetSceneConfig() {
@@ -108,20 +112,24 @@ export class CameraManager {
         this.orbitSpawn = null;
         if (!this.walkCam || !this.scene || !this.canvas) return;
         this.scene.activeCamera = this.walkCam;
-        this.walkCam.attachControl(this.canvas, true);
+        this.attachControl();
         this.walkCam.restoreState();
         this.walkSpawn.copyFrom(this.walkCam.position);
         this.walkRotation.copyFrom(this.walkCam.rotation);
     }
 
-    walkAcceleration(maxSpeed: number, timeToMaxSpeed = 5) {
+    walkAcceleration(maxSpeed = DEFAULT_WALK_ACCEL_MAX_SPEED, timeToMaxSpeed = DEFAULT_WALK_ACCEL_TIME_SEC) {
         if (!this.walkCam) throw new Error("cameraManager.init(scene, canvas) must be called first");
         if (maxSpeed <= 1) {
-            this.clearWalkAcceleration();
+            this.walkAccelMaxSpeed = 1;
+            this.walkAccelLevel = 0;
+            if (this.walkCam) this.walkCam.speed = WALK_BASE_SPEED;
             return;
         }
         this.walkAccelMaxSpeed = maxSpeed;
         this.walkAccelTimeSec = Math.max(0.001, timeToMaxSpeed);
+        this.walkAccelLevel = 0;
+        if (this.walkCam) this.walkCam.speed = WALK_BASE_SPEED;
     }
 
     detachControl() {
@@ -129,7 +137,9 @@ export class CameraManager {
     }
 
     attachControl() {
-        if (this.canvas) this.getCamera().attachControl(this.canvas, true);
+        if (!this.canvas) return;
+        this.getCamera().attachControl(this.canvas, true);
+        this.canvas.focus({ preventScroll: true });
     }
 
     dispose() {
@@ -210,15 +220,15 @@ export class CameraManager {
     }
 
     private clearWalkAcceleration() {
-        this.walkAccelMaxSpeed = 1;
+        this.walkAccelMaxSpeed = DEFAULT_WALK_ACCEL_MAX_SPEED;
+        this.walkAccelTimeSec = DEFAULT_WALK_ACCEL_TIME_SEC;
         this.walkAccelLevel = 0;
         if (this.walkCam) this.walkCam.speed = WALK_BASE_SPEED;
     }
 
-    private tickWalkAcceleration() {
+    private tickWalkAcceleration(scene: Scene) {
         const camera = this.walkCam;
-        const scene = this.scene;
-        if (!camera || !scene || scene.activeCamera !== camera || this.walkAccelMaxSpeed <= 1) return;
+        if (!camera || this.walkAccelMaxSpeed <= 1) return;
 
         if (!isWalkTranslating(camera)) {
             this.walkAccelLevel = 0;
@@ -242,14 +252,7 @@ type WalkTouchInput = {
 function isWalkTranslating(camera: UniversalCamera): boolean {
     const keyboard = camera.inputs.attached.keyboard as unknown as WalkKeyboardInput | undefined;
     if (keyboard?._keys.length) {
-        const movementKeys = [
-            ...camera.keysUp,
-            ...camera.keysDown,
-            ...camera.keysLeft,
-            ...camera.keysRight,
-            ...camera.keysUpward,
-            ...camera.keysDownward,
-        ];
+        const movementKeys = [...camera.keysUp, ...camera.keysDown, ...camera.keysLeft, ...camera.keysRight];
         for (const code of keyboard._keys) {
             if (movementKeys.includes(code)) return true;
         }

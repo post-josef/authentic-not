@@ -20,8 +20,8 @@ export class SceneKV implements Scene {
     async load(): Promise<void> {
         cameraManager.setOrbit({
             target: MASK_TARGET,
-            distance: 40,
             height: 10,
+            distance: 40,
             maxDistance: 55,
         });
 
