@@ -1,17 +1,19 @@
 import {
     ArcRotateCamera,
     ArcRotateCameraKeyboardMoveInput,
+    KeyboardEventTypes,
     Ray,
     StandardMaterial,
     UniversalCamera,
     Vector3,
 } from "@babylonjs/core";
-import type { AbstractMesh, Camera, Observer, Scene } from "@babylonjs/core";
+import type { AbstractEngine, AbstractMesh, Camera, KeyboardInfo, Observer, Scene } from "@babylonjs/core";
 
 const WALK_POSITION = new Vector3(0, 1.7, -10);
 const WALK_BASE_SPEED = 0.2;
 const DEFAULT_WALK_ACCEL_MAX_SPEED = 2;
 const DEFAULT_WALK_ACCEL_TIME_SEC = 5;
+const DEFAULT_ORBIT_ARROW_SPEED = 0.003;
 const RESET_MS = 900;
 const DOUBLE_TAP_MS = 300;
 
@@ -29,6 +31,10 @@ export class CameraManager {
     private walkAccelMaxSpeed = DEFAULT_WALK_ACCEL_MAX_SPEED;
     private walkAccelTimeSec = DEFAULT_WALK_ACCEL_TIME_SEC;
     private walkAccelLevel = 0;
+    private shiftHeld = false;
+    private shiftObserver: Observer<KeyboardInfo> | null = null;
+    private canvasBlurObserver: Observer<AbstractEngine> | null = null;
+    private orbitArrowSpeed = DEFAULT_ORBIT_ARROW_SPEED;
     private walkJoystick: HTMLDivElement | null = null;
     private walkJoystickPointerId: number | null = null;
     private walkJoystickOriginX = 0;
@@ -48,16 +54,16 @@ export class CameraManager {
         camera.keysUpward = [];
         camera.keysDownward = [];
 
+        const engine = scene.getEngine();
+        this.shiftObserver = scene.onKeyboardObservable.add((info) => {
+            if (info.event.key === "Shift") this.shiftHeld = info.type === KeyboardEventTypes.KEYDOWN;
+        });
+        this.canvasBlurObserver = engine.onCanvasBlurObservable.add(() => {
+            this.shiftHeld = false;
+        });
+
         this.heightObserver = scene.onBeforeRenderObservable.add(() => {
-            if (scene.activeCamera !== camera || this.resetObserver) return;
-            if (this.groundMeshes.length) {
-                const surfaceY = this.groundSurfaceY(camera.position.x, camera.position.z);
-                camera.position.y =
-                    surfaceY === null ? this.walkSpawn.y : surfaceY - this.groundDifference + this.walkSpawn.y;
-            } else {
-                camera.position.y = this.walkSpawn.y;
-            }
-            this.tickWalkAcceleration(scene);
+            if (!this.resetObserver) this.syncActiveCamera(scene);
         });
         this.walkCam = camera;
         this.resetSceneConfig();
@@ -115,7 +121,8 @@ export class CameraManager {
         const keyboard = camera.inputs.attached.keyboard as ArcRotateCameraKeyboardMoveInput | undefined;
         if (keyboard) {
             setCameraArrows(keyboard, config.invertKeys ?? false);
-            keyboard.angularSpeed = config.arrowsSpeed ?? 0.003;
+            this.orbitArrowSpeed = config.arrowsSpeed ?? DEFAULT_ORBIT_ARROW_SPEED;
+            keyboard.angularSpeed = this.orbitArrowSpeed;
         }
         camera.storeState();
         this.orbitSpawn = {
@@ -153,16 +160,10 @@ export class CameraManager {
 
     walkAcceleration(maxSpeed = DEFAULT_WALK_ACCEL_MAX_SPEED, timeToMaxSpeed = DEFAULT_WALK_ACCEL_TIME_SEC) {
         if (!this.walkCam) throw new Error("cameraManager.init(scene, canvas) must be called first");
-        if (maxSpeed <= 1) {
-            this.walkAccelMaxSpeed = 1;
-            this.walkAccelLevel = 0;
-            if (this.walkCam) this.walkCam.speed = WALK_BASE_SPEED;
-            return;
-        }
-        this.walkAccelMaxSpeed = maxSpeed;
-        this.walkAccelTimeSec = Math.max(0.001, timeToMaxSpeed);
+        this.walkAccelMaxSpeed = maxSpeed <= 1 ? 1 : maxSpeed;
+        if (maxSpeed > 1) this.walkAccelTimeSec = Math.max(0.001, timeToMaxSpeed);
         this.walkAccelLevel = 0;
-        if (this.walkCam) this.walkCam.speed = WALK_BASE_SPEED;
+        this.walkCam.speed = WALK_BASE_SPEED;
     }
 
     walkGround(mesh: AbstractMesh, invisible?: boolean) {
@@ -204,8 +205,12 @@ export class CameraManager {
     }
 
     dispose() {
+        const engine = this.scene?.getEngine();
         if (this.heightObserver) this.scene?.onBeforeRenderObservable.remove(this.heightObserver);
-        this.heightObserver = null;
+        if (this.shiftObserver) this.scene?.onKeyboardObservable.remove(this.shiftObserver);
+        if (this.canvasBlurObserver) engine?.onCanvasBlurObservable.remove(this.canvasBlurObserver);
+        this.heightObserver = this.shiftObserver = this.canvasBlurObserver = null;
+        this.shiftHeld = false;
         const canvas = this.canvas;
         if (canvas) {
             canvas.removeEventListener("pointerdown", this.onWalkJoystickPointerDown);
@@ -342,22 +347,44 @@ export class CameraManager {
         if (this.walkCam) this.walkCam.speed = WALK_BASE_SPEED;
     }
 
-    private tickWalkAcceleration(scene: Scene) {
+    private syncActiveCamera(scene: Scene) {
+        const active = scene.activeCamera;
+        if (active === this.orbitCam) {
+            const keyboard = this.orbitCam?.inputs.attached.keyboard as ArcRotateCameraKeyboardMoveInput | undefined;
+            if (keyboard) keyboard.angularSpeed = this.orbitArrowSpeed * (this.shiftHeld ? 2 : 1);
+            return;
+        }
+
         const camera = this.walkCam;
-        if (!camera || this.walkAccelMaxSpeed <= 1) return;
+        if (active !== camera || !camera) return;
+
+        if (this.groundMeshes.length) {
+            const surfaceY = this.groundSurfaceY(camera.position.x, camera.position.z);
+            camera.position.y =
+                surfaceY === null ? this.walkSpawn.y : surfaceY - this.groundDifference + this.walkSpawn.y;
+        } else {
+            camera.position.y = this.walkSpawn.y;
+        }
 
         if (!isWalkTranslating(camera)) {
             this.walkAccelLevel = 0;
             camera.speed = WALK_BASE_SPEED;
             return;
         }
-        const step = scene.getEngine().getDeltaTime() / 1000 / this.walkAccelTimeSec;
-        this.walkAccelLevel = Math.min(1, this.walkAccelLevel + step);
-        camera.speed = WALK_BASE_SPEED * (1 + this.walkAccelLevel * (this.walkAccelMaxSpeed - 1));
+        if (this.walkAccelMaxSpeed > 1) {
+            const step = scene.getEngine().getDeltaTime() / 1000 / this.walkAccelTimeSec;
+            this.walkAccelLevel = Math.min(1, this.walkAccelLevel + step);
+        }
+        const speed =
+            this.walkAccelMaxSpeed > 1
+                ? WALK_BASE_SPEED * (1 + this.walkAccelLevel * (this.walkAccelMaxSpeed - 1))
+                : WALK_BASE_SPEED;
+        camera.speed = speed * (this.shiftHeld ? 2 : 1);
     }
 }
 
-type WalkKeyboardInput = { _keys: number[] };
+type CameraArrowKeys = Pick<UniversalCamera, "keysUp" | "keysDown" | "keysLeft" | "keysRight">;
+type KeyboardMoveInput = { _keys: number[] };
 type WalkTouchInput = {
     _pointerPressed: number[];
     singleFingerRotate: boolean;
@@ -365,14 +392,15 @@ type WalkTouchInput = {
     _offsetY: number | null;
 };
 
+function isKeyboardMoving(keys: CameraArrowKeys, pressed: number[]): boolean {
+    if (!pressed.length) return false;
+    const movementKeys = [...keys.keysUp, ...keys.keysDown, ...keys.keysLeft, ...keys.keysRight];
+    return pressed.some((code) => movementKeys.includes(code));
+}
+
 function isWalkTranslating(camera: UniversalCamera): boolean {
-    const keyboard = camera.inputs.attached.keyboard as unknown as WalkKeyboardInput | undefined;
-    if (keyboard?._keys.length) {
-        const movementKeys = [...camera.keysUp, ...camera.keysDown, ...camera.keysLeft, ...camera.keysRight];
-        for (const code of keyboard._keys) {
-            if (movementKeys.includes(code)) return true;
-        }
-    }
+    const keyboard = camera.inputs.attached.keyboard as unknown as KeyboardMoveInput | undefined;
+    if (keyboard && isKeyboardMoving(camera, keyboard._keys)) return true;
 
     const touch = camera.inputs.attached.touch as unknown as WalkTouchInput | undefined;
     if (!touch?._pointerPressed.length || isTouchRotateGesture(touch)) return false;
