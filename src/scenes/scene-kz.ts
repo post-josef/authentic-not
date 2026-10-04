@@ -15,16 +15,10 @@ export class SceneKZ implements Scene {
 
         await objectManager.create({
             source: "assets/kz/city.glb",
-            x: 0,
-            y: 0,
-            z: 0,
         });
 
         const ground = await objectManager.create({
             source: "assets/kz/ground.glb",
-            x: 0,
-            y: 0,
-            z: 0,
         });
 
         cameraManager.walkGround(ground, true);
@@ -38,7 +32,6 @@ export class SceneKZ implements Scene {
             source: "assets/kz/teleport.glb",
             scale: 2,
             x: 2.8,
-            y: 0,
             z: -332,
             ry: Math.PI,
             highlight: "highlightLayer",

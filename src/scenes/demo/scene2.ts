@@ -61,7 +61,6 @@ const OBJECTS: Object3D[] = [
         highlight: "highlightLayer",
         subtitle: "Drift Three",
         source: "assets/demo/i1.png",
-        x: 0,
         y: 2.8,
         z: 4.5,
         ry: 0,

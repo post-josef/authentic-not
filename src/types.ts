@@ -13,9 +13,9 @@ export type ModalContent =
 
 export interface Object3D {
     source: string; // mesh source file (GLB, image or video)
-    x: number;
-    y: number;
-    z: number;
+    x?: number;
+    y?: number;
+    z?: number;
     rx?: number;
     ry?: number;
     rz?: number;

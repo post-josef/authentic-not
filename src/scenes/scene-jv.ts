@@ -21,9 +21,7 @@ export class SceneJV implements Scene {
 
         const grassball = await objectManager.create({
             source: "assets/jv/1.glb",
-            x: 0,
             y: -1,
-            z: 0,
         });
         // animationManager.add(grassball, { preset: "float", speed: 0.6, amplitude: 0.2 });
 

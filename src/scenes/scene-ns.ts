@@ -38,7 +38,6 @@ export class SceneNS implements Scene {
             },
             {
                 source: "assets/ns/2.mp4",
-                x: 0,
                 y: 1.7,
                 z: 5.999,
                 width: 3.04,
@@ -78,7 +77,6 @@ export class SceneNS implements Scene {
 
         const face = await objectManager.create({
             source: "assets/ns/face.glb",
-            x: 0,
             y: -2.3,
             z: 16,
             scale: 5,

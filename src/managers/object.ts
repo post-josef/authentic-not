@@ -77,6 +77,12 @@ function applyPlaneMaterial(
     mesh.metadata = { ...mesh.metadata, highlightMode: options.highlight, border };
 }
 
+function applyPosition(mesh: AbstractMesh, object: Object3D) {
+    if (object.x !== undefined) mesh.position.x = object.x;
+    if (object.y !== undefined) mesh.position.y = object.y;
+    if (object.z !== undefined) mesh.position.z = object.z;
+}
+
 export class ObjectManager {
     private scene: Scene | null = null;
 
@@ -121,7 +127,7 @@ export class ObjectManager {
             const container = await LoadAssetContainerAsync(object.source, scene);
             container.addAllToScene();
             mesh = container.meshes[0];
-            mesh.position.set(object.x, object.y, object.z);
+            applyPosition(mesh, object);
             if (object.scale !== undefined) mesh.scaling.scaleInPlace(object.scale);
             if (object.highlight !== undefined) {
                 container.meshes.forEach((part) => {
@@ -136,7 +142,7 @@ export class ObjectManager {
             const width = object.width ?? PLANE_WIDTH;
             const height = object.height ?? PLANE_HEIGHT;
             const plane = MeshBuilder.CreatePlane(object.source, { width, height }, scene);
-            plane.position.set(object.x, object.y, object.z);
+            applyPosition(plane, object);
             mesh = plane;
 
             if (path.endsWith(".mp4")) {

@@ -47,7 +47,6 @@ const OBJECTS: Object3D[] = [
     {
         highlight: "outline",
         source: "assets/demo/c3.svg",
-        x: 0,
         y: 1.8,
         z: 5,
         ry: 0,

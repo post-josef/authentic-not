@@ -31,8 +31,6 @@ export class SceneKV implements Scene {
 
         const cylinder = await objectManager.create({
             source: "assets/kv/valec.glb",
-            x: 0,
-            y: 0,
             z: 12,
         });
         animationManager.add(cylinder, { preset: "rotate", speed: -0.1 });
@@ -41,8 +39,6 @@ export class SceneKV implements Scene {
         const mask = await objectManager.create({
             source: "assets/kv/mask.glb",
             scale: 2,
-            x: 0,
-            y: 0,
             z: 12,
             envIntensity: 0.1,
         });

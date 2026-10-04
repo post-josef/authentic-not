@@ -50,7 +50,7 @@ const OBJECTS: Object3D[] = [
     },
 ];
 
-const MAX_ABS_X = Math.max(...OBJECTS.map((o) => Math.abs(o.x)));
+const MAX_ABS_X = Math.max(...OBJECTS.map((o) => Math.abs(o.x ?? 0)));
 
 /** Pull X toward 0; sign from position, strength from index distance + |x|. */
 function packedX(x: number, index: number, pull: number): number {
@@ -76,8 +76,8 @@ export class SceneStart implements Scene {
             OBJECTS.map(async (object, index) => {
                 const mesh = await objectManager.create({
                     ...object,
-                    x: packedX(object.x, index, small ? (index === 0 ? 4 : 2.2) : medium ? 0.6 : 0),
-                    y: object.y + (small ? (index % 2 ? -3 : 3) : 0),
+                    x: packedX(object.x ?? 0, index, small ? (index === 0 ? 4 : 2.2) : medium ? 0.6 : 0),
+                    y: (object.y ?? 0) + (small ? (index % 2 ? -3 : 3) : 0),
                 });
                 animationManager.add(mesh, { preset: "float", speed: 1.4, phase: index });
                 return mesh;

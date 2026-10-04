@@ -44,9 +44,6 @@ export class SceneMM implements Scene {
         const room = await objectManager.create({
             source: "assets/mm/room.glb",
             scale: 2,
-            x: 0,
-            y: 0,
-            z: 0,
             envIntensity: 0,
         });
 
