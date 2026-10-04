@@ -1,8 +1,7 @@
-import { CubeTexture, HDRCubeTexture } from "@babylonjs/core";
+import { Color3, Color4, CubeTexture, HDRCubeTexture } from "@babylonjs/core";
 import type { BaseTexture, Mesh, Scene } from "@babylonjs/core";
 
-export const DEFAULT_ENVIRONMENT_URL =
-    "https://assets.babylonjs.com/environments/environmentSpecular.env";
+export const DEFAULT_ENVIRONMENT_URL = "https://assets.babylonjs.com/environments/environmentSpecular.env";
 
 export interface EnvironmentOptions {
     intensity?: number;
@@ -20,6 +19,7 @@ const DEFAULTS: Required<EnvironmentOptions> = {
 
 export class BackgroundManager {
     private scene: Scene | null = null;
+    private defaultClearColor: Color4 | null = null;
     private environment: BaseTexture | null = null;
     private environmentUrl: string | null = null;
     private background: Mesh | null = null;
@@ -27,6 +27,12 @@ export class BackgroundManager {
     init(scene: Scene) {
         this.dispose();
         this.scene = scene;
+        this.defaultClearColor = scene.clearColor.clone();
+    }
+
+    setBackground(color: Color3 | Color4) {
+        const clear = color instanceof Color4 ? color : new Color4(color.r, color.g, color.b, 1);
+        this.requireScene().clearColor = clear;
     }
 
     /** Shared IBL for PBR materials (no skybox); kept across scene switches. */
@@ -57,6 +63,9 @@ export class BackgroundManager {
 
     clear() {
         this.clearSkybox();
+        if (this.scene && this.defaultClearColor) {
+            this.scene.clearColor = this.defaultClearColor;
+        }
     }
 
     dispose() {

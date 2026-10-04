@@ -1,6 +1,7 @@
 import { Color3, Vector3 } from "@babylonjs/core";
 import { animationManager } from "../managers/animation";
-// import { audioManager } from "../managers/audio";
+import { audioManager } from "../managers/audio";
+import { backgroundManager } from "../managers/background";
 import { cameraManager } from "../managers/camera";
 import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
@@ -8,12 +9,12 @@ import type { Scene } from "../types";
 
 export class SceneKZ implements Scene {
     async load(): Promise<void> {
-        // audioManager.play("assets/kz/zvuk.mp3", { loop: true, volume: 2 });
+        backgroundManager.setBackground(new Color3(0.98, 0.98, 0.98));
 
         cameraManager.walkPosition(new Vector3(0, 0.7, 9));
-        cameraManager.walkAcceleration(5);
+        cameraManager.walkAcceleration(4);
 
-        await objectManager.create({
+        objectManager.create({
             source: "assets/kz/city.glb",
         });
 
@@ -27,6 +28,27 @@ export class SceneKZ implements Scene {
         //     material.emissiveColor = new Color3(0.4, 0.2, 0.1);
         //     material.alpha = 0.6;
         // });
+
+        audioManager.add("assets/kz/ZVUK1.mp3", {
+            position: new Vector3(1, 0, 28),
+            radius: 15,
+            // fixture: { scale: 1 },
+        });
+        audioManager.add("assets/kz/ZVUK2.mp3", {
+            position: new Vector3(4, 0, 64),
+            radius: 10,
+            // fixture: { scale: 1 },
+        });
+        audioManager.add("assets/kz/ZVUK3.mp3", {
+            position: new Vector3(0, 0, 116),
+            radius: 15,
+            // fixture: { scale: 1 },
+        });
+        audioManager.add("assets/kz/ZVUK4.mp3", {
+            position: new Vector3(1, 0, 272),
+            radius: 40,
+            // fixture: { scale: 1 },
+        });
 
         const end = await objectManager.create({
             source: "assets/kz/teleport.glb",
