@@ -1,4 +1,4 @@
-import { Color3 } from "@babylonjs/core";
+import { Color3, Vector3 } from "@babylonjs/core";
 import { animationManager } from "../managers/animation";
 // import { audioManager } from "../managers/audio";
 import { cameraManager } from "../managers/camera";
@@ -10,22 +10,36 @@ export class SceneKZ implements Scene {
     async load(): Promise<void> {
         // audioManager.play("assets/kz/zvuk.mp3", { loop: true, volume: 2 });
 
+        cameraManager.walkPosition(new Vector3(0, 0.7, 9));
         cameraManager.walkAcceleration(5);
 
         await objectManager.create({
             source: "assets/kz/city.glb",
             x: 0,
-            y: 0.8,
-            z: -20,
-            ry: Math.PI,
+            y: 0,
+            z: 0,
         });
+
+        const ground = await objectManager.create({
+            source: "assets/kz/ground.glb",
+            x: 0,
+            y: 0,
+            z: 0,
+        });
+
+        cameraManager.walkGround(ground, true);
+        // ground.getChildMeshes().forEach((part) => {
+        //     const material = part.material as StandardMaterial;
+        //     material.emissiveColor = new Color3(0.4, 0.2, 0.1);
+        //     material.alpha = 0.6;
+        // });
 
         const end = await objectManager.create({
             source: "assets/kz/teleport.glb",
             scale: 2,
             x: 2.8,
             y: 0,
-            z: -354,
+            z: -332,
             ry: Math.PI,
             highlight: "highlightLayer",
             targetScene: "start",

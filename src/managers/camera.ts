@@ -1,5 +1,12 @@
-import { ArcRotateCamera, ArcRotateCameraKeyboardMoveInput, UniversalCamera, Vector3 } from "@babylonjs/core";
-import type { Camera, Observer, Scene } from "@babylonjs/core";
+import {
+    ArcRotateCamera,
+    ArcRotateCameraKeyboardMoveInput,
+    Ray,
+    StandardMaterial,
+    UniversalCamera,
+    Vector3,
+} from "@babylonjs/core";
+import type { AbstractMesh, Camera, Observer, Scene } from "@babylonjs/core";
 
 const WALK_POSITION = new Vector3(0, 1.7, -10);
 const WALK_BASE_SPEED = 0.2;
@@ -26,6 +33,8 @@ export class CameraManager {
     private walkJoystickPointerId: number | null = null;
     private walkJoystickOriginX = 0;
     private walkJoystickOriginY = 0;
+    private groundMeshes: AbstractMesh[] = [];
+    private groundDifference = 0;
 
     init(scene: Scene, canvas: HTMLCanvasElement) {
         this.dispose();
@@ -38,18 +47,20 @@ export class CameraManager {
         setCameraArrows(camera);
         camera.keysUpward = [];
         camera.keysDownward = [];
-        camera.storeState();
-        this.walkSpawn.copyFrom(camera.position);
-        this.walkRotation.copyFrom(camera.rotation);
 
         this.heightObserver = scene.onBeforeRenderObservable.add(() => {
             if (scene.activeCamera !== camera || this.resetObserver) return;
-            camera.position.y = WALK_POSITION.y;
+            if (this.groundMeshes.length) {
+                const surfaceY = this.groundSurfaceY(camera.position.x, camera.position.z);
+                camera.position.y =
+                    surfaceY === null ? this.walkSpawn.y : surfaceY - this.groundDifference + this.walkSpawn.y;
+            } else {
+                camera.position.y = this.walkSpawn.y;
+            }
             this.tickWalkAcceleration(scene);
         });
         this.walkCam = camera;
-        scene.activeCamera = camera;
-        this.attachControl();
+        this.resetSceneConfig();
         canvas.addEventListener("dblclick", this.onDoubleClick);
         canvas.addEventListener("touchend", this.onTouchEnd, { passive: false });
         if (matchMedia("(hover: none) and (pointer: coarse)").matches) {
@@ -84,9 +95,8 @@ export class CameraManager {
     ) {
         if (!this.scene || !this.canvas) throw new Error("cameraManager.init(scene, canvas) must be called first");
 
-        this.stopReset();
+        this.resetSceneConfig();
         this.walkCam?.detachControl();
-        this.orbitCam?.dispose();
 
         const target = config.target ?? Vector3.Zero();
         const distance = config.distance ?? 20;
@@ -122,18 +132,19 @@ export class CameraManager {
     resetSceneConfig() {
         this.stopReset();
         this.clearWalkAcceleration();
+        this.groundMeshes = [];
+        this.groundDifference = 0;
         this.orbitCam?.dispose();
-        this.orbitCam = null;
-        this.orbitSpawn = null;
+        this.orbitCam = this.orbitSpawn = null;
         if (!this.walkCam || !this.scene || !this.canvas) return;
+        this.walkPosition(WALK_POSITION);
+        this.walkRotation.setAll(0);
+        this.walkCam.rotation.setAll(0);
         this.scene.activeCamera = this.walkCam;
         this.attachControl();
-        this.walkCam.restoreState();
-        this.walkSpawn.copyFrom(this.walkCam.position);
-        this.walkRotation.copyFrom(this.walkCam.rotation);
     }
 
-    setWalkPosition(position: Vector3) {
+    walkPosition(position: Vector3) {
         if (!this.walkCam) throw new Error("cameraManager.init(scene, canvas) must be called first");
         this.walkCam.position.copyFrom(position);
         this.walkCam.storeState();
@@ -154,6 +165,34 @@ export class CameraManager {
         if (this.walkCam) this.walkCam.speed = WALK_BASE_SPEED;
     }
 
+    walkGround(mesh: AbstractMesh, invisible?: boolean) {
+        this.groundMeshes = [mesh, ...mesh.getChildMeshes()];
+        if (invisible) {
+            const invisibleMaterial = new StandardMaterial("invisibleMaterial", mesh.getScene());
+            invisibleMaterial.alpha = 0;
+            this.groundMeshes.forEach((part) => (part.material = invisibleMaterial));
+        }
+        for (const part of this.groundMeshes) {
+            part.computeWorldMatrix(true); // wait for the meshes to calculate the ground difference correctly
+        }
+        this.groundDifference = this.groundSurfaceY(this.walkSpawn.x, this.walkSpawn.z) ?? 0;
+    }
+
+    private groundSurfaceY(x: number, z: number): number | null {
+        if (!this.groundMeshes.length) return null;
+        const ray = new Ray(new Vector3(x, 1000, z), Vector3.Down(), 2000);
+        let surfaceY: number | null = null;
+        let bestDist = Infinity;
+        for (const mesh of this.groundMeshes) {
+            const hit = ray.intersectsMesh(mesh, true);
+            if (hit.hit && hit.pickedPoint && hit.distance < bestDist) {
+                bestDist = hit.distance;
+                surfaceY = hit.pickedPoint.y;
+            }
+        }
+        return surfaceY;
+    }
+
     detachControl() {
         this.getCamera().detachControl();
     }
@@ -165,11 +204,7 @@ export class CameraManager {
     }
 
     dispose() {
-        this.stopReset();
-        this.clearWalkAcceleration();
-        if (this.scene && this.heightObserver) {
-            this.scene.onBeforeRenderObservable.remove(this.heightObserver);
-        }
+        if (this.heightObserver) this.scene?.onBeforeRenderObservable.remove(this.heightObserver);
         this.heightObserver = null;
         const canvas = this.canvas;
         if (canvas) {
@@ -177,18 +212,14 @@ export class CameraManager {
             canvas.removeEventListener("pointermove", this.onWalkJoystickPointerMove);
             canvas.removeEventListener("pointerup", this.onWalkJoystickPointerUp);
             canvas.removeEventListener("pointercancel", this.onWalkJoystickPointerUp);
+            canvas.removeEventListener("dblclick", this.onDoubleClick);
+            canvas.removeEventListener("touchend", this.onTouchEnd);
         }
         this.walkJoystick?.remove();
-        this.walkJoystick = null;
-        this.walkJoystickPointerId = null;
-        this.canvas?.removeEventListener("dblclick", this.onDoubleClick);
-        this.canvas?.removeEventListener("touchend", this.onTouchEnd);
+        this.walkJoystickPointerId = this.walkJoystick = null;
+        this.resetSceneConfig();
         this.walkCam?.dispose();
-        this.orbitCam?.dispose();
-        this.walkCam = null;
-        this.orbitCam = null;
-        this.canvas = null;
-        this.scene = null;
+        this.walkCam = this.canvas = this.scene = null;
     }
 
     private readonly onDoubleClick = () => this.resetCamera();
@@ -345,11 +376,7 @@ function isWalkTranslating(camera: UniversalCamera): boolean {
 
     const touch = camera.inputs.attached.touch as unknown as WalkTouchInput | undefined;
     if (!touch?._pointerPressed.length || isTouchRotateGesture(touch)) return false;
-    return (
-        touch._offsetX !== null &&
-        touch._offsetY !== null &&
-        (touch._offsetX !== 0 || touch._offsetY !== 0)
-    );
+    return touch._offsetX !== null && touch._offsetY !== null && (touch._offsetX !== 0 || touch._offsetY !== 0);
 }
 
 function isTouchRotateGesture(touch: WalkTouchInput): boolean {

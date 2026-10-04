@@ -67,9 +67,9 @@ export class SceneStart implements Scene {
         const small = matchMedia("(max-width: 780px)").matches;
         const medium = matchMedia("(max-width: 1200px)").matches;
         if (small) {
-            cameraManager.setWalkPosition(new Vector3(0, 1.7, -18)); // 6m further back from default -10 on Z
+            cameraManager.walkPosition(new Vector3(0, 1.7, -18)); // 6m further back from default -10 on Z
         } else if (medium) {
-            cameraManager.setWalkPosition(new Vector3(0, 1.7, -14));
+            cameraManager.walkPosition(new Vector3(0, 1.7, -14));
         }
 
         const portals = await Promise.all(
