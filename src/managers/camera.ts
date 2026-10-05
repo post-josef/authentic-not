@@ -46,10 +46,11 @@ export class CameraManager {
         this.dispose();
         this.scene = scene;
         this.canvas = canvas;
-        canvas.tabIndex = -1;
 
         const camera = new UniversalCamera("cam", WALK_POSITION.clone(), scene);
         camera.speed = WALK_BASE_SPEED;
+        camera.touchAngularSensibility /= 2.2;
+        camera.touchMoveSensibility /= 1.4;
         setCameraArrows(camera);
         camera.keysUpward = [];
         camera.keysDownward = [];
