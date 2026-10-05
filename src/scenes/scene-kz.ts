@@ -9,14 +9,14 @@ import type { Scene } from "../types";
 
 export class SceneKZ implements Scene {
     async load(): Promise<void> {
-        backgroundManager.setBackground(new Color3(0.98, 0.98, 0.98));
-
         cameraManager.walkPosition(new Vector3(0, 0.7, 9));
         cameraManager.walkAcceleration(4);
 
-        objectManager.create({
+        await objectManager.create({
             source: "assets/kz/city.glb",
         });
+
+        backgroundManager.setBackground(new Color3(0.98, 0.98, 0.98));
 
         const ground = await objectManager.create({
             source: "assets/kz/ground.glb",
