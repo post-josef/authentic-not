@@ -24,6 +24,7 @@ export class SceneKV implements Scene {
             target: MASK_TARGET,
             height: 10,
             distance: small ? 50 : 40,
+            minDistance: 15,
             maxDistance: 55,
         });
 
