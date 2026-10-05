@@ -14,6 +14,9 @@ body {
     bottom: 0;
     left: 0;
     z-index: 10;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
     text-align: center;
     font-size: 11px;
     color: #929086;
@@ -25,6 +28,9 @@ body {
 .terms-copyright,
 .terms-link {
     white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 .terms-link {
     color: #c0baab;
@@ -45,7 +51,6 @@ body {
     box-sizing: border-box;
     width: min(420px, calc(100vw - 16px));
     padding: 4px 8px;
-    transform: translateX(-50%);
     border: 1px solid rgba(195, 186, 171, 0.22);
     border-radius: 4px;
     background: rgba(12, 14, 18, 0.96);
@@ -55,10 +60,12 @@ body {
     line-height: 1.4;
     pointer-events: none;
     opacity: 0;
-    transition:
-        opacity 0.18s ease,
-        visibility 0.18s ease;
+    transform: translateX(-50%);
+    transition: 0.2s;
     transition-delay: 0ms;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 #welcome {
