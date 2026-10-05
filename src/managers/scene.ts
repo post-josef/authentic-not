@@ -17,6 +17,7 @@ export class SceneManager {
     private routeId: string | null = null;
     private history: string[] = [];
     private navigatingBack = false;
+    private loadGeneration = 0;
 
     init(scene: BabylonScene) {
         this.babylonScene = scene;
@@ -67,6 +68,10 @@ export class SceneManager {
         return this.routeId;
     }
 
+    getLoadGeneration(): number {
+        return this.loadGeneration;
+    }
+
     resetHistory() {
         this.history = [];
     }
@@ -97,13 +102,19 @@ export class SceneManager {
         if (!this.navigatingBack && this.routeId && this.routeId !== id) {
             this.history.push(this.routeId);
         }
+        const loadId = ++this.loadGeneration;
         this.clearSceneResources();
         this.current = factory();
         this.routeId = id;
         void this.current
             .load()
-            .catch((error) => console.error(`[sceneManager] Failed to load ${id}`, error))
-            .finally(() => this.clearLoading());
+            .catch((error) => {
+                if (loadId !== this.loadGeneration) return;
+                console.error(`[sceneManager] Failed to load ${id}`, error);
+            })
+            .finally(() => {
+                if (loadId === this.loadGeneration) this.clearLoading();
+            });
     }
 
     private clearSceneResources() {

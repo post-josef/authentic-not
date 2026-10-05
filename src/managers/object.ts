@@ -119,12 +119,17 @@ export class ObjectManager {
     async create(object: Object3D): Promise<AbstractMesh> {
         if (!this.scene) throw new Error("objectManager.init(scene) must be called first");
         const scene = this.scene;
+        const loadId = sceneManager.getLoadGeneration();
         const path = object.source.split(/[?#]/, 1)[0].toLowerCase();
         let mesh: AbstractMesh;
         let release: () => void;
 
         if (path.endsWith(".glb")) {
             const container = await LoadAssetContainerAsync(object.source, scene);
+            if (loadId !== sceneManager.getLoadGeneration()) {
+                container.dispose();
+                throw new Error("Scene load superseded");
+            }
             container.addAllToScene();
             mesh = container.meshes[0];
             applyPosition(mesh, object);
@@ -192,6 +197,11 @@ export class ObjectManager {
 
         if (object.envIntensity !== undefined) {
             this.setEnvIntensity(mesh, object.envIntensity);
+        }
+
+        if (loadId !== sceneManager.getLoadGeneration()) {
+            release();
+            throw new Error("Scene load superseded");
         }
 
         if (object.modal?.length || object.subtitle || object.targetScene || object.highlight) {
