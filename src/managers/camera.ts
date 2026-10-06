@@ -50,7 +50,7 @@ export class CameraManager {
         const camera = new UniversalCamera("cam", WALK_POSITION.clone(), scene);
         camera.speed = WALK_BASE_SPEED;
         camera.touchAngularSensibility /= 2.2;
-        camera.touchMoveSensibility /= 1.4;
+        camera.touchMoveSensibility /= 1.6;
         setCameraArrows(camera);
         camera.keysUpward = [];
         camera.keysDownward = [];

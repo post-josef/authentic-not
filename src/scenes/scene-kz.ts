@@ -16,7 +16,7 @@ export class SceneKZ implements Scene {
             source: "assets/kz/city.glb",
         });
 
-        backgroundManager.setBackground(new Color3(0.98, 0.98, 0.98));
+        backgroundManager.setBackground(new Color3(0.99, 0.99, 0.99));
 
         const ground = await objectManager.create({
             source: "assets/kz/ground.glb",
