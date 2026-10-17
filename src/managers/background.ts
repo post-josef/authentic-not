@@ -1,4 +1,4 @@
-import { Color3, Color4, CubeTexture, HDRCubeTexture } from "@babylonjs/core";
+import { Color3, Color4, CubeTexture, EXRCubeTexture, HDRCubeTexture } from "@babylonjs/core";
 import type { BaseTexture, Mesh, Scene } from "@babylonjs/core";
 
 export const DEFAULT_ENVIRONMENT_URL = "https://assets.babylonjs.com/environments/environmentSpecular.env";
@@ -87,14 +87,18 @@ export class BackgroundManager {
         this.background = null;
     }
 
-    private createEnvironmentTexture(file: string, scene: Scene): BaseTexture {
+    private createEnvironmentTexture(file: string, scene: Scene, size = 512): BaseTexture {
         const extension = file.split(/[?#]/, 1)[0].toLowerCase();
-        if (!extension.endsWith(".env") && !extension.endsWith(".hdr")) {
-            throw new Error(`Unsupported environment file: ${file}`);
+        if (extension.endsWith(".env")) {
+            return CubeTexture.CreateFromPrefilteredData(file, scene);
         }
-        return extension.endsWith(".hdr")
-            ? new HDRCubeTexture(file, scene, 512, false, true, false, true)
-            : CubeTexture.CreateFromPrefilteredData(file, scene);
+        if (extension.endsWith(".exr")) {
+            return new EXRCubeTexture(file, scene, size, false, true, false, true);
+        }
+        if (extension.endsWith(".hdr")) {
+            return new HDRCubeTexture(file, scene, size, false, true, false, true);
+        }
+        throw new Error(`Unsupported environment file: ${file}`);
     }
 
     private applyEnvironmentSettings(scene: Scene, options: EnvironmentOptions) {
