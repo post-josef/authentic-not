@@ -1,5 +1,5 @@
 import { Vector3, Color3 } from "@babylonjs/core";
-// import { audioManager } from "../managers/audio";
+import { audioManager } from "../managers/audio";
 import { cameraManager } from "../managers/camera";
 import { lightManager } from "../managers/light";
 import { objectManager } from "../managers/object";
@@ -16,17 +16,17 @@ const videoPanels = [
     {
         ...panelFacingCenter(0, 0, 13.2),
         source: "assets/mm/ah.mp4",
-        external: "https://youtu.be/Sz1z0V6EFYk",
+        external: "https://youtu.be/WqGQg6uuBIs",
     },
     {
         ...panelFacingCenter(10.4, 0, -6.33),
         source: "assets/mm/kv.mp4",
-        external: "https://youtu.be/wV4CxtcqknM",
+        external: "https://youtu.be/bDN6ZJ8NWJE",
     },
     {
         ...panelFacingCenter(-10.4, 0, -6.36),
         source: "assets/mm/mm.mp4",
-        external: "https://youtu.be/5XOk-TidCOM",
+        external: "https://youtu.be/8UUrLUE1sgs",
     },
 ];
 
@@ -39,7 +39,7 @@ export class SceneMM implements Scene {
             invertKeys: true,
         });
 
-        // audioManager.play("assets/mm/zvuk.mp3", { loop: true });
+        audioManager.play("assets/mm/sound.wav", { loop: true, volume: 0.8 });
 
         const room = await objectManager.create({
             source: "assets/mm/room.glb",
