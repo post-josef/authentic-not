@@ -9,8 +9,8 @@ import type { Scene } from "../types";
 
 export class SceneKZ implements Scene {
     async load(): Promise<void> {
-        cameraManager.walkPosition(new Vector3(0, 0.7, 9));
-        cameraManager.walkAcceleration(4);
+        cameraManager.walkPosition(new Vector3(0, 0.7, 7.2));
+        cameraManager.walkAcceleration(3.2);
 
         await objectManager.create({
             source: "assets/kz/city.glb",
@@ -32,29 +32,25 @@ export class SceneKZ implements Scene {
         audioManager.add("assets/kz/ZVUK1.mp3", {
             position: new Vector3(1, 0, 28),
             radius: 15,
-            // fixture: { scale: 1 },
         });
         audioManager.add("assets/kz/ZVUK2.mp3", {
             position: new Vector3(4, 0, 64),
             radius: 10,
-            // fixture: { scale: 1 },
         });
         audioManager.add("assets/kz/ZVUK3.mp3", {
             position: new Vector3(0, 0, 116),
             radius: 15,
-            // fixture: { scale: 1 },
         });
         audioManager.add("assets/kz/ZVUK4.mp3", {
             position: new Vector3(1, 0, 272),
             radius: 40,
-            // fixture: { scale: 1 },
         });
 
         const end = await objectManager.create({
             source: "assets/kz/teleport.glb",
-            scale: 2,
-            x: 2.8,
-            z: -332,
+            scale: 1.1,
+            x: 0.4,
+            z: -36,
             ry: Math.PI,
             highlight: "highlightLayer",
             targetScene: "start",
@@ -62,8 +58,8 @@ export class SceneKZ implements Scene {
         animationManager.add(end, { preset: "float", speed: 0.64, amplitude: 0.18 });
 
         const spotLights = [
-            { x: 0, y: 16, z: 300, intensity: 600, color: new Color3(1, 0.8, 0.6) },
-            { x: 0, y: 20, z: 310, intensity: 2000, color: new Color3(0.8, 1, 0.9) },
+            { x: 0, y: 12, z: 308, intensity: 320, color: new Color3(1, 0.8, 0.6) },
+            { x: 0, y: 16, z: 324, intensity: 640, color: new Color3(0.8, 1, 0.9) },
             // { x: -5, y: 14, z: 302, intensity: 600, color: new Color3(0.7, 0.7, 1) },
         ];
         // const lights =
