@@ -1,5 +1,5 @@
 import { Color3, Color4, CubeTexture, EXRCubeTexture, HDRCubeTexture } from "@babylonjs/core";
-import type { BaseTexture, Mesh, Scene } from "@babylonjs/core";
+import type { BaseTexture, Mesh, Observer, Scene } from "@babylonjs/core";
 
 export const DEFAULT_ENVIRONMENT_URL = "https://assets.babylonjs.com/environments/environmentSpecular.env";
 
@@ -23,6 +23,7 @@ export class BackgroundManager {
     private environment: BaseTexture | null = null;
     private environmentUrl: string | null = null;
     private background: Mesh | null = null;
+    private transition: Observer<Scene> | null = null;
 
     init(scene: Scene) {
         this.dispose();
@@ -30,9 +31,28 @@ export class BackgroundManager {
         this.defaultClearColor = scene.clearColor.clone();
     }
 
-    setBackground(color: Color3 | Color4) {
-        const clear = color instanceof Color4 ? color : new Color4(color.r, color.g, color.b, 1);
-        this.requireScene().clearColor = clear;
+    setBackground(color: Color3 | Color4, transition?: number) {
+        const scene = this.requireScene();
+        const target = color instanceof Color4 ? color : new Color4(color.r, color.g, color.b, 1);
+
+        this.cancelTransition();
+
+        if (!transition) {
+            scene.clearColor.copyFrom(target);
+            return;
+        }
+
+        const from = scene.clearColor.clone();
+        const durationMs = transition * 1000;
+        const startedAt = performance.now();
+        this.transition = scene.onBeforeRenderObservable.add(() => {
+            const t = Math.min(1, (performance.now() - startedAt) / durationMs);
+            Color4.LerpToRef(from, target, t, scene.clearColor);
+            if (t >= 1) {
+                scene.clearColor.copyFrom(target);
+                this.cancelTransition();
+            }
+        });
     }
 
     /** Shared IBL for PBR materials (no skybox); kept across scene switches. */
@@ -62,13 +82,15 @@ export class BackgroundManager {
     }
 
     clear() {
+        this.cancelTransition();
         this.clearSkybox();
         if (this.scene && this.defaultClearColor) {
-            this.scene.clearColor = this.defaultClearColor;
+            this.scene.clearColor.copyFrom(this.defaultClearColor);
         }
     }
 
     dispose() {
+        this.cancelTransition();
         this.clearSkybox();
         const scene = this.scene;
         const environment = this.environment;
@@ -106,6 +128,13 @@ export class BackgroundManager {
         (this.environment as CubeTexture).rotationY = options.rotation ?? DEFAULTS.rotation;
         scene.environmentTexture = this.environment;
         scene.environmentIntensity = options.intensity ?? DEFAULTS.intensity;
+    }
+
+    private cancelTransition() {
+        if (this.scene && this.transition) {
+            this.scene.onBeforeRenderObservable.remove(this.transition);
+        }
+        this.transition = null;
     }
 
     private requireScene(): Scene {

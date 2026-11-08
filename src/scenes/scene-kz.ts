@@ -1,6 +1,7 @@
 import { Color3, Vector3 } from "@babylonjs/core";
 import { animationManager } from "../managers/animation";
 import { audioManager } from "../managers/audio";
+import { fogManager } from "../managers/fog";
 import { backgroundManager } from "../managers/background";
 import { cameraManager } from "../managers/camera";
 import { lightManager } from "../managers/light";
@@ -16,18 +17,13 @@ export class SceneKZ implements Scene {
             source: "assets/kz/city.glb",
         });
 
-        backgroundManager.setBackground(new Color3(0.99, 0.99, 0.99));
+        backgroundManager.setBackground(new Color3(0.99, 0.99, 1), 0.06);
+        fogManager.set({ color: [1, 0.99, 0.99], density: 0.006 });
 
         const ground = await objectManager.create({
             source: "assets/kz/ground.glb",
         });
-
-        cameraManager.walkGround(ground, true);
-        // ground.getChildMeshes().forEach((part) => {
-        //     const material = part.material as StandardMaterial;
-        //     material.emissiveColor = new Color3(0.4, 0.2, 0.1);
-        //     material.alpha = 0.6;
-        // });
+        cameraManager.walkGround(ground);
 
         audioManager.add("assets/kz/ZVUK1.mp3", {
             position: new Vector3(1, 0, 28),
@@ -62,7 +58,6 @@ export class SceneKZ implements Scene {
             { x: 0, y: 16, z: 324, intensity: 640, color: new Color3(0.8, 1, 0.9) },
             // { x: -5, y: 14, z: 302, intensity: 600, color: new Color3(0.7, 0.7, 1) },
         ];
-        // const lights =
         spotLights.map((light) =>
             lightManager.createLight({
                 meshes: [end],
@@ -70,18 +65,5 @@ export class SceneKZ implements Scene {
                 // fixture: { scale: 4 },
             }),
         );
-
-        // let lightsOn = true;
-        // objectManager.interactive(end, {
-        //     onClick: () => {
-        //         lightsOn = !lightsOn;
-        //         const scene = end.getScene();
-        //         for (const light of lights) {
-        //             // if (light !== lights[2]) continue;
-        //             light.setEnabled(lightsOn);
-        //             scene.getMeshByName(`${light.name}Fixture`)?.setEnabled(lightsOn);
-        //         }
-        //     },
-        // });
     }
 }

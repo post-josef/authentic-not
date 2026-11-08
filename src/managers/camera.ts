@@ -41,6 +41,8 @@ export class CameraManager {
     private walkJoystickOriginY = 0;
     private groundMeshes: AbstractMesh[] = [];
     private groundDifference = 0;
+    private walkLastGroundX = 0;
+    private walkLastGroundZ = 0;
 
     init(scene: Scene, canvas: HTMLCanvasElement) {
         this.dispose();
@@ -157,6 +159,10 @@ export class CameraManager {
         this.walkCam.position.copyFrom(position);
         this.walkCam.storeState();
         this.walkSpawn.copyFrom(position);
+        if (this.groundMeshes.length) {
+            this.walkLastGroundX = position.x;
+            this.walkLastGroundZ = position.z;
+        }
     }
 
     walkAcceleration(maxSpeed = DEFAULT_WALK_ACCEL_MAX_SPEED, timeToMaxSpeed = DEFAULT_WALK_ACCEL_TIME_SEC) {
@@ -167,7 +173,7 @@ export class CameraManager {
         this.walkCam.speed = WALK_BASE_SPEED;
     }
 
-    walkGround(mesh: AbstractMesh, invisible?: boolean) {
+    walkGround(mesh: AbstractMesh, invisible = true) {
         this.groundMeshes = [mesh, ...mesh.getChildMeshes()];
         if (invisible) {
             const invisibleMaterial = new StandardMaterial("invisibleMaterial", mesh.getScene());
@@ -178,6 +184,8 @@ export class CameraManager {
             part.computeWorldMatrix(true); // wait for the meshes to calculate the ground difference correctly
         }
         this.groundDifference = this.groundSurfaceY(this.walkSpawn.x, this.walkSpawn.z) ?? 0;
+        this.walkLastGroundX = this.walkSpawn.x;
+        this.walkLastGroundZ = this.walkSpawn.z;
     }
 
     private groundSurfaceY(x: number, z: number): number | null {
@@ -360,7 +368,24 @@ export class CameraManager {
         if (active !== camera || !camera) return;
 
         if (this.groundMeshes.length) {
-            const surfaceY = this.groundSurfaceY(camera.position.x, camera.position.z);
+            let x = camera.position.x;
+            let z = camera.position.z;
+            if (this.groundSurfaceY(x, z) === null) {
+                const lastX = this.walkLastGroundX;
+                const lastZ = this.walkLastGroundZ;
+                if (this.groundSurfaceY(x, lastZ) !== null) z = lastZ;
+                else if (this.groundSurfaceY(lastX, z) !== null) x = lastX;
+                else {
+                    x = lastX;
+                    z = lastZ;
+                }
+            }
+            camera.position.x = x;
+            camera.position.z = z;
+            this.walkLastGroundX = x;
+            this.walkLastGroundZ = z;
+
+            const surfaceY = this.groundSurfaceY(x, z);
             camera.position.y =
                 surfaceY === null ? this.walkSpawn.y : surfaceY - this.groundDifference + this.walkSpawn.y;
         } else {

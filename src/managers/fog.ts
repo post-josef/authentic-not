@@ -2,38 +2,12 @@ import { Color3, Color4, DynamicTexture, ParticleSystem, Scene, Vector3 } from "
 import type { Observer } from "@babylonjs/core";
 import { cameraManager } from "./camera";
 
-export interface FogConfig {
-    mode: "none" | "linear" | "exp" | "exp2";
-    color?: [number, number, number];
-    density?: number;
-    start?: number;
-    end?: number;
-}
-
-export interface MistConfig {
-    color?: [number, number, number];
-    /** Alpha of a single puff at its peak. Keep low; puffs stack. */
-    opacity?: number;
-    /** How many puffs are alive at once. */
-    count?: number;
-    /** [min, max] puff diameter in world units. */
-    size?: [number, number];
-    center?: [number, number, number];
-    /** Half-extents of the box the puffs spawn in. */
-    extents?: [number, number, number];
-    speed?: number;
-    /** Keeps the puff volume centred on the camera so you never walk out of it. */
-    followCamera?: boolean;
-}
-
 const MODES = {
-    none: Scene.FOGMODE_NONE,
     linear: Scene.FOGMODE_LINEAR,
     exp: Scene.FOGMODE_EXP,
     exp2: Scene.FOGMODE_EXP2,
 };
 
-/** Babylon's built-in fog is global and camera-distance based, not position-local. */
 export class FogManager {
     private scene: Scene | null = null;
     private transition: Observer<Scene> | null = null;
@@ -46,56 +20,41 @@ export class FogManager {
         this.scene = scene;
     }
 
-    set(config: FogConfig) {
+    /**
+     * Babylon's built-in fog is global and camera-distance based.
+     */
+    set(config: {
+        mode?: "linear" | "exp" | "exp2";
+        color?: [number, number, number];
+        density?: number;
+        start?: number;
+        end?: number;
+    }) {
         this.cancelTransition();
         const scene = this.requireScene();
-        scene.fogMode = MODES[config.mode];
+        scene.fogMode = MODES[config.mode || "exp2"];
         if (config.color) scene.fogColor = new Color3(...config.color);
         if (config.density !== undefined) scene.fogDensity = config.density;
         if (config.start !== undefined) scene.fogStart = config.start;
         if (config.end !== undefined) scene.fogEnd = config.end;
     }
 
-    tweenTo(config: FogConfig, durationMs: number) {
-        this.cancelTransition();
-        const scene = this.requireScene();
-        const fromColor = scene.fogColor.clone();
-        const toColor = config.color ?? [fromColor.r, fromColor.g, fromColor.b];
-        const fromDensity = scene.fogDensity;
-        const fromStart = scene.fogStart;
-        const fromEnd = scene.fogEnd;
-        const startedAt = performance.now();
-
-        if (config.mode !== "none") scene.fogMode = MODES[config.mode];
-        this.transition = scene.onBeforeRenderObservable.add(() => {
-            const linear = Math.min(1, (performance.now() - startedAt) / Math.max(1, durationMs));
-            const t = linear * linear * (3 - 2 * linear);
-            scene.fogColor.set(
-                fromColor.r + (toColor[0] - fromColor.r) * t,
-                fromColor.g + (toColor[1] - fromColor.g) * t,
-                fromColor.b + (toColor[2] - fromColor.b) * t,
-            );
-            if (config.density !== undefined) {
-                scene.fogDensity = fromDensity + (config.density - fromDensity) * t;
-            }
-            if (config.start !== undefined) {
-                scene.fogStart = fromStart + (config.start - fromStart) * t;
-            }
-            if (config.end !== undefined) {
-                scene.fogEnd = fromEnd + (config.end - fromEnd) * t;
-            }
-            if (linear >= 1) {
-                this.cancelTransition();
-                this.set(config);
-            }
-        });
-    }
-
     /**
-     * Distance fog only tints geometry, so an empty room shows nothing. This layers soft
-     * billboard puffs through the space to read as actual mist.
+     * Distance fog only tints meshes to fogColor, so an empty room shows nothing.
+     * This layers soft puffs through the space to look like actual mist.
      */
-    setMist(config: MistConfig = {}) {
+    setMist(
+        config: {
+            color?: [number, number, number];
+            opacity?: number; // alpha of a single puff at its peak. Keep low; puffs stack
+            count?: number; // how many puffs are alive at once
+            size?: [number, number]; // [min, max] puff diameter
+            center?: [number, number, number];
+            extents?: [number, number, number]; // half-extents of the box the puffs spawn in
+            speed?: number;
+            followCamera?: boolean; // keeps the puff volume centred on the camera
+        } = {},
+    ) {
         this.clearMist();
         const scene = this.requireScene();
         const [red, green, blue] = config.color ?? [0.62, 0.68, 0.8];
